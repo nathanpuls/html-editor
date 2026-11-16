@@ -107,7 +107,7 @@ function init(){
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
  let draftActive=false,initialModel='',styleSettings={},initialStyle='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
  let sectionStates={},undoStack=[],pageMeta={},originalMeta={},revertAvailable=false;
- const sectionDisplays=new Map();
+ const sectionDisplays=new Map(),sectionLabels=new Map(),sectionStyleAttrs=new Map();
  const snapshot=()=>JSON.stringify({model,styleSettings,sectionOrder,sectionStates,pageMeta});
  const revertKey=()=>draftKey+':last-revert';
  const readRevert=()=>{try{const x=JSON.parse(localStorage.getItem(revertKey())||'null');return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null}catch{return null}};
@@ -122,7 +122,25 @@ function init(){
  const checkpoint=()=>{if(revertAvailable)clearRevert();const state=snapshot();if(undoStack.at(-1)!==state){undoStack.push(state);if(undoStack.length>80)undoStack.shift()}syncUndoButton()};
  const syncUndoButton=()=>{const b=screen.querySelector('#ue-undo');if(b)b.disabled=!undoStack.length};
  function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
- function syncSections(){for(const node of sectionNodes){const state=sectionStates[node.getAttribute('data-section')]||{};if(state.hidden||state.deleted)node.style.display='none';else node.style.display=sectionDisplays.get(node)||'';if(state.label!==undefined)node.setAttribute('aria-label',state.label);else if(node.dataset.ueInitialLabel!==undefined){if(node.dataset.ueInitialLabel)node.setAttribute('aria-label',node.dataset.ueInitialLabel);else node.removeAttribute('aria-label')}}}
+ function syncSections(){
+  for(const node of sectionNodes){
+   const state=sectionStates[node.getAttribute('data-section')]||{};
+   const originalDisplay=sectionDisplays.get(node)||'';
+   const targetDisplay=state.hidden||state.deleted?'none':originalDisplay;
+   if(node.style.display!==targetDisplay){
+    if(targetDisplay==='none')node.style.display='none';
+    else if(sectionStyleAttrs.get(node)===null){
+     node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style');
+    }else node.style.display=originalDisplay;
+   }
+   const originalLabel=sectionLabels.get(node);
+   const targetLabel=state.label!==undefined?state.label:originalLabel;
+   if(node.getAttribute('aria-label')!==targetLabel){
+    if(targetLabel===null)node.removeAttribute('aria-label');
+    else node.setAttribute('aria-label',targetLabel);
+   }
+  }
+ }
 
  const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
@@ -195,7 +213,8 @@ function init(){
  const restoreStyle=()=>{
   const el=document.getElementById('editor-page-style');
   if(originalPageStyle===null)el?.remove();
-  else{if(el)el.textContent=originalPageStyle;else{const node=document.createElement('style');node.id='editor-page-style';node.textContent=originalPageStyle;document.head.append(node)}}
+  else if(el){if(el.textContent!==originalPageStyle)el.textContent=originalPageStyle}
+  else{const node=document.createElement('style');node.id='editor-page-style';node.textContent=originalPageStyle;document.head.append(node)}
  };
  const originalPageStyle=document.getElementById('editor-page-style')?.textContent??null;
  function renderStyle(){
@@ -301,7 +320,13 @@ function init(){
   }catch{} // file:// and privacy settings may block storage
  };
  const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||''});
- const applyMeta=()=>{document.title=pageMeta.title||'';let meta=document.querySelector('meta[name="description"]');if(!meta&&pageMeta.description){meta=document.createElement('meta');meta.name='description';document.head.append(meta)}if(meta)meta.setAttribute('content',pageMeta.description||'')};
+ const applyMeta=()=>{
+  const title=pageMeta.title||'';
+  if(document.title!==title)document.title=title;
+  let meta=document.querySelector('meta[name="description"]');
+  if(!meta&&pageMeta.description){meta=document.createElement('meta');meta.name='description';document.head.append(meta)}
+  if(meta&&meta.getAttribute('content')!==(pageMeta.description||''))meta.setAttribute('content',pageMeta.description||'');
+ };
  const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
  const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
@@ -355,6 +380,10 @@ function init(){
    }
   });
  }
+ const groupChanged=members=>{
+  const originals=members.filter(x=>!x.added).slice().sort((a,b)=>a.index-b.index);
+  return members.length!==originals.length||members.some((x,i)=>x.added||x.deleted||x.hidden||x.text!==x.originalText||x.url!==x.originalURL||x.index!==originals[i]?.index);
+ };
  function syncLive(){
   for(const item of model){
    if(item.group!==null||item.added)continue;
@@ -387,8 +416,7 @@ function init(){
   }
   liveRoots.forEach((root,gi)=>{
    const members=model.filter(x=>x.group===gi);
-   const baselineMembers=members.filter(x=>!x.added).sort((a,b)=>a.index-b.index);
-   const dirty=members.length!==baselineMembers.length||members.some((x,i)=>x.added||x.deleted||x.hidden||x.text!==x.originalText||x.url!==x.originalURL||x.index!==baselineMembers[i]?.index);
+   const dirty=groupChanged(members);
    if(!dirty){if(root.innerHTML!==rootSnapshots[gi])root.innerHTML=rootSnapshots[gi];return}
    // Only rebuild this collection when it was actually edited.
    root.innerHTML=rootSnapshots[gi];
@@ -540,7 +568,7 @@ function init(){
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
- function close(restore=true){if(restore){restoreLive();restoreStyle();restoreMeta();sectionOrder=[...initialSectionOrder];sectionStates={};reorderSections();syncSections()}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
+ function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
  function copyHTML(){
   const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
   doc.title=pageMeta.title;
@@ -563,21 +591,24 @@ function init(){
   const groups=Array.from(doc.querySelectorAll('[data-edit="links"]'));
   groups.forEach((g,gi)=>{
    const members=model.filter(x=>x.group===gi);
+   if(!groupChanged(members))return;
    const old=Array.from(g.children).filter(el=>el.matches('a[data-edit]'));
    old.forEach(el=>el.remove());
    for(const item of members){
     if(item.deleted)continue;
     if(!item.link||!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');
     const node=item.added?doc.createElement('a'):source[item.index].cloneNode(true);
-    node.setAttribute('data-edit',item.label||'Navigation link');node.setAttribute('href',normalizeURL(item.url));
-    node.textContent=item.text;if(item.hidden){node.hidden=true;node.style.display='none'}
+    if(item.added)node.setAttribute('data-edit',item.label||'Navigation link');
+    if(node.getAttribute('href')!==normalizeURL(item.url))node.setAttribute('href',normalizeURL(item.url));
+    if(item.added||item.text!==item.originalText)setText(node,item.text);
+    if(item.hidden){node.hidden=true;node.style.display='none'}
     if(g.lastChild&&g.lastChild.nodeType!==3)g.append(doc.createTextNode(' '));
     g.append(node);
    }
   });
   const exportedSections=Array.from(doc.querySelectorAll('[data-section]'));
   const exportedById=new Map(exportedSections.map(el=>[el.getAttribute('data-section'),el]));
-  for(const id of sectionOrder){
+  if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))for(const id of sectionOrder){
    const node=exportedById.get(id);if(!node||!node.parentElement)continue;
    const siblings=exportedSections.filter(el=>el.parentElement===node.parentElement);
    const ordered=sectionOrder.map(k=>exportedById.get(k)).filter(el=>el&&el.parentElement===node.parentElement&&siblings.includes(el));
@@ -623,7 +654,14 @@ function init(){
   draftActive=true;initialModel=JSON.stringify(model);
   originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
-  sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));for(const node of sectionNodes)node.dataset.ueInitialLabel=node.getAttribute('aria-label')||'';sectionStates={};sectionDisplays.clear();for(const node of sectionNodes)sectionDisplays.set(node,node.style.display);undoStack=[];revertAvailable=false;syncUndoButton();
+  sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));
+  sectionStates={};sectionDisplays.clear();sectionLabels.clear();sectionStyleAttrs.clear();
+  for(const node of sectionNodes){
+   sectionDisplays.set(node,node.style.display);
+   sectionLabels.set(node,node.getAttribute('aria-label'));
+   sectionStyleAttrs.set(node,node.getAttribute('style'));
+  }
+  undoStack=[];revertAvailable=false;syncUndoButton();
   initialSectionOrder=[...sectionOrder];
   const saved=readDraft();
   if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
