@@ -64,6 +64,16 @@ try{
  await js("document.querySelector('#ue-pencil').click()");
  check('panel opens',await js("!document.querySelector('#ue-screen').hidden"));
  check('ellipsis menu exists',await js("Boolean(document.querySelector('#ue-more'))"));
+ check('horizontal ellipsis stays in header',await js("document.querySelector('#ue-more i')?.dataset.lucide==='ellipsis'"));
+ check('docking controls live only inside ellipsis menu',await js("Boolean(document.querySelector('#ue-more-menu #ue-dock-left')&&document.querySelector('#ue-more-menu #ue-dock-right'))"));
+ check('copy split button exists',await js("Boolean(document.querySelector('#ue-copy')&&document.querySelector('#ue-copy-toggle')&&document.querySelector('#ue-copy-json'))"));
+ await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-left').click()");
+ check('menu docking moves editor left',await js("document.querySelector('#ue-screen').classList.contains('ue-dock-left')"));
+ await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-right').click()");
+ check('menu docking moves editor right',await js("document.querySelector('#ue-screen').classList.contains('ue-dock-right')"));
+ check('heading drag docks panel on left',await js("(async()=>{const el=document.querySelector('#ue-heading');const original=el.setPointerCapture;el.setPointerCapture=()=>{};el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1,button:0,clientX:window.innerWidth-100,clientY:30}));el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1,button:0,clientX:25,clientY:30}));el.setPointerCapture=original;return document.querySelector('#ue-screen').classList.contains('ue-dock-left')})()"));
+ await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-right').click()");
+
  check('CSS loaded',await js("Boolean(document.querySelector('#ue-stylesheet')?.sheet)"));
  const edit="(()=>{const label=[...document.querySelectorAll('#ue-fields label')].find(el=>el.textContent.includes('Hero heading'));const input=label?.querySelector('input,textarea');if(!input)return false;input.value='Changed heading';input.dispatchEvent(new Event('input',{bubbles:true}));return true})()";
  check('editable field works',await js(edit));
@@ -106,6 +116,12 @@ try{
  await js("document.querySelector('#ue-pencil').click()");
  await js(edit);
  await js("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__exportedHTML=text}}})");
+ await js("document.querySelector('#ue-copy-toggle').click()");
+ check('Copy JSON menu opens from caret',await js("!document.querySelector('#ue-copy-menu').hidden"));
+ await js("document.querySelector('#ue-copy-json').click()");
+ await waitJS("typeof window.__exportedHTML==='string'");
+ check('Copy JSON contains complete edited HTML',await js("JSON.parse(window.__exportedHTML).html.includes('Changed heading')"));
+ await js("document.querySelector('#ue-pencil').click()");
  await js("document.querySelector('#ue-copy').click()");
  await waitJS("typeof window.__exportedHTML==='string'");
  check('HTML export reflects edits',await js("window.__exportedHTML.includes('Changed heading') && !window.__exportedHTML.includes('id=\"ue-stylesheet\"')"));
