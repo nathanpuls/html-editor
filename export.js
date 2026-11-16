@@ -62,6 +62,15 @@ export function generateHTML(ctx){
    if(!pageStyle){pageStyle=doc.createElement('style');pageStyle.id='editor-page-style';doc.head.append(pageStyle)}
    pageStyle.textContent=styleSheetText(styleSettings);
   }
-  doc.querySelector('#ue-pencil')?.remove();doc.querySelector('#ue-screen')?.remove();doc.querySelector('#ue-style')?.remove();doc.querySelector('#ue-script')?.remove();doc.querySelector('#ue-stylesheet')?.remove();
+  // Remove editor UI and host-injected runtime markup from the copied document.
+  // Keep the site's own HTML, styling, and the edit.built.at installation script.
+  for(const selector of ['#ue-pencil','#ue-screen','#ue-style','#ue-script','#ue-stylesheet','#ue-drop-preview'])
+   doc.querySelectorAll(selector).forEach(node=>node.remove());
+  // The Built.at editor route adds a base tag so its relative demo links work.
+  // That routing detail is not part of the authored website.
+  doc.querySelectorAll('base[href="/editor/"]').forEach(node=>node.remove());
+  // Cloudflare injects Web Analytics into the response; exporting the website
+  // should not silently carry the hosting account's analytics configuration.
+  doc.querySelectorAll('script[data-cf-beacon],script[src*="static.cloudflareinsights.com/beacon.min.js"]').forEach(node=>node.remove());
   return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
  }
