@@ -163,3 +163,106 @@ export function buildStyleSheet(ctx){
   }
   return parts.join('\n');
  };
+
+export function inspectStyle(ctx){
+ const {styleDefaults,styleFonts,pageColor,pageButton,readStyle}=ctx;
+  const raw=document.getElementById('editor-page-style')?.textContent||'';
+  const match=raw.match(/\/\* editor-style:(.*?) \*\//);
+  if(match){try{return {...styleDefaults,...JSON.parse(decodeURIComponent(match[1]))}}catch{}}
+  const body=getComputedStyle(document.body),button=pageButton();
+  const heading=tag=>document.querySelector('main '+tag+',body '+tag);
+  const size=tag=>{const el=heading(tag);return el?Math.round(parseFloat(getComputedStyle(el).fontSize))||styleDefaults[tag]:styleDefaults[tag]};
+  const cards=document.querySelector('.card,.hero-visual,.photo');
+  const initialFont=body.fontFamily.toLowerCase();
+  const font=Object.keys(styleFonts).find(k=>initialFont.includes(k.toLowerCase()))||'system-ui';
+  return {...styleDefaults,
+   background:pageColor(document.body,'backgroundColor',styleDefaults.background),
+   text:pageColor(document.body,'color',styleDefaults.text),
+   accent:pageColor(document.querySelector('.site-nav a,a:not(.button):not(.btn)'), 'color',styleDefaults.accent),
+   buttonBackground:pageColor(button,'backgroundColor',styleDefaults.buttonBackground),
+   buttonText:pageColor(button,'color',styleDefaults.buttonText),
+   font,h1:size('h1'),h2:size('h2'),h3:size('h3'),p:size('p'),
+   radius:Math.round(parseFloat(cards?getComputedStyle(cards).borderTopLeftRadius:(button?getComputedStyle(button).borderTopLeftRadius:'8px')))||0
+  };
+ }
+
+export function findStyleVariables(ctx){
+ const {discoverVariables,hexColor}=ctx;
+  const found=new Map();
+  const scan=rules=>{
+   for(const rule of rules){
+    if(rule.type===1&&rule.selectorText?.split(',').some(t=>t.trim()===':root')){
+     for(const name of rule.style){
+      if(!/^--(?!ue-)[a-z0-9_-]+$/i.test(name))continue;
+      const value=rule.style.getPropertyValue(name).trim();
+      if(value&&!found.has(name))found.set(name,value);
+     }
+    }else if(rule.cssRules){try{scan(rule.cssRules)}catch{}}
+   }
+  };
+  for(const sheet of document.styleSheets){
+   const node=sheet.ownerNode;
+   if(!node||node.id==='ue-style'||node.id==='editor-page-style'||node.tagName!=='STYLE')continue;
+   try{scan(sheet.cssRules)}catch{}
+  }
+  const computed=getComputedStyle(document.documentElement);
+  const result={};
+  for(const [name,fallback] of found){
+   const value=computed.getPropertyValue(name).trim()||fallback;
+   if(hexColor(value))result[name]={kind:'color',value};
+   else if(/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(value))result[name]={kind:'size',value};
+  }
+  return result;
+ };
+
+export function inspectButtons(ctx){
+ const {selector,liveSnapshots,editableButtonSelector,getButtonAppearance,rgbToHex}=ctx;
+  const result={};
+  liveSnapshots.forEach((item,index)=>{
+   const node=item.node;
+   if(!node?.matches?.('a[data-edit],button[data-edit],input[type="button"][data-edit]'))return;
+   const css=getComputedStyle(node);
+   const isButton=node.matches('button,input[type="button"],a.button,a.btn,a[role="button"]');
+   // Discover button-like links with custom class names, without including plain links.
+   const padding=Math.max(parseFloat(css.paddingTop)||0,parseFloat(css.paddingLeft)||0);
+   const painted=css.backgroundColor.startsWith('rgb')&&!css.backgroundColor.endsWith(', 0)')&&!css.backgroundColor.endsWith(' 0)');
+   if(!isButton&&!(painted&&padding>=6))return;
+   const selector=editableButtonSelector(node);
+   if(!selector)return;
+   const background=rgbToHex(css.backgroundColor),color=rgbToHex(css.color);
+   if(!background||!color)return;
+   result[index]={selector,background,color,label:node.getAttribute('data-edit')||'Button '+(index+1)};
+  });
+  return result;
+ };
+
+export function drawButtonPreview(ctx){
+ const {model,liveSnapshots,buttonAppearance,refreshButtonSample,sample,index}=ctx;
+  if(!sample)return;
+  const node=liveSnapshots[Number(index)]?.node;
+  const item=model.find(x=>!x.added&&x.index===Number(index));
+  if(!node?.isConnected||!item||item.deleted)return;
+  const css=getComputedStyle(node);
+  sample.textContent=item.text||buttonAppearance[index]?.label||'';
+  sample.style.backgroundColor=css.backgroundColor;
+  sample.style.backgroundImage=css.backgroundImage;
+  sample.style.color=css.color;
+  sample.style.border=css.border;
+  sample.style.borderRadius=css.borderRadius;
+  sample.style.boxShadow=css.boxShadow;
+  sample.style.fontFamily=css.fontFamily;
+  sample.style.fontWeight=css.fontWeight;
+  sample.style.fontSize=css.fontSize;
+  sample.style.letterSpacing=css.letterSpacing;
+  sample.style.textAlign=css.textAlign==='left'?'left':'center';
+ };
+
+export function drawButtonPreviews(ctx){
+ const {stylePanel,model,refreshButtonSample,refreshButtonSamples}=ctx;
+  for(const sample of stylePanel.querySelectorAll('[data-ue-button-preview]')){
+   const index=sample.dataset.ueButtonPreview;
+   const item=model.find(x=>!x.added&&x.index===Number(index));
+   if(!item||item.deleted){sample.closest('.ue-button-block')?.remove();continue}
+   refreshButtonSample(sample,index);
+  }
+ };
