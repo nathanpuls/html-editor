@@ -76,7 +76,8 @@ try{
  check('docking controls live only inside ellipsis menu',await js("Boolean(document.querySelector('#ue-more-menu #ue-dock-left')&&document.querySelector('#ue-more-menu #ue-dock-right'))"));
  check('left and right menu icons render as arrows',await js("Boolean(document.querySelector('#ue-dock-left svg path')&&document.querySelector('#ue-dock-right svg path'))"));
  check('copy split button exists',await js("Boolean(document.querySelector('#ue-copy')&&document.querySelector('#ue-copy-toggle')&&document.querySelector('#ue-copy-json'))"));
- check('Page tab and named JSON actions',await js("Boolean(document.querySelector('[data-tab=page]'))&&!document.querySelector('[data-tab=settings]')&&document.querySelector('#ue-copy-json').textContent==='Copy editable data (JSON)'&&document.querySelector('#ue-import-json').textContent==='Import editable data (JSON)'"));
+ check('primary copy action names the HTML format',await js("document.querySelector('#ue-copy').textContent==='Copy HTML'"));
+ check('Page tab and named JSON actions',await js("Boolean(document.querySelector('[data-tab=page]'))&&!document.querySelector('[data-tab=settings]')&&document.querySelector('#ue-copy-json').textContent==='Copy editable data (JSON)'&&document.querySelector('#ue-import-json').textContent==='Paste editable data (JSON)'"));
  check('New page is first ellipsis action',await js("document.querySelector('#ue-more-menu').firstElementChild?.id==='ue-new-page'"));
  check('Undo is a text action',await js("document.querySelector('#ue-undo').textContent.trim()==='Undo'"));
 
@@ -103,6 +104,14 @@ try{
  check('page color edits apply',await js("document.querySelector('#editor-page-style').textContent.includes('#123456')"));
  await js("document.querySelector('#ue-undo').click()");
  check('undo page color edit',await js("!document.querySelector('#editor-page-style')?.textContent.includes('#123456')"));
+ check('blank logo placeholder starts hidden',await js("document.querySelector('[data-site-logo]').hidden&&!document.querySelector('[data-site-logo]').hasAttribute('src')"));
+ await js("(()=>{const v=document.querySelector('input[aria-label=\"Logo image URL (optional)\"]');v.value='https://example.com/logo.png?w=1000';v.dispatchEvent(new Event('input',{bubbles:true}))})()");
+ check('logo URL hydrates reserved blank slot',await js("document.querySelector('[data-site-logo]').getAttribute('src')==='https://example.com/logo.png?w=1000'&&!document.querySelector('[data-site-logo]').hidden"));
+ await js("(()=>{const v=document.querySelector('input[aria-label=\"Favicon image URL (optional)\"]');v.value='https://example.com/favicon.svg';v.dispatchEvent(new Event('input',{bubbles:true}))})()");
+ check('favicon URL updates head immediately',await js("document.querySelector('link[rel=icon]')?.getAttribute('href')==='https://example.com/favicon.svg'"));
+ await js("document.querySelector('#ue-undo').click();document.querySelector('#ue-undo').click()");
+ check('undo clears logo and favicon',await js("document.querySelector('[data-site-logo]').hidden&&!document.querySelector('[data-site-logo]').hasAttribute('src')&&!document.querySelector('link[rel=icon]')"));
+
 
  await js("document.querySelector('#ue-cancel').click()");
  check('close preserves preview',await js("document.querySelector('h1').textContent==='Changed heading'"));
@@ -143,9 +152,11 @@ try{
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-json-input').value='{broken';document.querySelector('#ue-json-apply').click()");
  check('invalid JSON does not change page',await js("!document.querySelector('#ue-json-error').hidden&&document.querySelector('h1').textContent==='Changed heading'"));
- await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.id==='intro.hero-heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.typography.fontFamily='Inter, -apple-system, BlinkMacSystemFont, sans-serif';d.design.elements['intro.hero-heading']={fontSize:58};d.fields.find(f=>f.id==='page.hero-image').alt='Updated alt without changing image';d.sections.order=['links','intro'];d.sections.items.links.label='Programs';d.design.colors.accent='#38bdf8';d.design.buttons.primary.background='#38bdf8';d.design.buttons.primary.text='#0f172a';d.design.buttons.secondary.background='#e8e7e0';d.design.buttons.secondary.text='#25302d';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.id==='intro.hero-heading').text='Bulk changed heading';d.page.title='Bulk title';d.page.logoUrl='https://example.com/bulk-logo.png';d.page.faviconUrl='https://example.com/bulk-icon.png';d.design.typography.fontFamily='Inter, -apple-system, BlinkMacSystemFont, sans-serif';d.design.elements['intro.hero-heading']={fontSize:58};d.fields.find(f=>f.id==='page.hero-image').alt='Updated alt without changing image';d.sections.order=['links','intro'];d.sections.items.links.label='Programs';d.design.colors.accent='#38bdf8';d.design.buttons.primary.background='#38bdf8';d.design.buttons.primary.text='#0f172a';d.design.buttons.secondary.background='#e8e7e0';d.design.buttons.secondary.text='#25302d';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
  await js("document.querySelector('#ue-json-apply').click()");
  check('Import JSON applies bulk content and settings',await js("document.querySelector('h1').textContent==='Bulk changed heading'&&document.title==='Bulk title'&&document.querySelector('#ue-json-dialog').hidden"));
+ check('JSON import hydrates logo and favicon',await js("document.querySelector('[data-site-logo]').getAttribute('src')==='https://example.com/bulk-logo.png'&&document.querySelector('link[rel=icon]').getAttribute('href')==='https://example.com/bulk-icon.png'"));
+
  check('image alt-only change preserves original src, srcset and loading',await js("(()=>{const img=document.querySelector('img[data-edit=\\\"Hero image\\\"]');return img.alt==='Updated alt without changing image'&&img.getAttribute('src')==='https://example.com/old.jpg?w=1000'&&img.getAttribute('srcset')==='https://example.com/old.jpg?w=400 400w'&&img.getAttribute('loading')==='lazy'})()"));
  check('reordered section updates its numbered eyebrow',await js("document.querySelector('main section')?.dataset.section==='links'&&document.querySelector('[data-section=links] .eyebrow')?.textContent==='01 / Programs'"));
  check('primary, secondary and navigation button text stay distinct',await js("(()=>{const primary=getComputedStyle(document.querySelector('a.button:not(.secondary)'));const secondary=getComputedStyle(document.querySelector('a.button.secondary'));const nav=getComputedStyle(document.querySelector('.site-links a'));return primary.backgroundColor==='rgb(56, 189, 248)'&&primary.color==='rgb(15, 23, 42)'&&secondary.backgroundColor==='rgb(232, 231, 224)'&&secondary.color==='rgb(37, 48, 45)'&&nav.backgroundColor==='rgb(56, 189, 248)'&&nav.color==='rgb(15, 23, 42)'})()"));
@@ -156,6 +167,8 @@ try{
  await js("window.__exportedJSON=window.__exportedHTML;document.querySelector('#ue-copy').click()");
  await waitJS("window.__exportedHTML!==window.__exportedJSON");
  check('HTML copy preserves imported section labels and image alt',await js("window.__exportedHTML.includes('01 / Programs')&&window.__exportedHTML.includes('Updated alt without changing image')&&window.__exportedHTML.includes('srcset=')"));
+ check('HTML export includes branded logo and favicon',await js("window.__exportedHTML.includes('bulk-logo.png')&&window.__exportedHTML.includes('bulk-icon.png')"));
+
  check('Copy HTML keeps editor open',await js("!document.querySelector('#ue-screen').hidden&&location.search==='?edit'"));
 
  await js("document.querySelector('#ue-pencil').click();window.__exportedHTML=window.__exportedJSON");
@@ -163,6 +176,8 @@ try{
  await js("document.querySelector('#ue-undo').click()");
  check('undo restores pre-import page content and settings',await js("document.querySelector('h1').textContent==='Changed heading'&&document.title!=='Bulk title'&&getComputedStyle(document.querySelector('h1')).fontSize!=='58px'"));
  check('undo restores original image alt and section order',await js("document.querySelector('img[data-edit=\\\"Hero image\\\"]').alt==='A placeholder image'&&document.querySelector('main section')?.dataset.section==='intro'"));
+ check('undo removes imported branding',await js("document.querySelector('[data-site-logo]').hidden&&!document.querySelector('link[rel=icon]')"));
+
 
  check('undo removes imported Google Fonts stylesheet',await js("!document.querySelector('#editor-google-font')"));
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
