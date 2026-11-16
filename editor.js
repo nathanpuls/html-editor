@@ -83,6 +83,7 @@ function init(){
    if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'content',label:label+' section',detail:'Section controls',section:index});
   });
   designLabels.forEach((label,index)=>{if((label+' design style').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Design',design:index})});
+  Object.keys(originalVariables).forEach((name,index)=>{const label=varLabel(name);if((label+' '+name+' design color size').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Website color or size',customDesign:name})});
   [['Page title',0],['Page description',1]].forEach(([label,index])=>{if((label+' '+String(index?pageMeta.description:pageMeta.title)+' SEO settings').toLocaleLowerCase().includes(q))matches.push({tab:'settings',label,detail:'Settings',setting:index})});
   for(const hit of matches){
    const button=document.createElement('button');button.type='button';
@@ -93,6 +94,7 @@ function init(){
     if(hit.section!==undefined){setSectionsOpen(true);const input=sectionsPanel.children[hit.section]?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
     else if(hit.index!==undefined){const row=fields.querySelectorAll('.ue-item')[hit.index];row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
     else if(hit.design!==undefined){const row=stylePanel.children[hit.design];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
+    else if(hit.customDesign!==undefined){const keys=Object.keys(originalVariables);const row=stylePanel.querySelectorAll('.ue-setting')[designLabels.length+keys.indexOf(hit.customDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
     else if(hit.setting!==undefined){const row=settingsPanel.querySelectorAll('.ue-meta label')[hit.setting];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,textarea')?.focus({preventScroll:true})}
    };
    resultsPanel.append(button);
