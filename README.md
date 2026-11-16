@@ -55,6 +55,15 @@ Open the page and click the **Edit** pencil (or press **E** while not typing in 
 
 **Important:** Copy exports HTML to your clipboard; it does not edit the original file or publish the page. Paste the result into your file, site editor, or publishing workflow.
 
+### AI-assisted bulk editing (JSON v2)
+
+Open the **Copy** dropdown and choose **Copy JSON** to export editable content and design settings without the site's HTML structure. Share that JSON with an AI, ask it to change content or design values, then choose **Import JSON** and paste the revised object. The entire import applies as one undoable action.
+
+The v2 format uses stable IDs such as `welcome.hero-heading`, descriptive named link groups such as `navLinks` and `contactLinks`, and an embedded `_schema` with editing rules and primary/secondary button hints. Its `design` object separates `colors`, `typography` (pixel units), `borderRadiusPx`, `buttons.primary`, `buttons.secondary`, optional `elementButtons`, and `variables`.
+
+Preserve field IDs, tags, and existing section IDs. Editable values include text, image URL/alt, link destinations, visibility, labels, section order, and design settings. Only new links can be added to an existing named link collection. An invalid import makes no changes. **Version 1 JSON is no longer supported.**
+
+
 [Try the demo](https://github.com/nathanpuls/html-editor/blob/main/demo.html) · [Browse the source](https://github.com/nathanpuls/html-editor)
 
 ## Markup conventions
