@@ -74,6 +74,10 @@ try{
  await js("document.querySelector('#ue-search').value='';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
  await js("document.querySelector('[data-tab=design]').click()");
  check('design controls display',await js("!document.querySelector('#ue-style-panel').hidden && Boolean(document.querySelector('#ue-style-panel input'))"));
+ check('design color edits apply',await js("(()=>{const swatch=document.querySelector('#ue-style-panel input[type=color]');if(!swatch)return false;swatch.value='#123456';swatch.dispatchEvent(new Event('input',{bubbles:true}));return document.querySelector('#editor-page-style')?.textContent.includes('#123456')})()"));
+ await js("document.querySelector('#ue-undo').click()");
+ check('undo design edit',await js("!document.querySelector('#editor-page-style')?.textContent.includes('#123456')"));
+
  await js("document.querySelector('#ue-cancel').click()");
  check('close preserves preview',await js("document.querySelector('h1').textContent==='Changed heading'"));
  await send('Page.reload',{ignoreCache:true});
@@ -84,6 +88,19 @@ try{
  check('overflow menu opens',await js("!document.querySelector('#ue-more-menu').hidden"));
  await js("document.querySelector('#ue-revert').click()");
  check('revert restores original',await js("document.querySelector('h1').textContent==='Original heading'"));
+ await js("document.querySelector('#ue-pencil').click()");
+ await js("document.querySelector('[data-tab=content]').click()");
+ await js("document.querySelector('#ue-sections-toggle').click()");
+ check('sections panel opens',await js("!document.querySelector('#ue-sections').hidden"));
+ await js("document.querySelector('#ue-sections button[title=\"Move down\"]').click()");
+ check('section reorder updates live page',await js("document.querySelector('main section')?.dataset.section==='links'"));
+ await js("document.querySelector('#ue-undo').click()");
+ check('undo section reorder',await js("document.querySelector('main section')?.dataset.section==='intro'"));
+ await js("(()=>{const label=[...document.querySelectorAll('#ue-fields label')].find(el=>el.textContent.includes('Hero image'));const input=label?.querySelector('input');if(input){input.value='https://example.com/new.jpg';input.dispatchEvent(new Event('input',{bubbles:true}))}})()");
+ check('image source live editing',await js("document.querySelector('img[data-edit=\"Hero image\"]')?.getAttribute('src')==='https://example.com/new.jpg'"));
+ await js("document.querySelector('#ue-undo').click()");
+ check('image undo',await js("document.querySelector('img[data-edit=\"Hero image\"]')?.getAttribute('src')==='https://example.com/old.jpg'"));
+
  await js("document.querySelector('#ue-pencil').click()");
  await js(edit);
  await js("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__exportedHTML=text}}})");
