@@ -52,7 +52,7 @@ function init(){
  const checkpoint=()=>{const state=snapshot();if(undoStack.at(-1)!==state){undoStack.push(state);if(undoStack.length>80)undoStack.shift()}syncUndoButton()};
  const syncUndoButton=()=>{const b=screen.querySelector('#ue-undo');if(b)b.disabled=!undoStack.length};
  function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());model=old.model;styleSettings=old.styleSettings;sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
- function syncSections(){for(const node of sectionNodes){const state=sectionStates[node.getAttribute('data-section')]||{};if(state.hidden||state.deleted)node.style.display='none';else node.style.display=sectionDisplays.get(node)||''}}
+ function syncSections(){for(const node of sectionNodes){const state=sectionStates[node.getAttribute('data-section')]||{};if(state.hidden||state.deleted)node.style.display='none';else node.style.display=sectionDisplays.get(node)||'';if(state.label!==undefined)node.setAttribute('aria-label',state.label);else if(node.dataset.ueInitialLabel!==undefined){if(node.dataset.ueInitialLabel)node.setAttribute('aria-label',node.dataset.ueInitialLabel);else node.removeAttribute('aria-label')}}}
 
  const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
@@ -157,7 +157,9 @@ function init(){
    }
    const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
    reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=String(styleSettings[key])===String(originalAppearance[key]);
-   reset.onclick=()=>{checkpoint();styleSettings[key]=originalAppearance[key];applyStyle();saveDraft();renderStyle()};
+   reset.onclick=event=>{event.preventDefault();checkpoint();styleSettings[key]=originalAppearance[key];applyStyle();saveDraft();renderStyle()};
+   const refreshReset=()=>{reset.disabled=String(styleSettings[key])===String(originalAppearance[key])};
+   row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',refreshReset));
    row.append(reset);stylePanel.append(row);
   }
   icons();
@@ -186,20 +188,21 @@ function init(){
   for(const [i,id] of sectionOrder.entries()){
    const node=sectionNodes.find(n=>n.getAttribute('data-section')===id);if(!node)continue;
    const row=document.createElement('div');row.className='ue-section-row';
-   const jump=document.createElement('button');jump.type='button';jump.className='ue-section-link';
-   jump.textContent=node.getAttribute('aria-label')||node.querySelector('h1,h2,h3')?.textContent?.trim()||id;
-   jump.onclick=()=>{hideEditor();node.scrollIntoView({behavior:'smooth',block:'start'})};
+   const jump=document.createElement('input');jump.type='text';jump.className='ue-section-link';
+   jump.value=sectionStates[id]?.label??node.getAttribute('aria-label')??node.querySelector('h1,h2,h3')?.textContent?.trim()??id;
+   jump.setAttribute('aria-label','Section name');jump.title='Edit section name';
+   jump.oninput=()=>{checkpoint();sectionStates[id]={...(sectionStates[id]||{}),label:jump.value};syncSections();saveDraft()};
    const controls=document.createElement('div');controls.className='ue-controls';
    for(const [dir,name] of [[-1,'arrow-up'],[1,'arrow-down']]){
-    const button=document.createElement('button');button.type='button';button.title=dir<0?'Move up':'Move down';button.setAttribute('aria-label',button.title+' '+jump.textContent);
+    const button=document.createElement('button');button.type='button';button.title=dir<0?'Move up':'Move down';button.setAttribute('aria-label',button.title+' '+jump.value);
     button.disabled=(i+dir<0||i+dir>=sectionOrder.length||sectionNodes.find(n=>n.getAttribute('data-section')===sectionOrder[i+dir])?.parentElement!==node.parentElement);
     button.innerHTML='<i data-lucide="'+name+'"></i>';
     button.onclick=()=>{checkpoint();const next=i+dir;[sectionOrder[i],sectionOrder[next]]=[sectionOrder[next],sectionOrder[i]];reorderSections();saveDraft();renderSections()};
     controls.append(button);
    }
    const state=sectionStates[id]||{};
-   for(const [action,icon,field] of [[state.hidden?'Show':'Hide',state.hidden?'eye':'eye-off','hidden'],[state.deleted?'Restore':'Delete',state.deleted?'undo-2':'trash-2','deleted']]){
-    const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+jump.textContent);
+   for(const [action,icon,field] of [[state.hidden?'Show':'Hide',state.hidden?'eye-off':'eye','hidden'],[state.deleted?'Restore':'Delete',state.deleted?'undo-2':'trash-2','deleted']]){
+    const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+jump.value);
     button.innerHTML='<i data-lucide="'+icon+'"></i>';
     button.onclick=()=>{checkpoint();sectionStates[id]={...(sectionStates[id]||{}),[field]:!Boolean(sectionStates[id]?.[field])};syncSections();saveDraft();renderSections()};
     controls.append(button);
@@ -252,8 +255,8 @@ function init(){
    if(!node?.isConnected)continue;
    node.style.display=(item.hidden||item.deleted)?'none':(liveSnapshots[item.index].display||'');
    if(item.deleted)continue;
-   if(item.image){if(item.src!==item.originalSrc&&validImageURL(item.src)){node.setAttribute('src',normalizeURL(item.src));node.removeAttribute('srcset');node.removeAttribute('sizes')}node.setAttribute('alt',item.alt);continue}
-   if(item.article){if(item.text!==item.originalText)setArticle(node,item.text)}else setText(node,item.text);
+   if(item.image){if(item.src===item.originalSrc){for(const k of ['src','srcset','sizes']){const v=liveSnapshots[item.index][k];if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}else if(validImageURL(item.src)){node.setAttribute('src',normalizeURL(item.src));node.removeAttribute('srcset');node.removeAttribute('sizes')}node.setAttribute('alt',item.alt);continue}
+   if(item.article){if(item.text!==item.originalText)setArticle(node,item.text);else node.innerHTML=liveSnapshots[item.index].html}else setText(node,item.text);
    if(item.link&&validURL(item.url))node.setAttribute('href',normalizeURL(item.url));
   }
   liveRoots.forEach((root,gi)=>{
@@ -323,7 +326,8 @@ function init(){
    label.append(input);
    const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
    reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=pageMeta[key]===originalMeta[key];
-   reset.onclick=()=>{checkpoint();pageMeta[key]=originalMeta[key];applyMeta();render();saveDraft()};
+   reset.onclick=event=>{event.preventDefault();event.stopPropagation();checkpoint();pageMeta[key]=originalMeta[key];applyMeta();render();saveDraft()};
+   input.addEventListener('input',()=>{reset.disabled=pageMeta[key]===originalMeta[key]});
    label.style.position='relative';label.style.paddingRight='35px';label.append(reset);metaBox.append(label);
   }
   fields.append(metaBox);
@@ -352,7 +356,7 @@ function init(){
    const addControl=(action,icon,fn)=>{
     const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+(item.label||item.text||'element'));button.innerHTML='<i data-lucide="'+icon+'"></i>';button.onclick=fn;controls.append(button);
    };
-   addControl(item.hidden?'Show':'Hide',item.hidden?'eye':'eye-off',()=>{checkpoint();item.hidden=!item.hidden;render()});
+   addControl(item.hidden?'Show':'Hide',item.hidden?'eye-off':'eye',()=>{checkpoint();item.hidden=!item.hidden;render()});
    addControl(item.deleted?'Restore':'Delete',item.deleted?'undo-2':'trash-2',()=>{checkpoint();item.deleted=!item.deleted;render()});
    if(item.group!==null){
     for(const [direction,icon] of [[-1,'arrow-up'],[1,'arrow-down']]){
@@ -366,8 +370,8 @@ function init(){
    const resetField=(key,name,original,fn)=>{
     const button=document.createElement('button');button.type='button';button.className='ue-field-reset';button.title='Reset '+name;button.setAttribute('aria-label','Reset '+name);
     button.innerHTML='<i data-lucide="rotate-ccw"></i>';button.disabled=String(item[key]??'')===String(original??'');
-    button.onclick=()=>{checkpoint();item[key]=original;fn?.();render()};
-    const target=box.querySelector('[data-ue-field="'+key+'"]');if(target){target.style.position='relative';target.style.paddingRight='35px';target.append(button)}
+    button.onclick=event=>{event.preventDefault();event.stopPropagation();checkpoint();item[key]=original;fn?.();syncLive();render()};
+    const target=box.querySelector('[data-ue-field="'+key+'"]');if(target){target.style.position='relative';target.style.paddingRight='35px';target.append(button);const input=target.querySelector('input,textarea');if(input)input.addEventListener('input',()=>{button.disabled=String(item[key]??'')===String(original??'')})}
    };
    if(item.image){resetField('src','image URL',item.originalSrc);resetField('alt','alt text',item.originalAlt)}
    else resetField('text','text',item.originalText);
@@ -426,6 +430,7 @@ function init(){
    const node=exportedById.get(id);if(!node)continue;
    if(state.deleted)node.remove();
    else if(state.hidden){node.hidden=true;node.style.display='none'}
+   if(state.label!==undefined&&!state.deleted)node.setAttribute('aria-label',state.label);
   }
   let pageStyle=doc.getElementById('editor-page-style');
   if(JSON.stringify(styleSettings)!==initialStyle){
@@ -456,7 +461,7 @@ function init(){
   draftActive=true;initialModel=JSON.stringify(model);
   originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
-  sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));sectionStates={};sectionDisplays.clear();for(const node of sectionNodes)sectionDisplays.set(node,node.style.display);undoStack=[];syncUndoButton();
+  sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));for(const node of sectionNodes)node.dataset.ueInitialLabel=node.getAttribute('aria-label')||'';sectionStates={};sectionDisplays.clear();for(const node of sectionNodes)sectionDisplays.set(node,node.style.display);undoStack=[];syncUndoButton();
   initialSectionOrder=[...sectionOrder];
   const saved=readDraft();
   if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
