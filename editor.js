@@ -13,6 +13,7 @@ editorStyle.textContent+="\n#ue-style-panel .ue-custom-heading{font-weight:700;f
 editorStyle.textContent+="\n#ue-style-panel .ue-button-title{font-size:13px;font-weight:650;color:#555;padding-top:10px}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-button-block{display:grid;gap:11px;padding:2px 0 20px;border-bottom:1px solid #e9e9e9}\n#ue-style-panel .ue-button-title{padding-top:8px}\n#ue-style-panel .ue-button-preview{display:block;box-sizing:border-box;min-height:48px;padding:13px 16px;border:1px solid #0002;overflow-wrap:anywhere;line-height:1.4;pointer-events:none}\n#ue-style-panel .ue-button-block .ue-setting{padding-bottom:8px}\n#ue-style-panel .ue-button-block .ue-setting:last-child{border-bottom:0}\n";
 editorStyle.textContent+="\n/* Horizontal, full-height dock: both edges resize; header drags sideways. */\n@media(min-width:641px){\n #ue-screen:not(.ue-fullscreen){top:0!important;bottom:0!important;height:100dvh!important;max-height:100dvh!important;border:1px solid #dedede;border-top:0;border-bottom:0;box-shadow:0 0 38px #00000016}\n #ue-head{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}\n #ue-head:active{cursor:grabbing}\n #ue-head button{cursor:pointer}\n #ue-resize,#ue-resize-right{position:absolute;z-index:4;top:0;bottom:0;width:15px;padding:0;border:0;background:transparent;cursor:ew-resize;touch-action:none;color:#9da3a0}\n #ue-resize{left:0}\n #ue-resize-right{right:0;left:auto}\n #ue-resize-right:before{content:\"\";position:absolute;right:0;top:calc(30% - 19px);width:15px;height:38px;border:1px solid #e1e3e2;border-right:0;border-radius:8px 0 0 8px;background:#f7f8f7;transition:background .15s,border-color .15s}\n #ue-resize-right svg{position:absolute;top:calc(30% - 10px);right:0;width:15px!important;height:20px!important;pointer-events:none;stroke-width:1.7}\n #ue-resize-right:hover:before,#ue-resize-right:focus-visible:before{background:#e9edeb;border-color:#c1c9c4}\n #ue-resize-right:hover,#ue-resize-right:focus-visible{color:#56635d}\n #ue-screen.ue-fullscreen{left:0!important;right:0!important}\n #ue-screen.ue-fullscreen #ue-resize-right{display:none}\n}\n@media(max-width:640px){#ue-resize-right{display:none!important}}\n";
+editorStyle.textContent+="\n/* Compact contextual design previews: expand only the button being edited. */\n#ue-style-panel details.ue-button-block{display:block;position:relative;padding:1px 0 18px}\n#ue-style-panel .ue-button-summary{display:block;cursor:pointer;list-style:none;padding:0 38px 0 0}\n#ue-style-panel .ue-button-summary::-webkit-details-marker{display:none}\n#ue-style-panel .ue-button-summary:focus-visible{outline:2px solid #777;outline-offset:4px;border-radius:4px}\n#ue-style-panel .ue-button-summary .ue-button-preview{margin-top:9px}\n#ue-style-panel .ue-button-hint{font-size:11px;color:#888;margin-top:8px}\n#ue-style-panel details[open] .ue-button-hint{display:none}\n#ue-style-panel .ue-button-jump{position:absolute;right:2px;top:39px;display:grid;place-items:center;width:31px;height:31px;padding:0;border:0;border-radius:7px;background:#f4f4f4;color:#666}\n#ue-style-panel .ue-button-jump:hover{background:#e9e9e9;color:#111}\n#ue-style-panel .ue-button-jump svg{width:15px;height:15px}\n#ue-style-panel details.ue-button-block .ue-setting:first-of-type{margin-top:13px}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -153,7 +154,7 @@ function init(){
     else if(hit.index!==undefined){const row=fields.querySelector('.ue-item[data-edit-index="'+hit.index+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
     else if(hit.design!==undefined){const row=stylePanel.children[hit.design];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
     else if(hit.customDesign!==undefined){const keys=Object.keys(originalVariables);const row=stylePanel.querySelectorAll('.ue-setting')[genericLabels.length+keys.indexOf(hit.customDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
-    else if(hit.buttonDesign!==undefined){const preview=Array.from(stylePanel.querySelectorAll('[data-ue-button-preview]')).find(node=>node.dataset.ueButtonPreview===String(hit.buttonDesign));const block=preview?.closest('.ue-button-block');block?.scrollIntoView({block:'center',behavior:'instant'});block?.querySelector('.ue-setting input')?.focus({preventScroll:true})}
+    else if(hit.buttonDesign!==undefined){const block=stylePanel.querySelector('[data-ue-button-block="'+hit.buttonDesign+'"]');if(block){block.open=true;expandedButtonControls.add(String(hit.buttonDesign));block.scrollIntoView({block:'center',behavior:'instant'});block.querySelector('.ue-setting input')?.focus({preventScroll:true})}}
     else if(hit.setting!==undefined){const row=settingsPanel.querySelectorAll('.ue-meta label')[hit.setting];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,textarea')?.focus({preventScroll:true})}
    };
    resultsPanel.append(button);
@@ -202,6 +203,7 @@ function init(){
  let sectionStates={},undoStack=[],pageMeta={},originalMeta={},revertAvailable=false;
  const sectionDisplays=new Map(),sectionLabels=new Map(),sectionStyleAttrs=new Map();
  const touchedNodes=new Set(),touchedRoots=new Set();
+ const expandedButtonControls=new Set();
  const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta});
  const revertKey=()=>draftKey+':last-revert';
  const readRevert=()=>{try{const x=JSON.parse(localStorage.getItem(revertKey())||'null');return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null}catch{return null}};
@@ -380,7 +382,7 @@ function init(){
    if(!original)continue;
    for(const key of ['background','color']){
     const value=settings[key];
-    if(value&&hexColor(value)&&value!==original[key])rule(original.selector,key==='background'?'background-color:'+value+'!important':'color:'+value+'!important');
+    if(value&&hexColor(value)&&value!==original[key])rule('html body '+original.selector,key==='background'?'background-color:'+value+'!important':'color:'+value+'!important');
    }
   }
   return parts.join('\n');
@@ -462,14 +464,30 @@ function init(){
    for(const [index,info] of buttons){
     const item=model.find(x=>!x.added&&x.index===Number(index));
     if(!item||item.deleted)continue;
-    const block=document.createElement('div');block.className='ue-button-block';
-    const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;block.append(name);
+    const block=document.createElement('details');block.className='ue-button-block';block.dataset.ueButtonBlock=index;
+    block.open=expandedButtonControls.has(index);
+    block.addEventListener('toggle',()=>{if(block.open)expandedButtonControls.add(index);else expandedButtonControls.delete(index)});
+    const summary=document.createElement('summary');summary.className='ue-button-summary';
+    const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;summary.append(name);
     // Preview only: read the source element's appearance; never clone its markup
     // or insert an interactive duplicate into the website.
     const preview=document.createElement('div');preview.className='ue-button-preview';
     preview.dataset.ueButtonPreview=index;
     preview.setAttribute('aria-label','Preview of '+info.label);
-    block.append(preview);
+    summary.append(preview);
+    const hint=document.createElement('div');hint.className='ue-button-hint';hint.textContent='Click to edit colors';
+    summary.append(hint);block.append(summary);
+    const jump=document.createElement('button');jump.type='button';jump.className='ue-button-jump';
+    jump.title='Find '+info.label+' on the website';jump.setAttribute('aria-label',jump.title);
+    jump.innerHTML='<i data-lucide="arrow-up-right"></i>';
+    jump.onclick=()=>{
+     const node=liveSnapshots[Number(index)]?.node;
+     if(!node?.isConnected)return;
+     if(screen.classList.contains('ue-fullscreen'))hideEditor();
+     const top=Math.max(0,window.scrollY+node.getBoundingClientRect().top-32);
+     window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    };
+    block.append(jump);
     const updatePreview=()=>{
      const live=liveSnapshots[Number(index)]?.node;
      const visual=live?.isConnected?getComputedStyle(live):null;
