@@ -1,6 +1,6 @@
 import {setText,articleText,isArticle,setArticle,drawSections,drawContent,restoreEditedDOM,syncEditedDOM} from './content.js';
 import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews} from './design.js';
-import {pageSignature,draftCompatible} from './storage.js';
+import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
 /* HTML Editor v1 — standalone, dependency-free.
@@ -194,18 +194,18 @@ function init(){
  const expandedButtonControls=new Set();
  const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta});
  const revertKey=()=>draftKey+':last-revert';
- const readRevert=()=>{try{const x=JSON.parse(localStorage.getItem(revertKey())||'null');return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null}catch{return null}};
- const clearRevert=()=>{revertAvailable=false;try{localStorage.removeItem(revertKey())}catch{}};
+ const readRevert=()=>{const x=readJSON(revertKey());return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null};
+ const clearRevert=()=>{revertAvailable=false;removeStorage(revertKey())};
  const saveRevert=()=>{
   if(!hasChanges())return;
   const state=snapshot();
   revertAvailable=true;
-  try{localStorage.setItem(revertKey(),JSON.stringify({signature:originalSignature,snapshot:state}))}catch{}
+  writeJSON(revertKey(),{signature:originalSignature,snapshot:state});
  };
 
- const checkpoint=()=>{if(revertAvailable)clearRevert();const state=snapshot();if(undoStack.at(-1)!==state){undoStack.push(state);if(undoStack.length>80)undoStack.shift()}syncUndoButton()};
+ const checkpoint=()=>{if(revertAvailable)clearRevert();pushHistory(undoStack,snapshot());syncUndoButton()};
  const syncUndoButton=()=>{const b=screen.querySelector('#ue-undo');if(b)b.disabled=!undoStack.length};
- function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;variableSettings=old.variableSettings||Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));buttonSettings=old.buttonSettings||{};sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
+ function undo(){if(!undoStack.length)return;const old=popHistory(undoStack);if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;variableSettings=old.variableSettings||Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));buttonSettings=old.buttonSettings||{};sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
  function syncSections(){
   for(const node of sectionNodes){
    const state=sectionStates[node.getAttribute('data-section')]||{};
@@ -307,16 +307,11 @@ function init(){
  const originalSignature=pageSignature();
  // Match drafts by editable element identity, not volatile rendered CSS or document title.
  // Preserve older drafts whose original signature changed but whose fields still match.
- const readDraft=()=>{try{
-  const x=JSON.parse(localStorage.getItem(draftKey)||'null');
-  return x&&Array.isArray(x.model)?x:null;
- }catch{return null}};
- const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
+ const readDraft=()=>{const x=readJSON(draftKey);return x&&Array.isArray(x.model)?x:null};
+ const clearDraft=()=>removeStorage(draftKey);
  const saveDraft=()=>{
-  try{
-   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,styleSchema:2}));
-   else clearDraft();
-  }catch{} // file:// and privacy settings may block storage
+  if(hasChanges())writeJSON(draftKey,{signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,styleSchema:2});
+  else clearDraft();
  };
  const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||''});
  const applyMeta=()=>{
