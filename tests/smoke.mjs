@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:http';
 import {readFile,mkdtemp,rm} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,extname} from 'node:path';
 import {once} from 'node:events';
@@ -18,11 +19,16 @@ const server=createServer(async(req,res)=>{
 server.listen(0,'127.0.0.1');await once(server,'listening');
 const origin='http://127.0.0.1:'+server.address().port;
 const profile=await mkdtemp(join(tmpdir(),'ue-chrome-'));
-const chrome=spawn(process.env.CHROME_BIN||'google-chrome',[
+const chromePath=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium','/usr/bin/chromium-browser','/opt/google/chrome/chrome'].find(path=>path&&existsSync(path))||'google-chrome';
+console.log('Using browser:',chromePath);
+const chrome=spawn(chromePath,[
  '--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check',
  '--disable-dev-shm-usage','--remote-debugging-address=127.0.0.1','--remote-debugging-port=9222',
  '--user-data-dir='+profile,'about:blank'
-],{stdio:'ignore'});
+],{stdio:['ignore','pipe','pipe']});
+let chromeError='';
+chrome.stderr?.on('data',chunk=>{chromeError=(chromeError+chunk.toString()).slice(-4000)});
+chrome.on('error',error=>{chromeError=String(error)});
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitFor(fn,ms=12000){const until=Date.now()+ms;let err;while(Date.now()<until){try{const result=await fn();if(result)return result}catch(e){err=e}await sleep(100)}throw err||Error('Timed out')}
 let ws;
@@ -88,5 +94,5 @@ try{
  await js("document.querySelector('#ue-pencil').click()");
  check('mobile editor fills viewport',await js("Math.abs(document.querySelector('#ue-screen').getBoundingClientRect().width-375)<2"));
  console.log('All browser smoke checks passed');
-}catch(error){console.error(error);process.exitCode=1}
+}catch(error){console.error(error,chromeError);process.exitCode=1}
 finally{try{ws?.close()}catch{}chrome.kill('SIGKILL');server.close();await rm(profile,{recursive:true,force:true})}
