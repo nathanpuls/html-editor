@@ -88,10 +88,11 @@ export function drawContent(ctx){
   fields.replaceChildren();
   const metaBox=document.createElement('div');metaBox.className='ue-meta';
   const heading=document.createElement('strong');heading.textContent='Page details';metaBox.append(heading);
-  for(const [key,title] of [['title','Page title'],['description','Page description']]){
+  for(const [key,title] of [['title','Page title'],['description','Page description'],['logoUrl','Logo image URL (optional)'],['faviconUrl','Favicon image URL (optional)']]){
    const label=document.createElement('label');label.textContent=title;
    const input=document.createElement(key==='description'?'textarea':'input');if(key==='title')input.type='text';
    input.value=pageMeta[key]||'';input.setAttribute('aria-label',title);
+    if(key.endsWith('Url')){input.type='url';input.placeholder='https://example.com/image.png';input.inputMode='url'}
    input.oninput=()=>{checkpoint();pageMeta[key]=input.value;applyMeta();saveDraft()};
    label.append(input);
    const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
