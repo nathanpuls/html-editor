@@ -344,3 +344,56 @@
 #ue-visual-sliders input[type=range]{
  width:100%;margin:0;min-height:26px;accent-color:#273d35;cursor:pointer
 }
+
+/* Simple Page/Design separation, input alignment and mobile usability. */
+#ue-page-design{display:grid;gap:13px}
+#ue-page-design .ue-custom-heading{
+ font-weight:700;font-size:14px;border-top:1px solid #e7e7e7;
+ padding-top:17px;margin-top:7px;color:#242424
+}
+#ue-settings .ue-meta{padding-bottom:18px!important;margin-bottom:4px!important;border-bottom:1px solid #eee!important}
+#ue-screen .ue-setting>.ue-field-reset{top:auto;bottom:18px}
+#ue-screen .ue-meta label>.ue-field-reset{top:auto;bottom:6px}
+#ue-screen .ue-item label>.ue-field-reset{top:auto;bottom:7px}
+#ue-style-panel details.ue-button-block .ue-button-hint{display:block!important}
+#ue-style-panel .ue-button-summary{padding-right:0!important}
+#ue-style-panel .ue-button-jump{display:none!important}
+#ue-actions #ue-undo{
+ position:static!important;display:inline-flex!important;align-items:center;justify-content:center;
+ min-width:66px!important;width:auto!important;height:auto!important;
+ padding:10px 12px!important;border:1px solid transparent!important;
+ background:transparent!important;color:#686868!important;font-size:14px!important;
+ border-radius:9px!important
+}
+#ue-actions #ue-undo:disabled{opacity:.35}
+#ue-actions #ue-undo:not(:disabled):hover{background:#f5f5f5!important;color:#222!important}
+#ue-actions #ue-copy-menu{min-width:242px}
+#ue-json-dialog{
+ position:fixed!important;inset:0!important;z-index:2147483640!important;
+ overflow:auto!important;overscroll-behavior:contain;
+ padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+ align-items:center;justify-items:center
+}
+#ue-json-dialog .ue-json-card{
+ min-height:0;max-height:calc(100dvh - 28px)!important;
+ width:min(100%,560px);overflow:hidden;overscroll-behavior:contain
+}
+#ue-json-dialog #ue-json-input{
+ flex:1 1 auto;min-height:100px!important;max-height:none!important;
+ overflow-y:auto!important;overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;touch-action:pan-y
+}
+@media(max-width:640px){
+ #ue-head #ue-more-menu #ue-dock-left,
+ #ue-head #ue-more-menu #ue-dock-right,
+ #ue-head #ue-more-menu #ue-fullscreen{display:none!important}
+ #ue-screen input:not([type=range]):not([type=color]),
+ #ue-screen textarea,#ue-screen select,#ue-search,
+ #ue-json-dialog #ue-json-input{font-size:16px!important}
+ #ue-json-dialog{align-items:stretch;justify-items:stretch;padding:10px}
+ #ue-json-dialog .ue-json-card{
+  height:calc(100dvh - 20px)!important;max-height:calc(100dvh - 20px)!important;
+  padding:16px;gap:10px
+ }
+ #ue-json-dialog #ue-json-input{min-height:0!important}
+}
