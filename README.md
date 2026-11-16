@@ -51,7 +51,7 @@ Then label anything you want to edit:
 </html>
 ```
 
-Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Use **Content** to edit words, images and links; **Page** for title, description, background, default font and page-wide appearance; and **Design** for individual elements, buttons and spacing. Click **Copy** to copy updated HTML. The editor stays open and briefly shows **Copied!** so you can continue editing.
+Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Use **Page** for the title, description, background, default font and page-wide appearance. Use **Elements** for words, images, links, buttons, sections and their visual adjustments together in expandable cards. Click **Copy** to copy updated HTML. The editor stays open and briefly shows **Copied!** so you can continue editing.
 
 **Important:** Copy exports HTML to your clipboard; it does not edit the original file or publish the page. Paste the result into your file, site editor, or publishing workflow.
 
@@ -61,7 +61,7 @@ Open the **Copy** dropdown and choose **Copy editable data (JSON)** to export ed
 
 The v2 format uses stable IDs such as `welcome.hero-heading`, descriptive named link groups such as `navLinks` and `contactLinks`, and an embedded `_schema` with editing rules and primary/secondary button hints. Its `design` object separates `colors`, `typography` (pixel units), `borderRadiusPx`, `buttons.primary`, `buttons.secondary`, optional `elementButtons`, and `variables`.
 
-**Contextual visual controls:** In the Design tab, choose an element in **Adjust element**. Relevant controls appear for font size, opacity (0–100%), roundness, padding, or gap. Drag a slider for an immediate preview, or enter an exact numeric value. Sliders affect only the chosen element or group and are included in local drafts, undo, copied HTML, and JSON v2 under `design.elements`.
+**Contextual visual controls:** Expand an element in **Elements** to edit its content and relevant appearance controls together. Font size, opacity (0–100%), roundness, padding and gap appear only where they apply. Drag a slider for an immediate preview, or enter an exact numeric value. Sliders affect only the chosen element or group and are included in local drafts, undo, copied HTML, and JSON v2 under `design.elements`.
 
 Preserve field IDs, tags, and existing section IDs. Editable values include text, image URL/alt, link destinations, visibility, labels, section order, and design settings. Only new links can be added to an existing named link collection. An invalid import makes no changes. **Version 1 JSON is no longer supported.**
 
@@ -83,10 +83,8 @@ Use a **descriptive value directly in `data-edit`**, not a separate `data-label`
 
 ## What you can edit
 
-- **Content:** headings, paragraphs, article copy, image sources and alt text, link labels and destinations, and editable link collections.
-- **Sections:** show, hide, reorder, and manage labeled `data-section` blocks.
-- **Page:** title, meta description, background, default font and page-wide colors and typography.
-- **Design:** individual elements, buttons, padding, gap, roundness, opacity and other contextual visual adjustments.
+- **Page:** title, meta description, background, default font, page-wide colors and typography.
+- **Elements:** headings, paragraphs, article copy, images, links, buttons, sections, and their relevant visual adjustments. Expand a card for content and styling; open Sections for reordering and group spacing.
 - **Workflow:** search across editor controls, dock or resize the panel, use full screen, undo changes, revert to the original page, and copy the resulting HTML.
 
 Edits preview on the page immediately. Browser drafts are saved locally and can be restored after a refresh when compatible with the original page. Use **Copy** for a durable result: local storage can be cleared, blocked, or scoped to a different origin.
