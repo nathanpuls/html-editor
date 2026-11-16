@@ -135,7 +135,7 @@ try{
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-json-input').value='{broken';document.querySelector('#ue-json-apply').click()");
  check('invalid JSON does not change page',await js("!document.querySelector('#ue-json-error').hidden&&document.querySelector('h1').textContent==='Changed heading'"));
- await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.label==='Hero heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.style.font="'Inter', -apple-system, BlinkMacSystemFont, sans-serif";document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.label==='Hero heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.style.font='Inter, -apple-system, BlinkMacSystemFont, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
  await js("document.querySelector('#ue-json-apply').click()");
  check('Import JSON applies bulk content and settings',await js("document.querySelector('h1').textContent==='Bulk changed heading'&&document.title==='Bulk title'&&document.querySelector('#ue-json-dialog').hidden"));
  check('imported Inter CSS stack loads Google Fonts',await js("document.querySelector('#editor-google-font')?.href.includes('family=Inter')&&document.querySelector('#editor-page-style')?.textContent.includes('BlinkMacSystemFont')"));
