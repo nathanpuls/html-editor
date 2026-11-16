@@ -83,7 +83,9 @@ function init(){
    const node=sectionNodes.find(n=>n.getAttribute('data-section')===id),label=sectionStates[id]?.label||node?.getAttribute('aria-label')||id;
    if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'content',label:label+' section',detail:'Section controls',section:index});
   });
-  designLabels.forEach((label,index)=>{if((label+' design style').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Design',design:index})});
+  const genericLabels=designLabels.filter((_,index)=>!Object.keys(originalVariables).length||![0,1,2,8,9,10].includes(index));
+  genericLabels.forEach((label,index)=>{if((label+' design style').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Design',design:index})});
+  Object.entries(buttonAppearance).forEach(([index,info])=>{if((info.label+' button background text color').toLocaleLowerCase().includes(q))matches.push({tab:'design',label:info.label,detail:'Individual button colors',buttonDesign:index})});
   Object.keys(originalVariables).forEach((name,index)=>{const label=varLabel(name);if((label+' '+name+' design color size').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Website color or size',customDesign:name})});
   [['Page title',0],['Page description',1]].forEach(([label,index])=>{if((label+' '+String(index?pageMeta.description:pageMeta.title)+' SEO settings').toLocaleLowerCase().includes(q))matches.push({tab:'settings',label,detail:'Settings',setting:index})});
   for(const hit of matches){
@@ -95,7 +97,8 @@ function init(){
     if(hit.section!==undefined){setSectionsOpen(true);const input=sectionsPanel.children[hit.section]?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
     else if(hit.index!==undefined){const row=fields.querySelectorAll('.ue-item')[hit.index];row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
     else if(hit.design!==undefined){const row=stylePanel.children[hit.design];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
-    else if(hit.customDesign!==undefined){const keys=Object.keys(originalVariables);const row=stylePanel.querySelectorAll('.ue-setting')[designLabels.length+keys.indexOf(hit.customDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
+    else if(hit.customDesign!==undefined){const keys=Object.keys(originalVariables);const row=stylePanel.querySelectorAll('.ue-setting')[genericLabels.length+keys.indexOf(hit.customDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
+    else if(hit.buttonDesign!==undefined){const keys=Object.keys(buttonAppearance);const row=stylePanel.querySelectorAll('.ue-button-title')[keys.indexOf(hit.buttonDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.nextElementSibling?.querySelector('input')?.focus({preventScroll:true})}
     else if(hit.setting!==undefined){const row=settingsPanel.querySelectorAll('.ue-meta label')[hit.setting];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,textarea')?.focus({preventScroll:true})}
    };
    resultsPanel.append(button);
@@ -267,11 +270,15 @@ function init(){
  const editableButtonSelector=node=>{
   const tag=node.tagName.toLowerCase(),label=node.getAttribute('data-edit');
   if(!label)return '';
-  const escape=window.CSS?.escape||((v)=>String(v).replace(/[^a-zA-Z0-9_-]/g,'\\\\ const styleSheetText=a=>{'));
+  const escape=window.CSS?.escape;
+  if(typeof escape!=='function')return '';
   const own=tag+'[data-edit='+escape(label)+']';
   if(document.querySelectorAll(own).length===1)return own;
   const section=node.closest('[data-section]');
-  if(section){const scoped='[data-section='+escape(section.getAttribute('data-section'))+'] '+own;if(document.querySelectorAll(scoped).length===1)return scoped}
+  if(section){
+   const scoped='[data-section='+escape(section.getAttribute('data-section'))+'] '+own;
+   if(document.querySelectorAll(scoped).length===1)return scoped;
+  }
   return '';
  };
  const getButtonAppearance=()=>{
