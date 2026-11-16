@@ -1,3 +1,7 @@
+import {setText,articleText,isArticle,setArticle} from './content.js';
+import {clamp,safeColor,rgbToHex,hexColor,varLabel} from './design.js';
+import {pageSignature,draftCompatible} from './storage.js';
+import {generateHTML} from './export.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
 /* HTML Editor v1 — standalone, dependency-free.
    Source: extracted from Dino → Shared!B22; this copy does not modify live.ends.at.
@@ -224,14 +228,6 @@ function init(){
 
  const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
- const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||min));
- const safeColor=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(v)?v:fallback;
- const rgbToHex=value=>{
-  const v=String(value||'').trim();
-  if(/^#[0-9a-f]{6}$/i.test(v))return v.toLowerCase();
-  const m=v.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
-  return m?'#'+[m[1],m[2],m[3]].map(n=>Math.min(255,Number(n)).toString(16).padStart(2,'0')).join(''):null;
- };
  const pageColor=(el,prop,fallback)=>rgbToHex(el?getComputedStyle(el)[prop]:'')||fallback;
  const pageButton=()=>document.querySelector('main .button,main .btn,main button,main [role="button"],main nav[data-edit="links"] a')||document.querySelector('body .button,body .btn');
  function readStyle(){
@@ -255,12 +251,6 @@ function init(){
   };
  }
  // Discover author-defined :root variables without touching the website stylesheet.
- const hexColor=value=>{
-  const v=String(value).trim();
-  if(/^#[0-9a-f]{6}$/i.test(v))return v.toLowerCase();
-  if(/^#[0-9a-f]{3}$/i.test(v))return '#'+[...v.slice(1)].map(c=>c+c).join('').toLowerCase();
-  return rgbToHex(v);
- };
  const discoverVariables=()=>{
   const found=new Map();
   const scan=rules=>{
@@ -297,7 +287,6 @@ function init(){
    for(const name of rule.style)if(Object.hasOwn(originalVariables,name))originalVariableOverrides.add(name);
   }
  }catch{}
- const varLabel=name=>name.slice(2).split(/[-_]+/).filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
  const originalAppearance=readStyle();
  // Preserve previously exported appearance overrides when editing an exported page again.
  const existingCSS=document.getElementById('editor-page-style')?.textContent||'';
@@ -587,26 +576,9 @@ function init(){
  }
  // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
  const draftKey='html-editor:draft:v1:'+location.href.split('#')[0];
- const pageSignature=()=>{
-  const content=document.querySelectorAll('[data-edit]');
-  const page=[document.title,...Array.from(document.querySelectorAll('style:not(#ue-style)')).map(el=>el.textContent),...Array.from(content).map(el=>el.outerHTML)].join('\u001f');
-  let hash=2166136261;
-  for(let i=0;i<page.length;i++)hash=Math.imul(hash^page.charCodeAt(i),16777619);
-  return (hash>>>0).toString(36);
- };
  const originalSignature=pageSignature();
  // Match drafts by editable element identity, not volatile rendered CSS or document title.
  // Preserve older drafts whose original signature changed but whose fields still match.
- const draftCompatible=(saved,current)=>{
-  if(!saved||!Array.isArray(saved.model)||saved.model.length<current.length)return false;
-  const originals=saved.model.filter(item=>!item.added);
-  if(originals.length!==current.length)return false;
-  const byIndex=new Map(originals.map(item=>[item.index,item]));
-  return byIndex.size===current.length&&current.every(item=>{
-   const old=byIndex.get(item.index);
-   return old&&old.tag===item.tag&&old.label===item.label&&old.group===item.group;
-  });
- };
  const readDraft=()=>{try{
   const x=JSON.parse(localStorage.getItem(draftKey)||'null');
   return x&&Array.isArray(x.model)?x:null;
@@ -631,43 +603,6 @@ function init(){
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  // Change only the necessary text nodes. Never flatten formatted descendants.
- const setText=(el,value)=>{
-  const old=el.textContent;
-  if(old===value)return;
-  const nodes=[],walker=el.ownerDocument.createTreeWalker(el,NodeFilter.SHOW_TEXT);
-  while(walker.nextNode())nodes.push(walker.currentNode);
-  if(!nodes.length){el.append(el.ownerDocument.createTextNode(value));return}
-  let prefix=0;while(prefix<old.length&&prefix<value.length&&old[prefix]===value[prefix])prefix++;
-  let suffix=0;while(suffix<old.length-prefix&&suffix<value.length-prefix&&old[old.length-1-suffix]===value[value.length-1-suffix])suffix++;
-  const start=prefix,end=old.length-suffix;
-  let offset=0,startNode=null,endNode=null,startOffset=0,endOffset=0;
-  for(const node of nodes){
-   const next=offset+node.data.length;
-   if(!startNode&&start<=next){startNode=node;startOffset=start-offset}
-   if(!endNode&&end<=next){endNode=node;endOffset=end-offset}
-   offset=next;
-  }
-  if(!startNode)startNode=nodes[nodes.length-1],startOffset=startNode.data.length;
-  if(!endNode)endNode=nodes[nodes.length-1],endOffset=endNode.data.length;
-  const replacement=value.slice(prefix,value.length-suffix);
-  if(startNode===endNode){startNode.replaceData(startOffset,endOffset-startOffset,replacement);return}
-  startNode.data=startNode.data.slice(0,startOffset)+replacement;
-  endNode.data=endNode.data.slice(endOffset);
-  let between=false;
-  for(const node of nodes){if(node===startNode){between=true;continue}if(node===endNode)break;if(between)node.data=''}
- };
- const articleText=el=>Array.from(el.children).map(p=>p.textContent.trim()).join('\n\n');
- const isArticle=el=>/^(DIV|SECTION|ARTICLE|MAIN)$/.test(el.tagName)&&el.children.length>0&&Array.from(el.children).every(c=>c.tagName==='P');
- const setArticle=(el,value)=>{
-  const paragraphs=value.replace(/\r\n?/g,'\n').trim().split(/\n\s*\n/);
-  const existing=Array.from(el.children).filter(n=>n.tagName==='P');
-  paragraphs.forEach((text,i)=>{
-   const next=text.trim().replace(/\n/g,' ');
-   if(existing[i])setText(existing[i],next);
-   else{const p=el.ownerDocument.createElement('p');p.textContent=next;el.append(p)}
-  });
-  for(let i=paragraphs.length;i<existing.length;i++)existing[i].remove();
- };
  function restoreLive(){
   liveRoots.forEach((root,i)=>{if(touchedRoots.has(i)&&root.innerHTML!==rootSnapshots[i])root.innerHTML=rootSnapshots[i]});
   liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display,hadStyle},i)=>{
@@ -902,71 +837,7 @@ function init(){
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
  function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
- function copyHTML(){
-  const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
-  doc.title=pageMeta.title;
-  let description=doc.querySelector('meta[name="description"]');
-  if(!description&&pageMeta.description){description=doc.createElement('meta');description.name='description';doc.head.append(description)}
-  if(description)description.setAttribute('content',pageMeta.description);
-  const source=Array.from(doc.querySelectorAll('[data-edit]')).filter(el=>!el.querySelector('[data-edit]'));
-  const originals=model.filter(x=>!x.added);
-  if(source.length!==liveSnapshots.length)throw Error('Page structure changed. Reload and try again.');
-  for(const item of originals){
-   const element=source[item.index];if(!element)throw Error('Editable element missing.');
-   if(item.deleted)continue;
-   if(item.hidden){element.hidden=true;element.style.display='none'}
-   if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}if(item.alt!==item.originalAlt)element.setAttribute('alt',item.alt);continue}
-   if(item.decorative)continue;
-   if(item.text!==item.originalText){if(item.article)setArticle(element,item.text);else setText(element,item.text)}
-   if(item.link){if(!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');if(item.url!==item.originalURL)element.setAttribute('href',normalizeURL(item.url))}
-  }
-  // Link collections are opt-in: <nav data-edit="links"><a data-edit ...>...</a></nav>
-  const groups=Array.from(doc.querySelectorAll('[data-edit="links"]'));
-  groups.forEach((g,gi)=>{
-   const members=model.filter(x=>x.group===gi);
-   if(!groupChanged(members))return;
-   const old=Array.from(g.children).filter(el=>el.matches('a[data-edit]'));
-   old.forEach(el=>el.remove());
-   for(const item of members){
-    if(item.deleted)continue;
-    if(!item.link||!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');
-    const node=item.added?doc.createElement('a'):source[item.index].cloneNode(true);
-    if(item.added)node.setAttribute('data-edit',item.label||'Navigation link');
-    const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
-    if(node.getAttribute('href')!==href)node.setAttribute('href',href);
-    if(item.added||item.text!==item.originalText)setText(node,item.text);
-    if(item.hidden){node.hidden=true;node.style.display='none'}
-    if(g.lastChild&&g.lastChild.nodeType!==3)g.append(doc.createTextNode(' '));
-    g.append(node);
-   }
-  });
-  const exportedSections=Array.from(doc.querySelectorAll('[data-section]'));
-  const exportedById=new Map(exportedSections.map(el=>[el.getAttribute('data-section'),el]));
-  if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))for(const id of sectionOrder){
-   const node=exportedById.get(id);if(!node||!node.parentElement)continue;
-   const siblings=exportedSections.filter(el=>el.parentElement===node.parentElement);
-   const ordered=sectionOrder.map(k=>exportedById.get(k)).filter(el=>el&&el.parentElement===node.parentElement&&siblings.includes(el));
-   const after=siblings[siblings.length-1]?.nextSibling||null;
-   for(const el of ordered)node.parentElement.insertBefore(el,after);
-  }
-  for(const item of originals.filter(item=>item.deleted)){
-   const element=source[item.index];
-   if(element?.isConnected)element.remove();
-  }
-  for(const [id,state] of Object.entries(sectionStates)){
-   const node=exportedById.get(id);if(!node)continue;
-   if(state.deleted)node.remove();
-   else if(state.hidden){node.hidden=true;node.style.display='none'}
-   if(state.label!==undefined&&!state.deleted)node.setAttribute('aria-label',state.label);
-  }
-  let pageStyle=doc.getElementById('editor-page-style');
-  if(JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons){
-   if(!pageStyle){pageStyle=doc.createElement('style');pageStyle.id='editor-page-style';doc.head.append(pageStyle)}
-   pageStyle.textContent=styleSheetText(styleSettings);
-  }
-  doc.querySelector('#ue-pencil')?.remove();doc.querySelector('#ue-screen')?.remove();doc.querySelector('#ue-style')?.remove();doc.querySelector('#ue-script')?.remove();
-  return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
- }
+ function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText})}
  pencil.onclick=()=>{
   if(draftActive){screen.hidden=false;pencil.hidden=true;return}
   const sourceTag=document.getElementById('ends-nav-data');
@@ -1070,4 +941,4 @@ function init(){
  });icons();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-
+}
