@@ -145,6 +145,11 @@ try{
 
  check('imported Inter CSS stack loads Google Fonts',await js("document.querySelector('#editor-google-font')?.href.includes('family=Inter')&&document.querySelector('#editor-page-style')?.textContent.includes('BlinkMacSystemFont')"));
  check('custom font stack appears in Design controls',await js("(()=>{document.querySelector('[data-tab=design]').click();return Boolean([...document.querySelectorAll('#ue-style-panel input')].find(el=>el.getAttribute('aria-label')==='Custom font family'&&el.value.includes('Inter')&&!el.hidden))})()"));
+ await js("window.__exportedJSON=window.__exportedHTML;document.querySelector('#ue-copy').click()");
+ await waitJS("window.__exportedHTML!==window.__exportedJSON");
+ check('HTML copy preserves imported section labels and image alt',await js("window.__exportedHTML.includes('01 / Programs')&&window.__exportedHTML.includes('Updated alt without changing image')&&window.__exportedHTML.includes('srcset=')"));
+ await js("document.querySelector('#ue-pencil').click();window.__exportedHTML=window.__exportedJSON");
+
  await js("document.querySelector('#ue-undo').click()");
  check('undo restores pre-import page content and settings',await js("document.querySelector('h1').textContent==='Changed heading'&&document.title!=='Bulk title'"));
  check('undo restores original image alt and section order',await js("document.querySelector('img[data-edit=\\\"Hero image\\\"]').alt==='A placeholder image'&&document.querySelector('main section')?.dataset.section==='intro'"));
