@@ -3,115 +3,118 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f8f7f4">
+<meta name="theme-color" content="#ffffff">
 <title>HTML Editor — Make a website your own</title>
-<meta name="description" content="Describe the website you want, copy a ready-made AI prompt, and edit the resulting HTML locally. No account, API key, or server required.">
+<meta name="description" content="Describe your website, copy a ready-made AI prompt, and edit the finished HTML in your browser. No account or server required.">
 <style>
-:root{color-scheme:light;--ink:#262724;--muted:#777871;--line:#e5e4dc;--cream:#f8f7f4;--accent:#252f29}
+:root{color-scheme:light;--black:#111111;--muted:#666666;--line:#e7e7e7;--light:#f8f8f8;--white:#fff}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--cream);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
-.container{max-width:1120px;margin:auto;padding:0 30px}
-header{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:760;letter-spacing:-.04em;color:inherit;text-decoration:none}
-.brand-icon{display:grid;place-items:center;width:32px;height:32px;background:#e7e8df;border:1px solid #d8dad0;border-radius:10px}
-.brand-icon svg{width:18px;height:18px}
-.toplinks{display:flex;align-items:center;gap:23px;font-size:13px}
-.toplinks a{color:#62675e;text-decoration:none}.toplinks a:hover{text-decoration:underline}
-main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(310px,.85fr);gap:68px;padding-top:112px;padding-bottom:118px;align-items:start}
-.kicker{display:inline-flex;gap:8px;align-items:center;font-size:12px;font-weight:730;color:#718072;letter-spacing:.09em;text-transform:uppercase;margin-bottom:22px}
-.kicker:before{content:"";width:7px;height:7px;border-radius:50%;background:#a2b39d}
-h1{font-size:clamp(48px,5.7vw,76px);line-height:1.04;letter-spacing:-.065em;font-weight:750;max-width:650px;margin:0 0 26px}
-.lead{max-width:520px;color:#757972;font-size:18px;line-height:1.67;margin:0 0 42px}
-.editor-card{max-width:600px}
-label{display:block;font-size:14px;font-weight:680;margin-bottom:12px}
-textarea{width:100%;display:block;min-height:182px;resize:vertical;border:1px solid #d7d9cf;background:white;border-radius:15px;padding:21px 22px;font:15px/1.65 inherit;color:var(--ink);outline:none;box-shadow:0 2px 7px #3331}
-textarea:focus{border-color:#748879;box-shadow:0 0 0 3px #74887920}
-textarea::placeholder{color:#959993}
-.primary{appearance:none;display:flex;align-items:center;justify-content:center;gap:11px;cursor:pointer;background:#29382f;border:1px solid #29382f;color:white;border-radius:11px;padding:17px 25px;font:650 15px inherit;width:100%;margin-top:15px;transition:background .12s}
-.primary:hover{background:#405648}.primary:focus-visible,.preview-toggle:focus-visible,a:focus-visible{outline:3px solid #97aa9b;outline-offset:3px}
-.primary svg{width:18px;height:18px;stroke:currentColor}
-.helper{font-size:12px;color:#888b84;margin-top:13px;line-height:1.65}
-aside{margin-top:20px}
-.visual{border:1px solid #e0e1d8;background:#e8ebe4;border-radius:20px;padding:14px;box-shadow:0 16px 60px #323d3010}
-.browser{background:#fff;border-radius:11px;overflow:hidden;box-shadow:0 6px 18px #262e2512}
-.browser-top{display:flex;align-items:center;gap:7px;padding:11px 15px;background:#fafbf8;border-bottom:1px solid #eee}
-.dot{width:7px;height:7px;border-radius:50%;background:#d1d5cc}
-.address{margin-left:15px;font-size:10px;color:#98a098}
-.mock-body{padding:32px 30px 34px}
-.mock-pill{display:inline-block;font-size:10px;color:#66806b;font-weight:700;letter-spacing:.06em;margin-bottom:18px}
-.mock-title{font-size:33px;line-height:1.08;font-weight:740;letter-spacing:-.055em;max-width:230px}
-.mock-copy{height:7px;background:#e3e7df;border-radius:8px;margin-top:22px;width:90%}.mock-copy.short{width:62%;margin-top:8px}
-.mock-button{display:inline-block;background:#354a3e;width:108px;height:29px;border-radius:7px;margin-top:26px}
-.mock-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:38px}
-.mock-card{height:76px;border-radius:9px;background:#eef0e9;border:1px solid #e3e7df}
-.mock-card:nth-child(2){background:#e9e7df}.mock-card:nth-child(3){background:#e4e9e4}
-.steps{display:grid;gap:19px;margin:28px 4px 0}
-.step{display:flex;align-items:flex-start;gap:14px}
-.num{display:grid;place-items:center;flex:none;width:26px;height:26px;border:1px solid #d9ded5;border-radius:50%;font-size:12px;color:#647368;font-weight:700}
-.step strong{font-size:13px;font-weight:700}.step p{font-size:12px;line-height:1.65;color:#858982;margin:4px 0 0}
-.detail{margin:32px auto 65px;max-width:770px;padding:0 30px}
-.preview-toggle{border:0;background:none;color:#606961;text-decoration:underline;text-underline-offset:4px;cursor:pointer;font:600 13px inherit;padding:8px 0}
-.prompt-preview{margin-top:12px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:18px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:390px;overflow:auto;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;color:#505650}
-footer{border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:27px 0 34px;font-size:12px;color:#83867e}
-footer a{color:inherit;text-decoration:none}footer a:hover{text-decoration:underline}
+body{margin:0;background:var(--white);color:var(--black);font-family:Manrope,Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid #333;outline-offset:3px}
+.container{width:min(1120px,calc(100% - 64px));margin:0 auto}
+header{height:78px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:inline-flex;align-items:center;gap:11px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:-.045em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border:1px solid #202020;border-radius:9px;background:#111;color:#fff}
+.lucide{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nav{display:flex;align-items:center;gap:26px;font-size:13px;font-weight:650}
+.nav a{text-decoration:none;color:#555}
+.nav a:hover{color:#111}
+.nav .nav-demo{display:inline-flex;align-items:center;gap:7px;color:#111}
+.nav .lucide{width:15px;height:15px}
+main{padding-top:116px;padding-bottom:100px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;margin-bottom:24px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#777}
+.eyebrow:before{content:"";width:7px;height:7px;background:#151515;border-radius:50%}
+h1{font-size:clamp(48px,6.5vw,88px);line-height:1.035;letter-spacing:-.078em;font-weight:800;margin:0 0 24px;max-width:860px}
+.lead{font-size:18px;line-height:1.8;color:#626262;max-width:590px;margin:0 0 56px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:64px;align-items:start}
+.editor-card{min-width:0}
+.prompt-heading{display:flex;align-items:baseline;justify-content:space-between;gap:15px;margin-bottom:13px}
+label{font-size:14px;font-weight:750;letter-spacing:-.015em}
+.prompt-tip{font-size:12px;color:#999}
+textarea{width:100%;min-height:245px;resize:vertical;display:block;border:1px solid #dcdcdc;border-radius:12px;padding:21px 22px;background:white;color:#171717;font-size:15px;line-height:1.7;outline:none;transition:border-color .15s,box-shadow .15s}
+textarea::placeholder{color:#999}
+textarea:focus{border-color:#444;box-shadow:0 0 0 3px #0000000a;outline:none}
+.primary{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;background:#111;color:#fff;border:1px solid #111;border-radius:10px;margin-top:13px;padding:17px 24px;font-size:14px;font-weight:800;transition:background .15s,transform .15s}
+.primary:hover{background:#303030}
+.primary:active{transform:scale(.995)}
+.primary .lucide{width:17px;height:17px}
+.helper{font-size:12px;line-height:1.8;color:#858585;margin:15px 2px 0}
+.guide{border:1px solid var(--line);border-radius:13px;padding:24px 23px 26px;background:#fcfcfc}
+.guide-heading{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:800;margin:0 0 25px;letter-spacing:-.015em}
+.guide-heading .lucide{width:17px;height:17px}
+.steps{display:grid;gap:26px}
+.step{display:grid;grid-template-columns:25px 1fr;gap:12px}
+.step-icon{width:25px;height:25px;display:grid;place-items:center;background:#f0f0f0;border:1px solid #e8e8e8;border-radius:7px;color:#444}
+.step-icon .lucide{width:14px;height:14px}
+.step strong{display:block;font-size:13px;font-weight:800;line-height:1.5}
+.step p{font-size:12px;line-height:1.75;color:#777;margin:5px 0 0}
+.guide-demo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:27px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;font-weight:750;text-decoration:none}
+.guide-demo:hover{text-decoration:underline;text-underline-offset:3px}
+.guide-demo .lucide{width:16px;height:16px}
+.detail{max-width:780px;margin:0 auto 86px}
+.preview-toggle{display:inline-flex;align-items:center;gap:9px;border:0;background:transparent;padding:9px 0;font-size:13px;font-weight:750;color:#555}
+.preview-toggle:hover{color:#111}
+.preview-toggle .lucide{width:16px;height:16px;transition:transform .15s}
+.preview-toggle[aria-expanded="true"] .lucide{transform:rotate(180deg)}
+.prompt-preview{margin:15px 0 0;background:#fafafa;border:1px solid var(--line);border-radius:12px;padding:22px;max-height:430px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#555;font:12px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace}
+footer{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid var(--line);padding:26px 0 34px;color:#929292;font-size:12px}
+footer a{text-decoration:none;color:#555}footer a:hover{color:#111;text-decoration:underline}
+.footer-links{display:flex;gap:20px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-@media(max-width:850px){main{grid-template-columns:1fr;gap:54px;padding-top:70px;padding-bottom:60px}aside{margin:0;max-width:580px}.lead{margin-bottom:32px}.detail{margin-bottom:55px}}
-@media(max-width:540px){.container{padding:0 20px}header{height:70px}main{padding-top:58px;gap:42px}h1{font-size:50px} .lead{font-size:16px}.toplinks{gap:12px}.toplinks a:first-child{display:none}.detail{padding:0 20px}.mock-body{padding:25px}.visual{padding:10px}footer{gap:15px;flex-wrap:wrap}}
+[hidden]{display:none!important}
+@media(max-width:900px){main{padding-top:85px}.workspace{grid-template-columns:minmax(0,1fr) 245px;gap:32px}}
+@media(max-width:700px){.container{width:calc(100% - 40px)}header{height:70px}main{padding-top:68px;padding-bottom:62px}h1{font-size:clamp(45px,10vw,67px)}.lead{font-size:16px;margin-bottom:38px}.workspace{grid-template-columns:1fr;gap:33px}.guide{padding:22px}.steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.step{grid-template-columns:1fr;gap:8px}.detail{margin-bottom:58px}.prompt-tip{display:none}}
+@media(max-width:480px){.nav{gap:13px}.nav a:first-child{display:none}.steps{grid-template-columns:1fr;gap:19px}.step{grid-template-columns:25px 1fr;gap:12px}h1{letter-spacing:-.065em}.prompt-heading{margin-bottom:12px}textarea{min-height:220px;padding:17px}.guide{border-radius:11px}footer{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="container">
 <header>
   <a class="brand" href="./index.html" aria-label="HTML Editor home">
-    <span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/><path d="m14.5 4-5 16"/></svg></span>
+    <span class="brand-mark"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/><path d="m14.5 4-5 16"/></svg></span>
     HTML Editor
   </a>
-  <nav class="toplinks" aria-label="Navigation"><a href="#how-it-works">How it works</a><a href="./demo.html">Try the editor</a></nav>
+  <nav class="nav" aria-label="Navigation">
+    <a href="#how-it-works">How it works</a>
+    <a class="nav-demo" href="./demo.html">Try the editor <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+  </nav>
 </header>
 <main>
-  <div>
-    <div class="kicker">Your website, your way</div>
-    <h1>Make a website that's yours.</h1>
-    <p class="lead">Describe what you want to create. We'll prepare the instructions for your favorite AI to build a beautiful website you can edit yourself.</p>
+  <div class="eyebrow">A simple way to make a website</div>
+  <h1>Your website.<br>Your design.</h1>
+  <p class="lead">Describe what you want. Get a ready-to-use prompt for your AI, then edit the HTML yourself. No complicated tools.</p>
+  <div class="workspace">
     <div class="editor-card">
-      <label for="website-description">How would you like your website to look?</label>
-      <textarea id="website-description" spellcheck="true" placeholder="For example: A warm, modern website for my private practice. Cream and sage colors, elegant typography, sections for About, Services, and Contact, and a friendly, approachable feel."></textarea>
+      <div class="prompt-heading"><label for="website-description">Describe your website</label><span class="prompt-tip">As much or as little detail as you like</span></div>
+      <textarea id="website-description" spellcheck="true" placeholder="What would you like to make? Describe the purpose, content, or look of your website..."></textarea>
       <button class="primary" type="button" id="copy-prompt">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
         <span id="copy-label">Copy AI prompt</span>
       </button>
-      <div class="helper">No account or API key. Paste the prompt into ChatGPT, Claude, Gemini, or another AI that writes HTML.</div>
+      <p class="helper">Works with ChatGPT or any AI that generates HTML. No account, API key, or server needed.</p>
       <div id="copy-announcement" class="sr-only" role="status" aria-live="polite"></div>
     </div>
-  </div>
-  <aside id="how-it-works" aria-label="How it works">
-    <div class="visual">
-      <div class="browser">
-        <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="address">your-website.html</span></div>
-        <div class="mock-body" aria-hidden="true">
-          <div class="mock-pill">MADE FOR YOU</div>
-          <div class="mock-title">Something beautiful starts here.</div>
-          <div class="mock-copy"></div><div class="mock-copy short"></div>
-          <span class="mock-button"></span>
-          <div class="mock-cards"><div class="mock-card"></div><div class="mock-card"></div><div class="mock-card"></div></div>
-        </div>
+    <aside id="how-it-works" class="guide" aria-label="How it works">
+      <h2 class="guide-heading"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> How it works</h2>
+      <div class="steps">
+        <div class="step"><span class="step-icon"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><div><strong>Describe</strong><p>Tell us what you want to create.</p></div></div>
+        <div class="step"><span class="step-icon"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg></span><div><strong>Generate</strong><p>Paste the prompt into your AI and save the HTML next to editor.js.</p></div></div>
+        <div class="step"><span class="step-icon"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 5 3 3M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/><path d="M12 20h9"/></svg></span><div><strong>Edit</strong><p>Open the page and press E to make changes.</p></div></div>
       </div>
-    </div>
-    <div class="steps">
-      <div class="step"><span class="num">1</span><div><strong>Describe your website</strong><p>A sentence or a paragraph is enough. Include any design or content preferences.</p></div></div>
-      <div class="step"><span class="num">2</span><div><strong>Generate the HTML with your AI</strong><p>Copy our prompt, paste it into your AI, and save the resulting HTML alongside <code>editor.js</code>.</p></div></div>
-      <div class="step"><span class="num">3</span><div><strong>Edit it anytime</strong><p>Open the HTML in your browser and press E. Make changes locally and copy the finished HTML.</p></div></div>
-    </div>
-  </aside>
+      <a class="guide-demo" href="./demo.html">Try the editor <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+    </aside>
+  </div>
 </main>
-</div>
-<div class="detail">
-  <button type="button" class="preview-toggle" id="preview-toggle" aria-expanded="false" aria-controls="prompt-preview">See the full AI prompt</button>
+<section class="detail" aria-label="Generated prompt">
+  <button type="button" class="preview-toggle" id="preview-toggle" aria-expanded="false" aria-controls="prompt-preview">See the full AI prompt <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
   <pre id="prompt-preview" class="prompt-preview" hidden></pre>
-</div>
-<div class="container">
-<footer><span>Simple HTML. Your AI. Your website.</span><span><a href="./demo.html">Open the demo</a> · <a href="https://github.com/nathanpuls/html-editor">GitHub</a></span></footer>
+</section>
+<footer><span>Simple HTML. Made yours.</span><div class="footer-links"><a href="./demo.html">Demo</a><a href="https://github.com/nathanpuls/html-editor">GitHub</a></div></footer>
 </div>
 <script>
 (()=>{
