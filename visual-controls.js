@@ -181,7 +181,7 @@ export function drawInlineVisualControls({host,target,values,onChange,onStart}){
    const swatch=document.createElement('input');swatch.type='color';
    const input=document.createElement('input');input.type='text';input.setAttribute('aria-label','Element text color hex');
    const original=getComputedStyle(target.node).color;
-   const match=original.match(/\\d+(?:\\.\\d+)?/g)||[];
+   const match=original.match(/\d+(?:\.\d+)?/g)||[];
    const hex=match.length>=3?'#'+match.slice(0,3).map(n=>Math.max(0,Math.min(255,Number(n))).toString(16).padStart(2,'0')).join(''):'#171717';
    const value=values[target.id]?.textColor||hex;
    swatch.value=input.value=value;
