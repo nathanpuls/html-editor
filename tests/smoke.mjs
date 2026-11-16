@@ -63,6 +63,14 @@ try{
  check('pencil available',await js("Boolean(document.querySelector('#ue-pencil'))"));
  await js("document.querySelector('#ue-pencil').click()");
  check('panel opens',await js("!document.querySelector('#ue-screen').hidden"));
+ check('opening editor adds bare ?edit',await js("location.search==='?edit'"));
+ await send('Page.reload',{ignoreCache:true});
+ await waitJS("Boolean(document.querySelector('#ue-screen')) && !document.querySelector('#ue-screen').hidden");
+ check('editor stays open after refresh with ?edit',await js("!document.querySelector('#ue-screen').hidden && location.search==='?edit'"));
+ await js("document.querySelector('#ue-cancel').click()");
+ check('closing editor removes ?edit',await js("location.search==='' && document.querySelector('#ue-screen').hidden"));
+ await js("document.querySelector('#ue-pencil').click()");
+
  check('ellipsis menu exists',await js("Boolean(document.querySelector('#ue-more'))"));
  check('horizontal ellipsis stays in header',await js("(()=>{const circles=[...document.querySelectorAll('#ue-more svg circle')];return circles.length===3&&circles.every(c=>c.getAttribute('cy')==='12')&&circles.map(c=>c.getAttribute('cx')).join(',')==='5,12,19'})()"));
  check('docking controls live only inside ellipsis menu',await js("Boolean(document.querySelector('#ue-more-menu #ue-dock-left')&&document.querySelector('#ue-more-menu #ue-dock-right'))"));
@@ -72,7 +80,7 @@ try{
  check('menu docking moves editor left',await js("document.querySelector('#ue-screen').classList.contains('ue-dock-left')"));
  await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-right').click()");
  check('menu docking moves editor right',await js("document.querySelector('#ue-screen').classList.contains('ue-dock-right')"));
- check('heading drag docks panel on left',await js("(async()=>{const el=document.querySelector('#ue-heading');const original=el.setPointerCapture;el.setPointerCapture=()=>{};el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1,button:0,clientX:window.innerWidth-100,clientY:30}));el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1,button:0,clientX:25,clientY:30}));el.setPointerCapture=original;return document.querySelector('#ue-screen').classList.contains('ue-dock-left')})()"));
+ check('heading drag previews and docks panel on left',await js("(()=>{const el=document.querySelector('#ue-heading');const original=el.setPointerCapture;el.setPointerCapture=()=>{};el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1,button:0,clientX:window.innerWidth-100,clientY:30}));el.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:1,button:0,clientX:25,clientY:30}));const preview=!document.querySelector('#ue-drop-preview').hidden&&document.querySelector('#ue-drop-preview').dataset.side==='left'&&document.querySelector('#ue-screen').classList.contains('ue-dragging');el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1,button:0,clientX:25,clientY:30}));el.setPointerCapture=original;return preview&&document.querySelector('#ue-drop-preview').hidden&&document.querySelector('#ue-screen').classList.contains('ue-dock-left')})()"));
  await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-right').click()");
 
  check('CSS loaded',await js("Boolean(document.querySelector('#ue-stylesheet')?.sheet)"));
