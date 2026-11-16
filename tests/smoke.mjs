@@ -12,7 +12,7 @@ const root=resolve(import.meta.dirname,'..');
 const mime={'.js':'application/javascript','.css':'text/css','.html':'text/html'};
 const server=createServer(async(req,res)=>{
  const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
- if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|json-schema\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
+ if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|json-schema\.js|visual-controls\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
  try{const data=await readFile(resolve(root,path.slice(1)));res.writeHead(200,{'content-type':mime[extname(path)]||'text/plain','cache-control':'no-store'});res.end(data)}
  catch{res.writeHead(404).end()}
 });
@@ -171,6 +171,30 @@ try{
  await send('Emulation.setDeviceMetricsOverride',{width:375,height:700,deviceScaleFactor:1,mobile:true});
  await js("document.querySelector('#ue-pencil').click()");
  check('mobile editor fills viewport',await js("Math.abs(document.querySelector('#ue-screen').getBoundingClientRect().width-375)<2"));
+
+ await send('Emulation.setDeviceMetricsOverride',{width:1200,height:800,deviceScaleFactor:1,mobile:false});
+ await js("document.querySelector('[data-tab=design]').click()");
+ check('contextual element selector is available',await js("Boolean(document.querySelector('#ue-visual-target'))"));
+ await js("document.querySelector('#ue-visual-target').value='intro.hero-heading';document.querySelector('#ue-visual-target').dispatchEvent(new Event('change',{bubbles:true}))");
+ check('text selection only shows font size',await js("Boolean(document.querySelector('#ue-slider-fontSize'))&&!document.querySelector('#ue-slider-opacity')&&!document.querySelector('#ue-slider-gap')"));
+ await js("document.querySelector('#ue-slider-fontSize').value='54';document.querySelector('#ue-slider-fontSize').dispatchEvent(new Event('input',{bubbles:true}))");
+ check('font slider updates preview immediately',await js("getComputedStyle(document.querySelector('h1')).fontSize==='54px'&&document.querySelector('input[aria-label=\"Font size exact value\"]').value==='54'"));
+ await js("document.querySelector('#ue-visual-target').value='page.hero-image';document.querySelector('#ue-visual-target').dispatchEvent(new Event('change',{bubbles:true}))");
+ check('image selection shows opacity and roundness',await js("Boolean(document.querySelector('#ue-slider-opacity')&&document.querySelector('#ue-slider-radius'))&&!document.querySelector('#ue-slider-fontSize')"));
+ await js("document.querySelector('input[aria-label=\"Opacity exact value\"]').value='65';document.querySelector('input[aria-label=\"Opacity exact value\"]').dispatchEvent(new Event('change',{bubbles:true}))");
+ check('exact opacity updates selected image only',await js("getComputedStyle(document.querySelector('img[data-edit=\"Hero image\"]')).opacity==='0.65'&&getComputedStyle(document.querySelector('h1')).opacity==='1'"));
+ await js("document.querySelector('#ue-visual-target').value='page.secondary-action';document.querySelector('#ue-visual-target').dispatchEvent(new Event('change',{bubbles:true}))");
+ check('button selection shows padding and roundness',await js("Boolean(document.querySelector('#ue-slider-padding')&&document.querySelector('#ue-slider-radius'))"));
+ await js("document.querySelector('#ue-slider-padding').value='24';document.querySelector('#ue-slider-padding').dispatchEvent(new Event('input',{bubbles:true}))");
+ await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-copy-json').click()");
+ await waitJS("window.__exportedHTML.includes('\"elements\"')");
+ check('JSON v2 contains contextual settings',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.design.elements['intro.hero-heading'].fontSize===54&&d.design.elements['page.hero-image'].opacity===65&&d.design.elements['page.secondary-action'].padding===24})()"));
+ await send('Page.reload',{ignoreCache:true});
+ await waitJS("Boolean(document.querySelector('#ue-screen'))&&!document.querySelector('#ue-screen').hidden");
+ check('slider values restore from local draft',await js("getComputedStyle(document.querySelector('h1')).fontSize==='54px'&&getComputedStyle(document.querySelector('img[data-edit=\"Hero image\"]')).opacity==='0.65'"));
+ await js("document.querySelector('#ue-copy').click()");
+ await waitJS("window.__exportedHTML.includes('editor-visual-style')");
+ check('HTML export contains targeted visual CSS',await js("window.__exportedHTML.includes('font-size:54px!important')&&window.__exportedHTML.includes('opacity:0.65!important')&&window.__exportedHTML.includes('padding:24px!important')"));
  console.log('All browser smoke checks passed');
 }catch(error){console.error(error,chromeError);process.exitCode=1}
 finally{try{ws?.close()}catch{}chrome.kill('SIGKILL');server.close();await rm(profile,{recursive:true,force:true})}
