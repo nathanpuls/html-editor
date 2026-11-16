@@ -280,7 +280,8 @@ function init(){
    // Keep them synchronized with the visible section order and editable label.
    const eyebrow=node.querySelector(':scope > .eyebrow');
    if(eyebrow&&/^\s*\d{1,2}\s*\//.test(eyebrow.textContent||'')){
-    const number=String(sectionOrder.filter(key=>key!==sectionOrder[0]&&!sectionStates[key]?.deleted).indexOf(node.getAttribute('data-section'))+1).padStart(2,'0');
+    const numbered=sectionOrder.filter(id=>!sectionStates[id]?.deleted&&sectionNodes.find(n=>n.getAttribute('data-section')===id)?.querySelector(':scope > .eyebrow')?.textContent?.match(/^\\s*\\d{1,2}\\s*\\//));
+    const number=String(numbered.indexOf(node.getAttribute('data-section'))+1).padStart(2,'0');
     const label=state.label??sectionLabels.get(node)??node.getAttribute('data-section');
     eyebrow.textContent=number+' / '+label;
    }
