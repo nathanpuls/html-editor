@@ -62,6 +62,6 @@ export function generateHTML(ctx){
    if(!pageStyle){pageStyle=doc.createElement('style');pageStyle.id='editor-page-style';doc.head.append(pageStyle)}
    pageStyle.textContent=styleSheetText(styleSettings);
   }
-  doc.querySelector('#ue-pencil')?.remove();doc.querySelector('#ue-screen')?.remove();doc.querySelector('#ue-style')?.remove();doc.querySelector('#ue-script')?.remove();
+  doc.querySelector('#ue-pencil')?.remove();doc.querySelector('#ue-screen')?.remove();doc.querySelector('#ue-style')?.remove();doc.querySelector('#ue-script')?.remove();doc.querySelector('#ue-stylesheet')?.remove();
   return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
  }
