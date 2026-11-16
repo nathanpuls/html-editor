@@ -115,8 +115,11 @@ try{
 
  await js("document.querySelector('#ue-cancel').click()");
  check('close preserves preview',await js("document.querySelector('h1').textContent==='Changed heading'"));
+ await js("history.replaceState(null,'','?previewRefresh=12345')");
  await send('Page.reload',{ignoreCache:true});
  await waitJS("Boolean(document.querySelector('#ue-pencil')) && document.querySelector('h1')?.textContent==='Changed heading'");
+ check('draft survives a changed preview query string',await js("document.querySelector('h1').textContent==='Changed heading'"));
+ await js("history.replaceState(null,'',location.pathname)");
  check('draft restored on refresh',await js("document.querySelector('h1').textContent==='Changed heading'"));
  await js("document.querySelector('#ue-pencil').click()");
  await js("document.querySelector('#ue-more').click()");
@@ -146,7 +149,7 @@ try{
  check('Copy JSON exports editable data without HTML',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.version===2&&d.fields.some(f=>f.id==='intro.hero-heading'&&f.text==='Changed heading')&&d._schema&&d.design.typography.h1FontSizePx>0&&d.fields.every(f=>typeof f.group==='string'||f.group===null)&&d.fields.every(f=>!('index' in f))&&Boolean(d.sections)&&Boolean(d.design)&&Boolean(d.page)&&!('html' in d)&&!window.__exportedHTML.includes('<!DOCTYPE html>')})()"));
  check('duplicate data-edit labels get distinct stable IDs',await js("(()=>{const ids=JSON.parse(window.__exportedHTML).fields.map(f=>f.id);return ids.includes('intro.intro-paragraph')&&ids.includes('intro.intro-paragraph-2')&&new Set(ids).size===ids.length})()"));
  check('Copy JSON leaves editor open',await js("!document.querySelector('#ue-screen').hidden"));
- check('Copy feedback shows Copied',await js("document.querySelector('#ue-copy').textContent==='Copied!'"));
+ check('Copy feedback shows Copied',await js("document.querySelector('#ue-copy').textContent==='Copied'"));
 
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
