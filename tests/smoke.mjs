@@ -98,7 +98,7 @@ try{
  check('search results appear',await js("!document.querySelector('#ue-results').hidden"));
  await js("document.querySelector('#ue-search').value='';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
  await js("document.querySelector('[data-tab=page]').click()");
- check('Page tab contains global appearance and SEO',await js("!document.querySelector('#ue-settings').hidden&&Boolean(document.querySelector('#ue-page-design [data-ue-style-key=background]'))&&Boolean(document.querySelector('#ue-settings .ue-meta'))&&!document.querySelector('#ue-style-panel [data-ue-style-key=background]"));
+ check('Page tab contains global appearance and SEO',await js("!document.querySelector('#ue-settings').hidden&&Boolean(document.querySelector('#ue-page-design [data-ue-style-key=background]'))&&Boolean(document.querySelector('#ue-settings .ue-meta'))&&!document.querySelector('#ue-style-panel [data-ue-style-key=background]')"));
  await js("document.querySelector('#ue-page-design input[type=color]').value='#123456';document.querySelector('#ue-page-design input[type=color]').dispatchEvent(new Event('input',{bubbles:true}))");
  check('page color edits apply',await js("document.querySelector('#editor-page-style').textContent.includes('#123456')"));
  await js("document.querySelector('#ue-undo').click()");
