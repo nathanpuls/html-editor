@@ -285,10 +285,16 @@ function init(){
   const result={};
   liveSnapshots.forEach((item,index)=>{
    const node=item.node;
-   if(!node?.matches?.('a.button,a.btn,a[role="button"],button[data-edit],input[type="button"][data-edit]'))return;
+   if(!node?.matches?.('a[data-edit],button[data-edit],input[type="button"][data-edit]'))return;
+   const css=getComputedStyle(node);
+   const isButton=node.matches('button,input[type="button"],a.button,a.btn,a[role="button"]');
+   // Discover button-like links with custom class names, without including plain links.
+   const padding=Math.max(parseFloat(css.paddingTop)||0,parseFloat(css.paddingLeft)||0);
+   const painted=css.backgroundColor.startsWith('rgb')&&!css.backgroundColor.endsWith(', 0)')&&!css.backgroundColor.endsWith(' 0)');
+   if(!isButton&&!(painted&&padding>=6))return;
    const selector=editableButtonSelector(node);
    if(!selector)return;
-   const css=getComputedStyle(node),background=rgbToHex(css.backgroundColor),color=rgbToHex(css.color);
+   const background=rgbToHex(css.backgroundColor),color=rgbToHex(css.color);
    if(!background||!color)return;
    result[index]={selector,background,color,label:node.getAttribute('data-edit')||'Button '+(index+1)};
   });
