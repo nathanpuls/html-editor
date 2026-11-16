@@ -353,7 +353,7 @@ function init(){
   for(const item of originals){
    const element=source[item.index];if(!element)throw Error('Editable element missing.');
    if(item.deleted)continue;
-   if(item.hidden)element.hidden=true;else element.hidden=false;
+   if(item.hidden){element.hidden=true;element.style.display='none'}
    if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}element.setAttribute('alt',item.alt);continue}
    if(item.article){if(item.text!==item.originalText)setArticle(element,item.text)}else element.textContent=item.text;
    if(item.link){if(!validURL(item.url.trim()))throw Error('Invalid link URL.');element.setAttribute('href',normalizeURL(item.url))}
@@ -369,7 +369,7 @@ function init(){
     if(!item.link||!validURL(item.url.trim()))throw Error('Enter a valid link URL.');
     const node=item.added?doc.createElement('a'):source[item.index].cloneNode(true);
     node.setAttribute('data-edit','');node.setAttribute('href',normalizeURL(item.url));
-    node.textContent=item.text;if(item.hidden)node.hidden=true;else node.hidden=false;
+    node.textContent=item.text;if(item.hidden){node.hidden=true;node.style.display='none'}
     if(g.lastChild&&g.lastChild.nodeType!==3)g.append(doc.createTextNode(' '));
     g.append(node);
    }
@@ -390,7 +390,7 @@ function init(){
   for(const [id,state] of Object.entries(sectionStates)){
    const node=exportedById.get(id);if(!node)continue;
    if(state.deleted)node.remove();
-   else if(state.hidden)node.hidden=true;
+   else if(state.hidden){node.hidden=true;node.style.display='none'}
   }
   let pageStyle=doc.getElementById('editor-page-style');
   if(JSON.stringify(styleSettings)!==initialStyle){
@@ -457,6 +457,9 @@ function init(){
  // Recover a compatible local draft immediately, including its live preview.
  if(readDraft()){pencil.click();hideEditor()}
  document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&draftActive&&!screen.hidden&&!e.target?.closest?.('input,textarea,[contenteditable]')){
+   if(undoStack.length){e.preventDefault();undo()}return;
+  }
   if(e.key==='Escape'&&!screen.hidden){hideEditor();return}
   if(e.key.toLowerCase()!=='e'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.repeat||!screen.hidden)return;
   const target=e.target;
