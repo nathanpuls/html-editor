@@ -135,11 +135,18 @@ try{
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-json-input').value='{broken';document.querySelector('#ue-json-apply').click()");
  check('invalid JSON does not change page',await js("!document.querySelector('#ue-json-error').hidden&&document.querySelector('h1').textContent==='Changed heading'"));
- await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.label==='Hero heading').text='Bulk changed heading';d.page.title='Bulk title';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.label==='Hero heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.style.font="'Inter', -apple-system, BlinkMacSystemFont, sans-serif";document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
  await js("document.querySelector('#ue-json-apply').click()");
  check('Import JSON applies bulk content and settings',await js("document.querySelector('h1').textContent==='Bulk changed heading'&&document.title==='Bulk title'&&document.querySelector('#ue-json-dialog').hidden"));
+ check('imported Inter CSS stack loads Google Fonts',await js("document.querySelector('#editor-google-font')?.href.includes('family=Inter')&&document.querySelector('#editor-page-style')?.textContent.includes('BlinkMacSystemFont')"));
+ check('custom font stack appears in Design controls',await js("(()=>{document.querySelector('[data-tab=design]').click();return Boolean([...document.querySelectorAll('#ue-style-panel input')].find(el=>el.getAttribute('aria-label')==='Custom font family'&&el.value.includes('Inter')&&!el.hidden))})()"));
  await js("document.querySelector('#ue-undo').click()");
  check('undo restores pre-import page content and settings',await js("document.querySelector('h1').textContent==='Changed heading'&&document.title!=='Bulk title'"));
+ check('undo removes imported Google Fonts stylesheet',await js("!document.querySelector('#editor-google-font')"));
+ await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.design.style.font='Unlisted Experimental Font, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d);document.querySelector('#ue-json-apply').click()})()");
+ check('unknown valid font stack imports with fallback',await js("document.querySelector('#ue-json-dialog').hidden&&document.querySelector('#editor-page-style')?.textContent.includes('Unlisted Experimental Font')&&!document.querySelector('#editor-google-font')"));
+ await js("document.querySelector('#ue-undo').click()");
  // Simulate infrastructure-injected markup present in the live document.
  await js("(()=>{const base=document.createElement('base');base.href='/editor/';document.head.prepend(base);const beacon=document.createElement('script');beacon.src='https://static.cloudflareinsights.com/beacon.min.js/example';beacon.setAttribute('data-cf-beacon','{}');document.body.append(beacon)})()");
  await js("document.querySelector('#ue-copy').click()");
