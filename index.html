@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f8f7f4">
+<title>HTML Editor — Make a website your own</title>
+<meta name="description" content="Describe the website you want, copy a ready-made AI prompt, and edit the resulting HTML locally. No account, API key, or server required.">
+<style>
+:root{color-scheme:light;--ink:#262724;--muted:#777871;--line:#e5e4dc;--cream:#f8f7f4;--accent:#252f29}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.container{max-width:1120px;margin:auto;padding:0 30px}
+header{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:760;letter-spacing:-.04em;color:inherit;text-decoration:none}
+.brand-icon{display:grid;place-items:center;width:32px;height:32px;background:#e7e8df;border:1px solid #d8dad0;border-radius:10px}
+.brand-icon svg{width:18px;height:18px}
+.toplinks{display:flex;align-items:center;gap:23px;font-size:13px}
+.toplinks a{color:#62675e;text-decoration:none}.toplinks a:hover{text-decoration:underline}
+main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(310px,.85fr);gap:68px;padding-top:112px;padding-bottom:118px;align-items:start}
+.kicker{display:inline-flex;gap:8px;align-items:center;font-size:12px;font-weight:730;color:#718072;letter-spacing:.09em;text-transform:uppercase;margin-bottom:22px}
+.kicker:before{content:"";width:7px;height:7px;border-radius:50%;background:#a2b39d}
+h1{font-size:clamp(48px,5.7vw,76px);line-height:1.04;letter-spacing:-.065em;font-weight:750;max-width:650px;margin:0 0 26px}
+.lead{max-width:520px;color:#757972;font-size:18px;line-height:1.67;margin:0 0 42px}
+.editor-card{max-width:600px}
+label{display:block;font-size:14px;font-weight:680;margin-bottom:12px}
+textarea{width:100%;display:block;min-height:182px;resize:vertical;border:1px solid #d7d9cf;background:white;border-radius:15px;padding:21px 22px;font:15px/1.65 inherit;color:var(--ink);outline:none;box-shadow:0 2px 7px #3331}
+textarea:focus{border-color:#748879;box-shadow:0 0 0 3px #74887920}
+textarea::placeholder{color:#959993}
+.primary{appearance:none;display:flex;align-items:center;justify-content:center;gap:11px;cursor:pointer;background:#29382f;border:1px solid #29382f;color:white;border-radius:11px;padding:17px 25px;font:650 15px inherit;width:100%;margin-top:15px;transition:background .12s}
+.primary:hover{background:#405648}.primary:focus-visible,.preview-toggle:focus-visible,a:focus-visible{outline:3px solid #97aa9b;outline-offset:3px}
+.primary svg{width:18px;height:18px;stroke:currentColor}
+.helper{font-size:12px;color:#888b84;margin-top:13px;line-height:1.65}
+aside{margin-top:20px}
+.visual{border:1px solid #e0e1d8;background:#e8ebe4;border-radius:20px;padding:14px;box-shadow:0 16px 60px #323d3010}
+.browser{background:#fff;border-radius:11px;overflow:hidden;box-shadow:0 6px 18px #262e2512}
+.browser-top{display:flex;align-items:center;gap:7px;padding:11px 15px;background:#fafbf8;border-bottom:1px solid #eee}
+.dot{width:7px;height:7px;border-radius:50%;background:#d1d5cc}
+.address{margin-left:15px;font-size:10px;color:#98a098}
+.mock-body{padding:32px 30px 34px}
+.mock-pill{display:inline-block;font-size:10px;color:#66806b;font-weight:700;letter-spacing:.06em;margin-bottom:18px}
+.mock-title{font-size:33px;line-height:1.08;font-weight:740;letter-spacing:-.055em;max-width:230px}
+.mock-copy{height:7px;background:#e3e7df;border-radius:8px;margin-top:22px;width:90%}.mock-copy.short{width:62%;margin-top:8px}
+.mock-button{display:inline-block;background:#354a3e;width:108px;height:29px;border-radius:7px;margin-top:26px}
+.mock-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:38px}
+.mock-card{height:76px;border-radius:9px;background:#eef0e9;border:1px solid #e3e7df}
+.mock-card:nth-child(2){background:#e9e7df}.mock-card:nth-child(3){background:#e4e9e4}
+.steps{display:grid;gap:19px;margin:28px 4px 0}
+.step{display:flex;align-items:flex-start;gap:14px}
+.num{display:grid;place-items:center;flex:none;width:26px;height:26px;border:1px solid #d9ded5;border-radius:50%;font-size:12px;color:#647368;font-weight:700}
+.step strong{font-size:13px;font-weight:700}.step p{font-size:12px;line-height:1.65;color:#858982;margin:4px 0 0}
+.detail{margin:32px auto 65px;max-width:770px;padding:0 30px}
+.preview-toggle{border:0;background:none;color:#606961;text-decoration:underline;text-underline-offset:4px;cursor:pointer;font:600 13px inherit;padding:8px 0}
+.prompt-preview{margin-top:12px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:18px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:390px;overflow:auto;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;color:#505650}
+footer{border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:27px 0 34px;font-size:12px;color:#83867e}
+footer a{color:inherit;text-decoration:none}footer a:hover{text-decoration:underline}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(max-width:850px){main{grid-template-columns:1fr;gap:54px;padding-top:70px;padding-bottom:60px}aside{margin:0;max-width:580px}.lead{margin-bottom:32px}.detail{margin-bottom:55px}}
+@media(max-width:540px){.container{padding:0 20px}header{height:70px}main{padding-top:58px;gap:42px}h1{font-size:50px} .lead{font-size:16px}.toplinks{gap:12px}.toplinks a:first-child{display:none}.detail{padding:0 20px}.mock-body{padding:25px}.visual{padding:10px}footer{gap:15px;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <a class="brand" href="./index.html" aria-label="HTML Editor home">
+    <span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/><path d="m14.5 4-5 16"/></svg></span>
+    HTML Editor
+  </a>
+  <nav class="toplinks" aria-label="Navigation"><a href="#how-it-works">How it works</a><a href="./demo.html">Try the editor</a></nav>
+</header>
+<main>
+  <div>
+    <div class="kicker">Your website, your way</div>
+    <h1>Make a website that's yours.</h1>
+    <p class="lead">Describe what you want to create. We'll prepare the instructions for your favorite AI to build a beautiful website you can edit yourself.</p>
+    <div class="editor-card">
+      <label for="website-description">How would you like your website to look?</label>
+      <textarea id="website-description" spellcheck="true" placeholder="For example: A warm, modern website for my private practice. Cream and sage colors, elegant typography, sections for About, Services, and Contact, and a friendly, approachable feel."></textarea>
+      <button class="primary" type="button" id="copy-prompt">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span id="copy-label">Copy AI prompt</span>
+      </button>
+      <div class="helper">No account or API key. Paste the prompt into ChatGPT, Claude, Gemini, or another AI that writes HTML.</div>
+      <div id="copy-announcement" class="sr-only" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+  <aside id="how-it-works" aria-label="How it works">
+    <div class="visual">
+      <div class="browser">
+        <div class="browser-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="address">your-website.html</span></div>
+        <div class="mock-body" aria-hidden="true">
+          <div class="mock-pill">MADE FOR YOU</div>
+          <div class="mock-title">Something beautiful starts here.</div>
+          <div class="mock-copy"></div><div class="mock-copy short"></div>
+          <span class="mock-button"></span>
+          <div class="mock-cards"><div class="mock-card"></div><div class="mock-card"></div><div class="mock-card"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><div><strong>Describe your website</strong><p>A sentence or a paragraph is enough. Include any design or content preferences.</p></div></div>
+      <div class="step"><span class="num">2</span><div><strong>Generate the HTML with your AI</strong><p>Copy our prompt, paste it into your AI, and save the resulting HTML alongside <code>editor.js</code>.</p></div></div>
+      <div class="step"><span class="num">3</span><div><strong>Edit it anytime</strong><p>Open the HTML in your browser and press E. Make changes locally and copy the finished HTML.</p></div></div>
+    </div>
+  </aside>
+</main>
+</div>
+<div class="detail">
+  <button type="button" class="preview-toggle" id="preview-toggle" aria-expanded="false" aria-controls="prompt-preview">See the full AI prompt</button>
+  <pre id="prompt-preview" class="prompt-preview" hidden></pre>
+</div>
+<div class="container">
+<footer><span>Simple HTML. Your AI. Your website.</span><span><a href="./demo.html">Open the demo</a> · <a href="https://github.com/nathanpuls/html-editor">GitHub</a></span></footer>
+</div>
+<script>
+(()=>{
+  "use strict";
+  const input=document.getElementById("website-description");
+  const button=document.getElementById("copy-prompt");
+  const label=document.getElementById("copy-label");
+  const announcement=document.getElementById("copy-announcement");
+  const preview=document.getElementById("prompt-preview");
+  const toggle=document.getElementById("preview-toggle");
+  const promptText=()=>[
+    "Create a complete, polished, responsive, single-page HTML website. Return only the full HTML document, beginning with <!DOCTYPE html>.",
+    "",
+    "WEBSITE BRIEF",
+    input.value.trim()||"Design an attractive, original, modern one-page website with clear content, excellent typography, and an approachable visual identity. Choose a cohesive design appropriate to its purpose.",
+    "",
+    "TECHNICAL REQUIREMENTS — FOLLOW ALL",
+    "1. Produce one full standalone HTML document, with inline CSS and only minimal inline JavaScript if essential. No build tools, frameworks, CDNs, icon fonts, remote scripts, or dependency downloads.",
+    "2. Add <script src=\"./editor.js\" defer><\/script> in the document head. The HTML Editor will be in the same folder as this HTML file.",
+    "3. Every user-editable heading, paragraph, image, and individual link must have one descriptive data-edit attribute, for example: <h1 data-edit=\"Hero heading\">Welcome<\/h1>. The attribute value becomes the field label. Never use data-label.",
+    "4. An editable article-style block can be a <div data-edit=\"About copy\"> containing only direct <p> children. Do not nest other editable elements inside a data-edit element, except the special links collection below.",
+    "5. Each independently manageable, reorderable section must use a unique data-section value, such as <section data-section=\"about\" aria-label=\"About\">. Keep sections as siblings under the same parent so they can be reordered. Use a stable, unique id and a human-readable aria-label.",
+    "6. For a collection of editable links that users can add, remove, and reorder, use <nav data-edit=\"links\"><a data-edit=\"Contact link\" href=\"https://example.com\">Contact<\/a><\/nav>. The exact value links is reserved for such a collection.",
+    "7. Use the .button class consistently for button-looking links and buttons. Ordinary hyperlinks must remain visually distinct from buttons. Do not style the editor UI or floating pencil with broad global button rules.",
+    "8. Define and consistently use CSS custom properties in :root for page background, main text, accent, button background, button text, and border radius. Ensure body background and text, ordinary links, and every button-like element are styled predictably and consistently.",
+    "9. Include a concise, meaningful <title> and a <meta name=\"description\" content=\"...\">.",
+    "10. Make the website accessible and mobile responsive: semantic landmarks, alt text, adequate contrast, keyboard-friendly links and buttons, and correct heading hierarchy.",
+    "11. Aim for a finished, visually excellent website with realistic, user-relevant content. Avoid generic filler, debug text, demo instructions, mock UI, or unexplained placeholders. If important details are unknown, make sensible clearly editable assumptions rather than inventing factual credentials or guarantees.",
+    "12. Keep the finished website usable offline. Prefer system fonts, CSS-generated decoration, and inline SVG. Images that rely on remote URLs will not load offline; avoid remote image dependencies unless requested. If an image needs to be editable using the current HTML Editor, provide an absolute HTTPS image URL and meaningful alt text.",
+    "13. Do not change or duplicate the HTML Editor JavaScript. The separate editor.js handles edits, undo, Style, Sections, local drafts, and copying HTML.",
+    "",
+    "OUTPUT",
+    "Return only the HTML source in one code block. No explanation before or after the HTML."
+  ].join("\n");
+  function refreshPreview(){if(!preview.hidden)preview.textContent=promptText()}
+  input.addEventListener("input",refreshPreview);
+  toggle.addEventListener("click",()=>{const open=preview.hidden;preview.hidden=!open;toggle.setAttribute("aria-expanded",String(open));toggle.textContent=open?"Hide full AI prompt":"See the full AI prompt";refreshPreview()});
+  button.addEventListener("click",async()=>{
+    const value=promptText();
+    try{
+      if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value)}
+      else{
+        const temporary=document.createElement("textarea");temporary.value=value;temporary.style.position="fixed";temporary.style.left="-9999px";document.body.append(temporary);temporary.focus();temporary.select();
+        const copied=document.execCommand("copy");temporary.remove();if(!copied)throw new Error("Clipboard unavailable");
+      }
+      label.textContent="Copied to clipboard";announcement.textContent="AI prompt copied to clipboard.";
+    }catch{
+      preview.hidden=false;toggle.setAttribute("aria-expanded","true");toggle.textContent="Hide full AI prompt";preview.textContent=value;
+      label.textContent="Select the prompt below";announcement.textContent="Clipboard access is unavailable. Select and copy the prompt shown below.";
+    }
+  });
+})();
+</script>
+</body>
+</html>
