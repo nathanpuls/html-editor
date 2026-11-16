@@ -47,7 +47,7 @@ async function js(expression){
 async function waitJS(expression){return waitFor(async()=>await js(expression))}
 function check(name,value){assert.ok(value,name);console.log('PASS',name)}
 try{
- const debugPort=await waitFor(async()=>{try{const p=await readFile(join(profile,'DevToolsActivePort'),'utf8');return Number(p.split('\\n')[0])||false}catch{return false}});
+ const debugPort=await waitFor(async()=>{try{const p=await readFile(join(profile,'DevToolsActivePort'),'utf8');return Number(p.split('\n')[0])||false}catch{return false}});
  const debuggerUrl='http://127.0.0.1:'+debugPort;
  await waitFor(async()=>{const r=await fetch(debuggerUrl+'/json/version');return r.ok});
  const page=await (await fetch(debuggerUrl+'/json/new?'+encodeURIComponent(origin+'/tests/fixture.html'),{method:'PUT'})).json();
