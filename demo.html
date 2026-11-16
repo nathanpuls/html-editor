@@ -14,6 +14,8 @@ main{max-width:990px;margin:0 auto;padding:28px 24px 90px}
 .brand{font-size:15px;font-weight:800;letter-spacing:.08em}
 .site-nav{display:flex;gap:18px}
 .site-nav a{font-size:14px;color:#394c45;text-decoration:none}
+.section-divider{border:0;height:2px;width:88px;background:#c9d3c7;border-radius:2px;margin:40px 0 0}
+
 section{padding:48px 0;border-bottom:1px solid #deded8}
 section:last-child{border-bottom:0}
 .eyebrow{color:#ac6845;text-transform:uppercase;letter-spacing:.16em;font-weight:700;font-size:12px}
@@ -45,14 +47,14 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
 </head>
 <body>
 <main>
-<header class="topbar"><div class="brand">FULL PSYCH</div><nav class="site-nav"><a href="#about">Approach</a><a href="#work">Services</a><a href="#contact">Next steps</a></nav></header>
+<header class="topbar"><div class="brand" data-edit="Site name">FULL PSYCH</div><nav class="site-nav" data-edit="links"><a data-edit="Approach navigation" href="#about">Approach</a><a data-edit="Services navigation" href="#work">Services</a><a data-edit="Contact navigation" href="#contact">Next steps</a></nav></header>
 <section id="welcome" data-section="welcome" aria-label="Welcome">
  <div class="hero-grid">
   <div>
    <div class="eyebrow">Thoughtful psychiatric care</div>
    <h1 data-edit="Hero heading">Care that starts with listening.</h1>
    <p class="intro" data-edit="Hero description">Medication management and collaborative care for adults seeking a thoughtful, practical approach to mental health.</p>
-   <div class="actions"><a class="button" href="#work">Explore services</a><button class="btn" type="button">Schedule a consultation</button></div>
+   <div class="actions"><a class="button" data-edit="Explore services button" href="#work">Explore services</a><button class="btn" data-edit="Consultation button" type="button">Schedule a consultation</button></div>
   </div>
   <div class="hero-visual"><img data-edit="Hero image" src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1000" alt="Warm, welcoming office space"></div>
  </div>
@@ -64,6 +66,7 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
   <div data-edit="About paragraph"><p>Good care begins with understanding your goals, history, and preferences.</p><p>Treatment plans can include medication management, education, and coordination with your therapist or other clinicians.</p></div>
   <div class="photo"><img data-edit="About image" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000" alt="Comfortable bright consultation room"></div>
  </div>
+ <hr class="section-divider" data-edit="Approach divider">
 </section>
 <section id="work" data-section="work" aria-label="Our work">
  <div class="eyebrow">02 / Services</div>
@@ -74,6 +77,7 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
   <article class="card"><h3 data-edit="Second card title">Depression</h3><p data-edit="Second card description">Thoughtful assessment and ongoing treatment of mood symptoms.</p></article>
   <article class="card"><h3 data-edit="Third card title">ADHD</h3><p data-edit="Third card description">Evaluation and medication management tailored to individual needs.</p></article>
  </div>
+ <hr class="section-divider" data-edit="Services divider">
 </section>
 <section id="contact" data-section="contact" aria-label="Get in touch">
  <div class="eyebrow">03 / Next steps</div>
@@ -81,7 +85,7 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
  <p data-edit="Contact description">Reach out to ask about availability, treatment fit, and what to expect at an initial appointment.</p>
  <nav class="site-links" data-edit="links"><a data-edit="Contact link" href="mailto:hello@example.com">Contact the practice</a><a data-edit="Information link" href="https://example.org">What to expect</a></nav>
 </section>
-<footer>Full Psych · Sample practice website for testing the HTML editor. Press E to edit.</footer>
+<footer data-edit="Footer note">Full Psych · Sample practice website for testing the HTML editor. Press E to edit.</footer>
 </main>
 </body>
 </html>
