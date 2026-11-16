@@ -65,7 +65,12 @@ export function exportEditableJSON(ctx){
    fonts:'Google Font names or safe CSS font-family stacks. Unknown installed font names use browser fallback.',
    colors:'Hex colors (#RRGGBB). Font sizes and border radius are in pixels.',
    buttons:'primary and secondary are independent roles. Optional design.elementButtons overrides target one editable button by field id.',
-   editableButtonIds:Object.keys(buttonAppearance).map(index=>ids.get(Number(index))).filter(Boolean),
+   editableButtonRoles:Object.fromEntries(Object.keys(buttonAppearance).map(index=>{
+    const id=ids.get(Number(index));
+    const node=liveSnapshots[Number(index)]?.node;
+    const role=node?.matches?.('.secondary,[data-button-role="secondary"]')?'secondary':'primary';
+    return [id,role];
+   }).filter(([id])=>Boolean(id))),
    sections:'order contains existing section ids; changing section labels updates visible numbered eyebrow labels where present.'
   },
   page:{title:pageMeta.title,description:pageMeta.description},
