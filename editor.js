@@ -230,7 +230,7 @@ function init(){
  const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||''});
  const applyMeta=()=>{document.title=pageMeta.title||'';let meta=document.querySelector('meta[name="description"]');if(!meta&&pageMeta.description){meta=document.createElement('meta');meta.name='description';document.head.append(meta)}if(meta)meta.setAttribute('content',pageMeta.description||'')};
  const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
- const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||JSON.stringify(pageMeta)!==JSON.stringify(originalMeta));
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  const setText=(el,value)=>{el.textContent=value};
