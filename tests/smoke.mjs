@@ -97,6 +97,7 @@ try{
  await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-right').click()");
 
  check('CSS loaded',await js("Boolean(document.querySelector('#ue-stylesheet')?.sheet)"));
+ check('editor stylesheet gets unique refresh URL',await js("new URL(document.querySelector('#ue-stylesheet').href).searchParams.has('editor-load')"));
  const edit="(()=>{const label=[...document.querySelectorAll('#ue-fields label')].find(el=>el.textContent.includes('Hero heading'));const input=label?.querySelector('input,textarea');if(!input)return false;input.value='Changed heading';input.dispatchEvent(new Event('input',{bubbles:true}));return true})()";
  check('editable field works',await js(edit));
  check('live preview updates',await js("document.querySelector('h1').textContent==='Changed heading'"));
