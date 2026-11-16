@@ -54,11 +54,12 @@ export function syncGoogleFontLink(doc,value){
 }
 
 export function drawDesign(ctx){
- const {screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel}=ctx;
+ const {screen,add,stylePanel,pagePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel}=ctx;
   stylePanel.replaceChildren();
+  const pageDesign=document.createElement('div');pageDesign.id='ue-page-design';pageDesign.className='ue-page-design';
   const controls=[
-   ['Page background','background','color'],['Text color','text','color'],['Accent color','accent','color'],
-   ['Font family','font','font'],['Heading 1 size (px)','h1','number'],['Heading 2 size (px)','h2','number'],
+   ['Page background','background','color'],['Default text color','text','color'],['Accent color','accent','color'],
+   ['Default font','font','font'],['Heading 1 size (px)','h1','number'],['Heading 2 size (px)','h2','number'],
    ['Heading 3 size (px)','h3','number'],['Paragraph size (px)','p','number'],
    ['Corner roundness (px)','radius','radius'],
    ['Primary buttons background','buttonBackground','color'],['Primary buttons text','buttonText','color'],
@@ -66,7 +67,7 @@ export function drawDesign(ctx){
   ].filter(([,key])=>!Object.keys(originalVariables).length||!['background','text','accent','buttonBackground','buttonText','radius'].includes(key));
   const update=()=>{applyStyle();saveDraft()};
   for(const [title,key,kind] of controls){
-   const row=document.createElement('div');row.className='ue-setting';
+   const row=document.createElement('div');row.className='ue-setting';row.dataset.ueStyleKey=key;
    const label=document.createElement('label');label.textContent=title;row.append(label);
    if(kind==='color'){
     const pair=document.createElement('div');pair.className='ue-color-row';
@@ -102,11 +103,11 @@ export function drawDesign(ctx){
    reset.onclick=event=>{event.preventDefault();checkpoint();styleSettings[key]=originalAppearance[key];applyStyle();saveDraft();renderStyle()};
    const refreshReset=()=>{reset.disabled=String(styleSettings[key])===String(originalAppearance[key])};
    row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',refreshReset));
-   row.append(reset);stylePanel.append(row);
+   row.append(reset);(['background','text','accent','font','h1','h2','h3','p','radius'].includes(key)?pageDesign:stylePanel).append(row);
   }
   const custom=Object.entries(originalVariables);
   if(custom.length){
-   const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Website colors & sizes';stylePanel.append(heading);
+   const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Website colors & sizes';pageDesign.append(heading);
    for(const [name,config] of custom){
     const row=document.createElement('div');row.className='ue-setting';
     const label=document.createElement('label');label.textContent=varLabel(name);row.append(label);
@@ -126,9 +127,10 @@ export function drawDesign(ctx){
     }
     const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+varLabel(name);reset.setAttribute('aria-label',reset.title);reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=value===config.value;
     reset.onclick=()=>{checkpoint();variableSettings[name]=config.value;applyStyle();saveDraft();renderStyle()};
-    row.append(reset);stylePanel.append(row);
+    row.append(reset);pageDesign.append(row);
    }
   }
+  pagePanel.querySelector('#ue-page-design')?.remove();pagePanel.append(pageDesign);
   const buttons=Object.entries(buttonAppearance);
   if(buttons.length){
    const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Individual buttons';stylePanel.append(heading);
@@ -137,7 +139,7 @@ export function drawDesign(ctx){
     if(!item||item.deleted)continue;
     const block=document.createElement('details');block.className='ue-button-block';block.dataset.ueButtonBlock=index;
     block.open=expandedButtonControls.has(index);
-    block.addEventListener('toggle',()=>{if(block.open)expandedButtonControls.add(index);else expandedButtonControls.delete(index)});
+    block.addEventListener('toggle',()=>{if(block.open)expandedButtonControls.add(index);else expandedButtonControls.delete(index);const hint=block.querySelector('.ue-button-hint');if(hint)hint.textContent=block.open?'Click to hide colors':'Click to edit colors'});
     const summary=document.createElement('summary');summary.className='ue-button-summary';
     const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;summary.append(name);
     // Preview only: read the source element's appearance; never clone its markup
@@ -146,22 +148,8 @@ export function drawDesign(ctx){
     preview.dataset.ueButtonPreview=index;
     preview.setAttribute('aria-label','Preview of '+info.label);
     summary.append(preview);
-    const hint=document.createElement('div');hint.className='ue-button-hint';hint.textContent='Click to edit colors';
+    const hint=document.createElement('div');hint.className='ue-button-hint';hint.textContent=block.open?'Click to hide colors':'Click to edit colors';
     summary.append(hint);block.append(summary);
-    const jump=document.createElement('span');jump.className='ue-button-jump';jump.setAttribute('role','button');jump.setAttribute('tabindex','0');
-    jump.title='Find '+info.label+' on the website';jump.setAttribute('aria-label',jump.title);
-    jump.innerHTML='<i data-lucide="arrow-up-right"></i>';
-    jump.onclick=event=>{
-     event?.preventDefault();event?.stopPropagation();
-     const node=liveSnapshots[Number(index)]?.node;
-     if(!node?.isConnected)return;
-     if(screen.classList.contains('ue-fullscreen'))hideEditor();
-     const top=Math.max(0,window.scrollY+node.getBoundingClientRect().top-32);
-     window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-    };
-    // A secondary action within the always-visible summary.
-    jump.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();jump.click()}});
-    summary.append(jump);
     const updatePreview=()=>refreshButtonSample(preview,index);
     updatePreview();
     for(const [key,label] of [['background','Background'],['color','Text color']]){
