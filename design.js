@@ -64,7 +64,7 @@ export function drawDesign(ctx){
    ['Corner roundness (px)','radius','radius'],
    ['Primary buttons background','buttonBackground','color'],['Primary buttons text','buttonText','color'],
    ['Secondary buttons background','secondaryButtonBackground','color'],['Secondary buttons text','secondaryButtonText','color']
-  ].filter(([,key])=>!Object.keys(originalVariables).length||!['background','text','accent','buttonBackground','buttonText','radius'].includes(key));
+  ];
   const update=()=>{applyStyle();saveDraft()};
   for(const [title,key,kind] of controls){
    const row=document.createElement('div');row.className='ue-setting';row.dataset.ueStyleKey=key;
