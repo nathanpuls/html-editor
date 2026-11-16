@@ -3,6 +3,7 @@ import {exportEditableJSON,importEditableJSON} from './json-schema.js';
 import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews,googleFontFamilies,validFontStack,syncGoogleFontLink} from './design.js';
 import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
+import {applyBranding,readBranding,validBrandURL} from './branding.js';
 import {visualTargets,applyVisual,drawInlineVisualControls} from './visual-controls.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
 /* HTML Editor v1 — standalone, dependency-free.
@@ -18,7 +19,7 @@ function init(){
  if(!editable().length)return;
  const pencil=document.createElement('button');pencil.id='ue-pencil';pencil.type='button';pencil.title='Edit';pencil.setAttribute('aria-label','Edit page');pencil.innerHTML='<i data-lucide="pencil"></i>';
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
- screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, page, and design"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="page" aria-selected="false"><i data-lucide="file-text"></i>Page</button><button type="button" data-tab="elements" aria-selected="true"><i data-lucide="square-text"></i>Elements</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled>Undo</button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy editable data (JSON)</button><button id="ue-import-json" type="button" role="menuitem">Import editable data (JSON)</button></div></div></div><div id="ue-json-dialog" role="dialog" aria-label="Import editable data (JSON)" hidden><div class="ue-json-card"><h2>Import editable data (JSON)</h2><p>Paste the editable data you copied. The page structure stays unchanged.</p><textarea id="ue-json-input" spellcheck="false" placeholder="Paste editable JSON here" aria-label="Editable page JSON"></textarea><p id="ue-json-error" role="alert" hidden></p><div class="ue-json-buttons"><button id="ue-json-cancel" type="button">Cancel</button><button id="ue-json-apply" type="button">Apply changes</button></div></div></div></div>';
+ screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, page, and design"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="page" aria-selected="false"><i data-lucide="file-text"></i>Page</button><button type="button" data-tab="elements" aria-selected="true"><i data-lucide="square-text"></i>Elements</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled>Undo</button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy HTML</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy editable data (JSON)</button><button id="ue-import-json" type="button" role="menuitem">Paste editable data (JSON)</button></div></div></div><div id="ue-json-dialog" role="dialog" aria-label="Paste editable data (JSON)" hidden><div class="ue-json-card"><h2>Paste editable data (JSON)</h2><p>Paste the editable data you copied. The page structure stays unchanged.</p><textarea id="ue-json-input" spellcheck="false" placeholder="Paste editable JSON here" aria-label="Editable page JSON"></textarea><p id="ue-json-error" role="alert" hidden></p><div class="ue-json-buttons"><button id="ue-json-cancel" type="button">Cancel</button><button id="ue-json-apply" type="button">Apply changes</button></div></div></div></div>';
  document.body.append(pencil,screen);
  const dropPreview=document.createElement('div');
  dropPreview.id='ue-drop-preview';
@@ -436,16 +437,17 @@ function init(){
   if(hasChanges())writeJSON(draftKey,{signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,visualValues,styleSchema:2});
   else clearDraft();
  };
- const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||''});
+ const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||'',...readBranding(document)});
  const applyMeta=()=>{
   const title=pageMeta.title||'';
   if(document.title!==title)document.title=title;
   let meta=document.querySelector('meta[name="description"]');
   if(!meta&&pageMeta.description){meta=document.createElement('meta');meta.name='description';document.head.append(meta)}
   if(meta&&meta.getAttribute('content')!==(pageMeta.description||''))meta.setAttribute('content',pageMeta.description||'');
+  applyBranding(document,pageMeta,originalMeta);
  };
  const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
- const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons||Object.keys(visualValues).length>0||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons||Object.keys(visualValues).length>0||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description||pageMeta.logoUrl!==originalMeta.logoUrl||pageMeta.faviconUrl!==originalMeta.faviconUrl));
  function hideEditor(){if(!draftActive||screen.hidden)return;clearDrag();screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  // Change only the necessary text nodes. Never flatten formatted descendants.
@@ -534,7 +536,7 @@ function init(){
    return {index:i,tag:el.tagName.toLowerCase(),article,image,decorative:el.matches('hr'),src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalAlt:el.getAttribute('alt')||'',originalURL:el.getAttribute('href')||'',originalText:text,hidden:false,deleted:false,link:el.tagName==='A',label:(el.getAttribute('data-edit')==='links'?'':el.getAttribute('data-edit')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
   });
   draftActive=true;initialModel=JSON.stringify(model);
-  originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
+  originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description,logoUrl:originalMeta.logoUrl||'',faviconUrl:originalMeta.faviconUrl||''};
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
   variableSettings=Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));initialVariables=JSON.stringify(variableSettings);
   buttonAppearance=getButtonAppearance();buttonSettings={};initialButtons=JSON.stringify(buttonSettings);visualValues={};
@@ -562,7 +564,7 @@ function init(){
    }
    if(saved.sectionStates&&typeof saved.sectionStates==='object')sectionStates=saved.sectionStates;
    if(saved.visualValues&&typeof saved.visualValues==='object'&&!Array.isArray(saved.visualValues))visualValues=saved.visualValues;
-   if(saved.pageMeta&&typeof saved.pageMeta==='object')pageMeta={title:String(saved.pageMeta.title||''),description:String(saved.pageMeta.description||'')};
+   if(saved.pageMeta&&typeof saved.pageMeta==='object')pageMeta={title:String(saved.pageMeta.title||''),description:String(saved.pageMeta.description||''),logoUrl:String(saved.pageMeta.logoUrl??originalMeta.logoUrl??''),faviconUrl:String(saved.pageMeta.faviconUrl??originalMeta.faviconUrl??'')};
    if(Array.isArray(saved.sectionOrder)&&saved.sectionOrder.length===sectionOrder.length&&saved.sectionOrder.every(id=>sectionOrder.includes(id)))sectionOrder=[...saved.sectionOrder];
   }
   const lastRevert=readRevert();
@@ -603,13 +605,14 @@ function init(){
    model=next.model;sectionOrder=next.sectionOrder;sectionStates=next.sectionStates;pageMeta=next.pageMeta;
    styleSettings=next.styleSettings;variableSettings=next.variableSettings;buttonSettings=next.buttonSettings;visualValues=next.visualValues;
    applyMeta();reorderSections();syncSections();syncLive();applyStyle();updateVisual();renderStyle();renderSections();render();
-   saveDraft();dismissImport();message.textContent='JSON imported. All editable changes applied.';
+   saveDraft();dismissImport();message.textContent='Editable data pasted. All changes applied.';
   }catch(error){importError.textContent=error instanceof SyntaxError?'Invalid JSON: '+error.message:(error.message||'Unable to import JSON');importError.hidden=false}
  };
  let copyFeedbackTimer;
  const copyPage=async(format)=>{
   toggleCopyMenu(false);
   try{
+   if(!validBrandURL(pageMeta.logoUrl||'')||!validBrandURL(pageMeta.faviconUrl||''))throw Error('Enter a valid http(s) URL for the logo or favicon.');
    const value=format==='json'?JSON.stringify(contentJSON(),null,2):copyHTML();
    if(window.endsSharedCopyText)await window.endsSharedCopyText(value);else await navigator.clipboard.writeText(value);
    if(format==='html'){
@@ -618,7 +621,7 @@ function init(){
    }
    saveDraft();
    const copyButton=screen.querySelector('#ue-copy');copyButton.textContent='Copied!';
-   clearTimeout(copyFeedbackTimer);copyFeedbackTimer=setTimeout(()=>{copyButton.textContent='Copy'},1800);
+   clearTimeout(copyFeedbackTimer);copyFeedbackTimer=setTimeout(()=>{copyButton.textContent='Copy HTML'},1800);
    message.textContent=format==='json'?'Editable data copied. Paste it into AI, then import the result.':'';
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
