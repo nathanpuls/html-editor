@@ -9,7 +9,7 @@ export const fieldId=(item,sectionId)=>{
 };
 export const groupId=(root,index)=>{
  const section=root.closest('[data-section]')?.getAttribute('data-section');
- return section?section+'Links':'links'+(index+1);
+ return section?section+'Links':index===0?'navLinks':'navigationLinks'+(index+1);
 };
 export const styleToJSON=s=>({
  colors:{background:s.background,text:s.text,accent:s.accent},
