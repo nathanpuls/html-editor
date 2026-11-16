@@ -355,7 +355,11 @@ function init(){
  }
  function renderSections(){return drawSections({screen,sectionsPanel,sectionOrder,sectionNodes,sectionStates,checkpoint,syncSections,reorderSections,renderSections,saveDraft,hideEditor,icons})}
  // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
- const draftKey='html-editor:draft:v1:'+location.href.split('#')[0];
+ // The UI-only ?edit flag is not part of a page's draft identity.
+ const draftURL=new URL(location.href);
+ draftURL.searchParams.delete('edit');
+ draftURL.hash='';
+ const draftKey='html-editor:draft:v1:'+draftURL.href;
  const originalSignature=pageSignature();
  // Match drafts by editable element identity, not volatile rendered CSS or document title.
  // Preserve older drafts whose original signature changed but whose fields still match.
