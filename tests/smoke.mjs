@@ -120,7 +120,7 @@ try{
  await js("(()=>{const label=[...document.querySelectorAll('#ue-fields label')].find(el=>el.textContent.includes('Hero image'));const input=label?.querySelector('input');if(input){input.value='https://example.com/new.jpg';input.dispatchEvent(new Event('input',{bubbles:true}))}})()");
  check('image source live editing',await js("document.querySelector('img[data-edit=\"Hero image\"]')?.getAttribute('src')==='https://example.com/new.jpg'"));
  await js("document.querySelector('#ue-undo').click()");
- check('image undo',await js("document.querySelector('img[data-edit=\"Hero image\"]')?.getAttribute('src')==='https://example.com/old.jpg'"));
+ check('image undo',await js("document.querySelector('img[data-edit=\"Hero image\"]')?.getAttribute('src')==='https://example.com/old.jpg?w=1000'"));
 
  await js("document.querySelector('#ue-pencil').click()");
  await js(edit);
@@ -129,19 +129,25 @@ try{
  check('Copy JSON menu opens from caret',await js("!document.querySelector('#ue-copy-menu').hidden"));
  await js("document.querySelector('#ue-copy-json').click()");
  await waitJS("typeof window.__exportedHTML==='string'");
- check('Copy JSON exports editable data without HTML',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.version===2&&d.fields.some(f=>f.id==='intro.hero-heading'&&f.text==='Changed heading')&&d._schema&&d.design.typography.h1FontSizePx>0&&d.fields.every(f=>!('index' in f))&&Boolean(d.sections)&&Boolean(d.design)&&Boolean(d.page)&&!('html' in d)&&!window.__exportedHTML.includes('<!DOCTYPE html>')})()"));
+ check('Copy JSON exports editable data without HTML',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.version===2&&d.fields.some(f=>f.id==='intro.hero-heading'&&f.text==='Changed heading')&&d._schema&&d.design.typography.h1FontSizePx>0&&d.fields.every(f=>typeof f.group==='string'||f.group===null)&&d.fields.every(f=>!('index' in f))&&Boolean(d.sections)&&Boolean(d.design)&&Boolean(d.page)&&!('html' in d)&&!window.__exportedHTML.includes('<!DOCTYPE html>')})()"));
  check('Copy JSON leaves editor open',await js("!document.querySelector('#ue-screen').hidden"));
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-json-input').value='{broken';document.querySelector('#ue-json-apply').click()");
  check('invalid JSON does not change page',await js("!document.querySelector('#ue-json-error').hidden&&document.querySelector('h1').textContent==='Changed heading'"));
- await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.id==='intro.hero-heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.typography.fontFamily='Inter, -apple-system, BlinkMacSystemFont, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.id==='intro.hero-heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.typography.fontFamily='Inter, -apple-system, BlinkMacSystemFont, sans-serif';d.fields.find(f=>f.id==='page.hero-image').alt='Updated alt without changing image';d.sections.order=['links','intro'];d.sections.items.links.label='Programs';d.design.colors.accent='#38bdf8';d.design.buttons.primary.background='#38bdf8';d.design.buttons.primary.text='#0f172a';d.design.buttons.secondary.background='#e8e7e0';d.design.buttons.secondary.text='#25302d';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
  await js("document.querySelector('#ue-json-apply').click()");
  check('Import JSON applies bulk content and settings',await js("document.querySelector('h1').textContent==='Bulk changed heading'&&document.title==='Bulk title'&&document.querySelector('#ue-json-dialog').hidden"));
+ check('image alt-only change preserves original src, srcset and loading',await js("(()=>{const img=document.querySelector('img[data-edit=\\\"Hero image\\\"]');return img.alt==='Updated alt without changing image'&&img.getAttribute('src')==='https://example.com/old.jpg?w=1000'&&img.getAttribute('srcset')==='https://example.com/old.jpg?w=400 400w'&&img.getAttribute('loading')==='lazy'})()"));
+ check('reordered section updates its numbered eyebrow',await js("document.querySelector('main section')?.dataset.section==='links'&&document.querySelector('[data-section=links] .eyebrow')?.textContent==='01 / Programs'"));
+ check('primary, secondary and navigation button text stay distinct',await js("(()=>{const primary=getComputedStyle(document.querySelector('a.button:not(.secondary)'));const secondary=getComputedStyle(document.querySelector('a.button.secondary'));const nav=getComputedStyle(document.querySelector('.site-links a'));return primary.backgroundColor==='rgb(56, 189, 248)'&&primary.color==='rgb(15, 23, 42)'&&secondary.backgroundColor==='rgb(232, 231, 224)'&&secondary.color==='rgb(37, 48, 45)'&&nav.backgroundColor==='rgb(56, 189, 248)'&&nav.color==='rgb(15, 23, 42)'})()"));
+
  check('imported Inter CSS stack loads Google Fonts',await js("document.querySelector('#editor-google-font')?.href.includes('family=Inter')&&document.querySelector('#editor-page-style')?.textContent.includes('BlinkMacSystemFont')"));
  check('custom font stack appears in Design controls',await js("(()=>{document.querySelector('[data-tab=design]').click();return Boolean([...document.querySelectorAll('#ue-style-panel input')].find(el=>el.getAttribute('aria-label')==='Custom font family'&&el.value.includes('Inter')&&!el.hidden))})()"));
  await js("document.querySelector('#ue-undo').click()");
  check('undo restores pre-import page content and settings',await js("document.querySelector('h1').textContent==='Changed heading'&&document.title!=='Bulk title'"));
+ check('undo restores original image alt and section order',await js("document.querySelector('img[data-edit=\\\"Hero image\\\"]').alt==='A placeholder image'&&document.querySelector('main section')?.dataset.section==='intro'"));
+
  check('undo removes imported Google Fonts stylesheet',await js("!document.querySelector('#editor-google-font')"));
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
  await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.design.typography.fontFamily='Unlisted Experimental Font, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d);document.querySelector('#ue-json-apply').click()})()");
