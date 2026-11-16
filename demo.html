@@ -29,7 +29,7 @@ p{font-size:17px;line-height:1.72;color:#5a625d;max-width:65ch}
 .hero-visual img,.photo img{display:block;width:100%;height:100%;object-fit:cover}
 .actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
 .button,.btn{display:inline-flex;padding:13px 20px;background:#273d35;color:white;text-decoration:none;border:0;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
-.button.secondary{background:#e8e7e0;color:#25302d}
+.button.secondary,.btn.secondary{background:#e8e7e0;color:#25302d}
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:30px 0}
 .card{border:1px solid #d9ddd6;border-radius:22px;padding:24px;background:white}
 .card p{font-size:15px;margin-bottom:0}
@@ -54,13 +54,13 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
    <div class="eyebrow">Thoughtful psychiatric care</div>
    <h1 data-edit="Hero heading">Care that starts with listening.</h1>
    <p class="intro" data-edit="Hero description">Medication management and collaborative care for adults seeking a thoughtful, practical approach to mental health.</p>
-   <div class="actions"><a class="button" data-edit="Explore services button" href="#work">Explore services</a><button class="btn" data-edit="Consultation button" type="button">Schedule a consultation</button></div>
+   <div class="actions"><a class="button" data-edit="Explore services button" href="#work">Explore services</a><button class="btn secondary" data-button-role="secondary" data-edit="Consultation button" type="button">Schedule a consultation</button></div>
   </div>
   <div class="hero-visual"><img data-edit="Hero image" src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1000" alt="Warm, welcoming office space"></div>
  </div>
  <hr class="section-divider" data-edit="Welcome section divider">
 </section>
-<section id="about" data-section="about" aria-label="About">
+<section id="about" data-section="about" aria-label="Approach">
  <div class="eyebrow">01 / Approach</div>
  <h2 data-edit="About heading">Mental health care should feel personal.</h2>
  <div class="two-cols">
@@ -69,7 +69,7 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
  </div>
  <hr class="section-divider" data-edit="Approach section divider">
 </section>
-<section id="work" data-section="work" aria-label="Our work">
+<section id="work" data-section="work" aria-label="Services">
  <div class="eyebrow">02 / Services</div>
  <h2 data-edit="Work heading">Support for the things that matter.</h2>
  <p data-edit="Work introduction">A few common areas of care, with clear next steps and room for your questions.</p>
@@ -80,7 +80,7 @@ footer{padding:40px 0;color:#6d746d;font-size:13px}
  </div>
  <hr class="section-divider" data-edit="Services section divider">
 </section>
-<section id="contact" data-section="contact" aria-label="Get in touch">
+<section id="contact" data-section="contact" aria-label="Next steps">
  <div class="eyebrow">03 / Next steps</div>
  <h2 data-edit="Contact heading">Ready for a conversation?</h2>
  <p data-edit="Contact description">Reach out to ask about availability, treatment fit, and what to expect at an initial appointment.</p>
