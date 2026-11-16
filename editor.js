@@ -260,14 +260,14 @@ function init(){
  function reorderSections(order=sectionOrder){
   if(!sectionNodes.length)return;
   const byId=new Map(sectionNodes.map(n=>[n.getAttribute('data-section'),n]));
-  for(const id of order){
-   const node=byId.get(id);if(!node||!node.parentElement)continue;
-   // Same-parent sections can be moved safely without changing their internals.
-   const siblings=sectionNodes.filter(n=>n.parentElement===node.parentElement);
-   const parent=node.parentElement;
-   const ordered=order.map(k=>byId.get(k)).filter(n=>n&&n.parentElement===parent&&siblings.includes(n));
-   const after=siblings[siblings.length-1]?.nextSibling||null;
-   for(const item of ordered)parent.insertBefore(item,after);
+  const parents=[...new Set(sectionNodes.map(n=>n.parentElement).filter(Boolean))];
+  for(const parent of parents){
+   const actual=Array.from(parent.children).filter(n=>sectionNodes.includes(n));
+   const desired=order.map(id=>byId.get(id)).filter(n=>n?.parentElement===parent);
+   // Avoid moving existing DOM nodes unless their order genuinely changed.
+   if(actual.length!==desired.length||actual.every((n,i)=>n===desired[i]))continue;
+   const after=actual[actual.length-1]?.nextSibling||null;
+   for(const node of desired)parent.insertBefore(node,after);
   }
  }
  function renderSections(){
@@ -663,6 +663,7 @@ function init(){
    sourceHTML='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
   }
   baseline=sourceHTML;
+  touchedNodes.clear();touchedRoots.clear();
   const roots=Array.from(document.querySelectorAll('[data-edit="links"]')).filter(root=>root.querySelector('a[data-edit]'));
   liveRoots=roots;rootSnapshots=roots.map(root=>root.innerHTML);
   liveNodes=editable().filter(el=>el.getAttribute('data-edit')!=='links');
