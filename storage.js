@@ -8,15 +8,46 @@ export const pageSignature=()=>{
  };
 
 export const draftCompatible=(saved,current)=>{
-  if(!saved||!Array.isArray(saved.model)||saved.model.length<current.length)return false;
+  if(!saved||!Array.isArray(saved.model))return false;
   const originals=saved.model.filter(item=>!item.added);
   if(originals.length!==current.length)return false;
-  const byIndex=new Map(originals.map(item=>[item.index,item]));
-  return byIndex.size===current.length&&current.every(item=>{
-   const old=byIndex.get(item.index);
+  return current.every((item,i)=>{
+   const old=originals[i];
    return old&&old.tag===item.tag&&old.label===item.label&&old.group===item.group;
   });
  };
+// The edit flag and transient preview query parameters must never change
+// the browser storage address for the same document.
+export const draftStorageKey=(url=location.href)=>{
+ const page=new URL(url);
+ return 'html-editor:draft:v2:'+page.origin+page.pathname;
+};
+export const recoverDraftModel=(saved,current)=>{
+ if(!saved||!Array.isArray(saved.model))return null;
+ if(draftCompatible(saved,current))return saved.model;
+ // Recover by field identity when a generated preview adds, removes, or
+ // reorders fields. Duplicate labels are paired by their source order.
+ const identity=item=>[item.tag,item.label,item.group].join('\\u001f');
+ const pools=new Map();
+ for(const item of saved.model.filter(x=>!x.added)){
+  const key=identity(item);
+  if(!pools.has(key))pools.set(key,[]);
+  pools.get(key).push(item);
+ }
+ let matched=0;
+ const rebuilt=current.map(item=>{
+  const found=pools.get(identity(item))?.shift();
+  if(!found)return item;
+  matched++;
+  return {...item,...found,index:item.index,tag:item.tag,label:item.label,group:item.group,added:false};
+ });
+ if(!matched)return null;
+ // Added links can be retained if their target link group still exists.
+ for(const item of saved.model.filter(x=>x.added&&x.link&&Number.isInteger(x.group))){
+  if(current.some(x=>x.group===item.group&&x.link))rebuilt.push({...item});
+ }
+ return rebuilt;
+};
 
 /* Browser storage may be blocked by privacy settings or file:// origins. */
 export function readJSON(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}}
