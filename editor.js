@@ -11,6 +11,7 @@ editorStyle.textContent+="\n#ue-screen:not(.ue-fullscreen){width:min(var(--ue-pa
 editorStyle.textContent+="\n#ue-actions{display:flex;align-items:center;justify-content:flex-start;gap:5px}\n#ue-actions button{min-width:0;width:auto;flex:none;padding:10px 12px}\n#ue-actions #ue-cancel,#ue-actions #ue-revert{border-color:transparent;background:transparent;color:#686868;font-weight:500}\n#ue-actions #ue-cancel:hover,#ue-actions #ue-revert:hover{background:#f5f5f5;color:#222}\n#ue-actions #ue-copy{margin-left:auto;min-width:110px;padding:11px 20px;font-weight:650}\n#ue-head{padding:0 36px 0 36px}\n@media(max-width:390px){#ue-actions{gap:0}#ue-actions button{font-size:13px;padding:10px 8px}#ue-actions #ue-copy{min-width:90px;padding:10px 13px}}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-custom-heading{font-weight:700;font-size:14px;border-top:1px solid #e7e7e7;padding-top:17px;margin-top:7px;color:#242424}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-button-title{font-size:13px;font-weight:650;color:#555;padding-top:10px}\n";
+editorStyle.textContent+="\n#ue-style-panel .ue-button-block{display:grid;gap:11px;padding:2px 0 20px;border-bottom:1px solid #e9e9e9}\n#ue-style-panel .ue-button-title{padding-top:8px}\n#ue-style-panel .ue-button-preview{display:block;box-sizing:border-box;min-height:48px;padding:13px 16px;border:1px solid #0002;overflow-wrap:anywhere;line-height:1.4;pointer-events:none}\n#ue-style-panel .ue-button-block .ue-setting{padding-bottom:8px}\n#ue-style-panel .ue-button-block .ue-setting:last-child{border-bottom:0}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -87,7 +88,12 @@ function init(){
   });
   const genericLabels=designLabels.filter((_,index)=>!Object.keys(originalVariables).length||![0,1,2,8,9,10].includes(index));
   genericLabels.forEach((label,index)=>{if((label+' design style').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Design',design:index})});
-  Object.entries(buttonAppearance).forEach(([index,info])=>{if((info.label+' button background text color').toLocaleLowerCase().includes(q))matches.push({tab:'design',label:info.label,detail:'Individual button colors',buttonDesign:index})});
+  Object.entries(buttonAppearance).forEach(([index,info])=>{
+   const item=model.find(x=>!x.added&&x.index===Number(index));
+   if(!item||item.deleted)return;
+   const visibleText=(item.text||'').replace(/\s+/g,' ').trim();
+   if((info.label+' '+visibleText+' button background text color').toLocaleLowerCase().includes(q))matches.push({tab:'design',label:visibleText||info.label,detail:info.label,buttonDesign:index});
+  });
   Object.keys(originalVariables).forEach((name,index)=>{const label=varLabel(name);if((label+' '+name+' design color size').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Website color or size',customDesign:name})});
   [['Page title',0],['Page description',1]].forEach(([label,index])=>{if((label+' '+String(index?pageMeta.description:pageMeta.title)+' SEO settings').toLocaleLowerCase().includes(q))matches.push({tab:'settings',label,detail:'Settings',setting:index})});
   for(const hit of matches){
@@ -406,7 +412,30 @@ function init(){
   if(buttons.length){
    const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Individual buttons';stylePanel.append(heading);
    for(const [index,info] of buttons){
-    const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;stylePanel.append(name);
+    const item=model.find(x=>!x.added&&x.index===Number(index));
+    if(!item||item.deleted)continue;
+    const block=document.createElement('div');block.className='ue-button-block';
+    const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;block.append(name);
+    // Preview only: read the source element's appearance; never clone its markup
+    // or insert an interactive duplicate into the website.
+    const preview=document.createElement('div');preview.className='ue-button-preview';
+    preview.dataset.ueButtonPreview=index;
+    preview.setAttribute('aria-label','Preview of '+info.label);
+    block.append(preview);
+    const updatePreview=()=>{
+     const live=liveSnapshots[Number(index)]?.node;
+     const visual=live?.isConnected?getComputedStyle(live):null;
+     const current=model.find(x=>!x.added&&x.index===Number(index));
+     preview.textContent=current?.text||info.label;
+     preview.style.backgroundColor=visual?.backgroundColor||buttonSettings[index]?.background||info.background;
+     preview.style.color=visual?.color||buttonSettings[index]?.color||info.color;
+     preview.style.borderRadius=visual?.borderRadius||'8px';
+     preview.style.fontFamily=visual?.fontFamily||'inherit';
+     preview.style.fontWeight=visual?.fontWeight||'600';
+     preview.style.fontSize=visual?.fontSize||'14px';
+     preview.style.textAlign=visual?.textAlign==='left'?'left':'center';
+    };
+    updatePreview();
     for(const [key,label] of [['background','Background'],['color','Text color']]){
      const row=document.createElement('div');row.className='ue-setting';
      const lbl=document.createElement('label');lbl.textContent=label;row.append(lbl);
@@ -414,14 +443,15 @@ function init(){
      const value=buttonSettings[index]?.[key]||info[key];
      const swatch=document.createElement('input');swatch.type='color';swatch.value=hexColor(value)||'#000000';
      const input=document.createElement('input');input.type='text';input.value=value;input.setAttribute('aria-label',info.label+' '+label);
-     const setValue=v=>{checkpoint();buttonSettings[index]={...buttonSettings[index],[key]:v};applyStyle();saveDraft();reset.disabled=v===info[key]};
+     const setValue=v=>{checkpoint();buttonSettings[index]={...buttonSettings[index],[key]:v};applyStyle();updatePreview();saveDraft();reset.disabled=v===info[key]};
      swatch.oninput=()=>{input.value=swatch.value;setValue(swatch.value)};
      input.onchange=()=>{const color=hexColor(input.value);if(!color){input.value=buttonSettings[index]?.[key]||info[key];return}swatch.value=color;setValue(input.value.trim())};
      pair.append(swatch,input);row.append(pair);
      const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+info.label+' '+label;reset.setAttribute('aria-label',reset.title);reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=value===info[key];
      reset.onclick=()=>{checkpoint();if(buttonSettings[index]){delete buttonSettings[index][key];if(!Object.keys(buttonSettings[index]).length)delete buttonSettings[index]}applyStyle();saveDraft();renderStyle()};
-     row.append(reset);stylePanel.append(row);
+     row.append(reset);block.append(row);
     }
+    stylePanel.append(block);
    }
   }
   icons();
@@ -638,7 +668,19 @@ function init(){
     root.append(node);
    }
   });
-  syncSections();saveDraft();
+  syncSections();
+  // Keep button samples current as text or styles change in Content.
+  for(const sample of stylePanel.querySelectorAll('[data-ue-button-preview]')){
+   const index=Number(sample.dataset.ueButtonPreview),item=model.find(x=>!x.added&&x.index===index);
+   if(!item||item.deleted){sample.closest('.ue-button-block')?.remove();continue}
+   sample.textContent=item.text||buttonAppearance[index]?.label||'';
+   const node=liveSnapshots[index]?.node;
+   if(node?.isConnected){
+    const css=getComputedStyle(node);
+    sample.style.backgroundColor=css.backgroundColor;sample.style.color=css.color;
+   }
+  }
+  saveDraft();
  }
  const icons=()=>{
   // Official Lucide icon artwork bundled locally for offline rendering.
