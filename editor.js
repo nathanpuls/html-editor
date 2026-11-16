@@ -49,28 +49,54 @@ function init(){
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||min));
  const safeColor=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(v)?v:fallback;
- const styleSheetText=a=>{
-  // Only override controls the user actually changed. Preserve the existing
-  // responsive typography and design when editing an unrelated color.
-  const parts=['/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */'];
-  const changed=k=>String(a[k])!==String(styleDefaults[k]);
-  const rule=(selector,declaration)=>parts.push(selector+'{'+declaration+'}');
-  if(changed('background'))rule('html body','background-color:'+safeColor(a.background,styleDefaults.background)+'!important');
-  if(changed('text'))rule('html body,html body :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,small,span):not(#ue-screen *)','color:'+safeColor(a.text,styleDefaults.text)+'!important');
-  if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a)','color:'+safeColor(a.accent,styleDefaults.accent)+'!important');
-  if(changed('font'))rule('html body','font-family:'+(styleFonts[a.font]||styleFonts['system-ui'])+'!important');
-  for(const tag of ['h1','h2','h3','p'])if(changed(tag))rule('html body '+tag+':not(#ue-screen '+tag+')','font-size:'+clamp(a[tag],8,120)+'px!important');
-  if(changed('radius'))rule('html body :is(button,.button,.btn,[role=button],.card,img,input,textarea):not(#ue-screen *),html body nav[data-edit=links] a','border-radius:'+clamp(a.radius,0,64)+'px!important');
-  const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
-  if(changed('buttonBackground'))rule(buttonSelectors,'background-color:'+safeColor(a.buttonBackground,styleDefaults.buttonBackground)+'!important');
-  if(changed('buttonText'))rule(buttonSelectors,'color:'+safeColor(a.buttonText,styleDefaults.buttonText)+'!important');
-  return parts.join('\\n');
+ const rgbToHex=value=>{
+  const v=String(value||'').trim();
+  if(/^#[0-9a-f]{6}$/i.test(v))return v.toLowerCase();
+  const m=v.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+  return m?'#'+[m[1],m[2],m[3]].map(n=>Math.min(255,Number(n)).toString(16).padStart(2,'0')).join(''):null;
  };
- const readStyle=()=>{
+ const pageColor=(el,prop,fallback)=>rgbToHex(el?getComputedStyle(el)[prop]:'')||fallback;
+ const pageButton=()=>document.querySelector('main .button,main .btn,main button,main [role="button"],main nav[data-edit="links"] a')||document.querySelector('body .button,body .btn');
+ function readStyle(){
   const raw=document.getElementById('editor-page-style')?.textContent||'';
   const match=raw.match(/\/\* editor-style:(.*?) \*\//);
   if(match){try{return {...styleDefaults,...JSON.parse(decodeURIComponent(match[1]))}}catch{}}
-  return {...styleDefaults};
+  const body=getComputedStyle(document.body),button=pageButton();
+  const heading=tag=>document.querySelector('main '+tag+',body '+tag);
+  const size=tag=>{const el=heading(tag);return el?Math.round(parseFloat(getComputedStyle(el).fontSize))||styleDefaults[tag]:styleDefaults[tag]};
+  const cards=document.querySelector('.card,.hero-visual,.photo');
+  const initialFont=body.fontFamily.toLowerCase();
+  const font=Object.keys(styleFonts).find(k=>initialFont.includes(k.toLowerCase()))||'system-ui';
+  return {...styleDefaults,
+   background:pageColor(document.body,'backgroundColor',styleDefaults.background),
+   text:pageColor(document.body,'color',styleDefaults.text),
+   accent:pageColor(document.querySelector('.site-nav a,a:not(.button):not(.btn)'), 'color',styleDefaults.accent),
+   buttonBackground:pageColor(button,'backgroundColor',styleDefaults.buttonBackground),
+   buttonText:pageColor(button,'color',styleDefaults.buttonText),
+   font,h1:size('h1'),h2:size('h2'),h3:size('h3'),p:size('p'),
+   radius:Math.round(parseFloat(cards?getComputedStyle(cards).borderTopLeftRadius:(button?getComputedStyle(button).borderTopLeftRadius:'8px')))||0
+  };
+ }
+ const originalAppearance=readStyle();
+ const styleSheetText=a=>{
+  // Store exact settings, but override only properties changed from the
+  // original page, preserving responsive typography and existing CSS.
+  const parts=['/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */'];
+  const changed=k=>String(a[k])!==String(originalAppearance[k]);
+  const colors=['background','text','accent','buttonBackground','buttonText'];
+  const vars=colors.filter(changed).map(k=>'--ue-'+k+':'+safeColor(a[k],styleDefaults[k])+';');
+  if(vars.length)parts.push(':root{'+vars.join('')+'}');
+  const rule=(selector,declaration)=>parts.push(selector+'{'+declaration+'}');
+  if(changed('background'))rule('html body','background-color:var(--ue-background)!important');
+  if(changed('text'))rule('html body,html body :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,small,span):not(#ue-screen *)','color:var(--ue-text)!important');
+  if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a)','color:var(--ue-accent)!important');
+  if(changed('font'))rule('html body','font-family:'+(styleFonts[a.font]||styleFonts['system-ui'])+'!important');
+  for(const tag of ['h1','h2','h3','p'])if(changed(tag))rule('html body '+tag+':not(#ue-screen '+tag+')','font-size:'+clamp(a[tag],8,120)+'px!important');
+  if(changed('radius'))rule('html body :is(button,.button,.btn,[role=button],.card,.hero-visual,.photo,img,input,textarea):not(#ue-screen *),html body nav[data-edit=links] a','border-radius:'+clamp(a.radius,0,64)+'px!important');
+  const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
+  if(changed('buttonBackground'))rule(buttonSelectors,'background-color:var(--ue-buttonBackground)!important');
+  if(changed('buttonText'))rule(buttonSelectors,'color:var(--ue-buttonText)!important');
+  return parts.join('\n');
  };
  const applyStyle=()=>{
   let el=document.getElementById('editor-page-style');
