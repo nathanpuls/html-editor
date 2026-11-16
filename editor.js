@@ -605,7 +605,22 @@ function init(){
   return (hash>>>0).toString(36);
  };
  const originalSignature=pageSignature();
- const readDraft=()=>{try{const x=JSON.parse(localStorage.getItem(draftKey)||'null');return x?.signature===originalSignature&&Array.isArray(x.model)?x:null}catch{return null}};
+ // Match drafts by editable element identity, not volatile rendered CSS or document title.
+ // Preserve older drafts whose original signature changed but whose fields still match.
+ const draftCompatible=(saved,current)=>{
+  if(!saved||!Array.isArray(saved.model)||saved.model.length<current.length)return false;
+  const originals=saved.model.filter(item=>!item.added);
+  if(originals.length!==current.length)return false;
+  const byIndex=new Map(originals.map(item=>[item.index,item]));
+  return byIndex.size===current.length&&current.every(item=>{
+   const old=byIndex.get(item.index);
+   return old&&old.tag===item.tag&&old.label===item.label&&old.group===item.group;
+  });
+ };
+ const readDraft=()=>{try{
+  const x=JSON.parse(localStorage.getItem(draftKey)||'null');
+  return x&&Array.isArray(x.model)?x:null;
+ }catch{return null}};
  const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
  const saveDraft=()=>{
   try{
@@ -994,7 +1009,7 @@ function init(){
   undoStack=[];revertAvailable=false;syncUndoButton();
   initialSectionOrder=[...sectionOrder];
   const saved=readDraft();
-  if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
+  if(draftCompatible(saved,model)){
    model=saved.model;
    if(saved.styleSettings&&saved.styleSchema===2)styleSettings={...originalAppearance,...saved.styleSettings};
    if(saved.buttonSettings&&typeof saved.buttonSettings==='object')for(const [index,settings] of Object.entries(saved.buttonSettings)){
@@ -1021,7 +1036,7 @@ function init(){
  };
  add.onclick=()=>{checkpoint();const group=model.find(x=>x.link&&x.group!==null)?.group;if(group===undefined)return;model.push({added:true,index:-1,tag:'a',link:true,text:'',url:'',group});render();fields.lastElementChild?.querySelector('input')?.focus()};
  screen.querySelector('#ue-cancel').onclick=()=>hideEditor();
- screen.querySelector('#ue-revert').onclick=()=>{saveRevert();close(true)};
+ screen.querySelector('#ue-revert').onclick=()=>{close(true);clearRevert()};
  document.addEventListener('pointerdown',event=>{
   if(!draftActive||screen.hidden)return;
   if(screen.contains(event.target)||pencil.contains(event.target))return;
@@ -1034,11 +1049,15 @@ function init(){
    if(window.endsSharedCopyText)await window.endsSharedCopyText(value);else await navigator.clipboard.writeText(value);
    const sourceTag=document.getElementById('ends-nav-data');
    if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=value;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
-   clearRevert();close(false);
+   saveDraft();hideEditor();
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
  // Recover a compatible local draft immediately, including its live preview.
- if(readDraft()){pencil.click();hideEditor()}
+ if(readDraft()){
+  // Initialize from the unedited document first, then apply the saved model to
+  // the live page. Do not discard a draft merely because its style changed.
+  pencil.click();hideEditor();
+ }
  document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&draftActive&&!screen.hidden&&!e.target?.closest?.('input,textarea,[contenteditable]')){
    if(undoStack.length){e.preventDefault();undo()}return;
