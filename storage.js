@@ -17,3 +17,10 @@ export const draftCompatible=(saved,current)=>{
    return old&&old.tag===item.tag&&old.label===item.label&&old.group===item.group;
   });
  };
+
+/* Browser storage may be blocked by privacy settings or file:// origins. */
+export function readJSON(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}}
+export function writeJSON(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}}
+export function removeStorage(key){try{localStorage.removeItem(key)}catch{}}
+export function pushHistory(stack,snapshot,limit=80){if(stack.at(-1)===snapshot)return;stack.push(snapshot);if(stack.length>limit)stack.shift()}
+export function popHistory(stack){const value=stack.pop();return value===undefined?null:JSON.parse(value)}
