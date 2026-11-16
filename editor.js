@@ -451,7 +451,7 @@ function init(){
   model=liveNodes.map((el,i)=>{
    const group=el.closest('[data-edit="links"]');
    const article=isArticle(el),image=el.tagName==='IMG',text=article?articleText(el):el.textContent.trim();
-   return {index:i,tag:el.tagName.toLowerCase(),article,image,src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalAlt:el.getAttribute('alt')||'',originalURL:el.getAttribute('href')||'',originalText:text,hidden:false,deleted:false,link:el.tagName==='A',label:(el.getAttribute('data-label')||el.getAttribute('aria-label')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
+   return {index:i,tag:el.tagName.toLowerCase(),article,image,src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalAlt:el.getAttribute('alt')||'',originalURL:el.getAttribute('href')||'',originalText:text,hidden:false,deleted:false,link:el.tagName==='A',label:(el.getAttribute('data-edit')?.trim()&&el.getAttribute('data-edit')!=='links'?el.getAttribute('data-edit'):el.getAttribute('data-label')||el.getAttribute('aria-label')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
   });
   draftActive=true;initialModel=JSON.stringify(model);
   originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
