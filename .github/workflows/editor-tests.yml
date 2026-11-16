@@ -1,0 +1,20 @@
+name: Editor module tests
+on:
+  push:
+    branches: [refactor/native-modules]
+  pull_request:
+jobs:
+  editor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check native JS syntax
+        run: |
+          for file in editor.js interface.js content.js design.js storage.js export.js; do
+            node --experimental-default-type=module --check "$file"
+          done
+      - name: Run browser smoke checks (headless Chrome, no npm install)
+        run: node --experimental-default-type=module tests/smoke.mjs
