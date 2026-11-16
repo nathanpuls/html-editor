@@ -30,7 +30,7 @@ export const styleToJSON=s=>({
  }
 });
 export function exportEditableJSON(ctx){
- const {model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,sectionStates,pageMeta,styleSettings,variableSettings,buttonSettings,buttonAppearance}=ctx;
+ const {model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,sectionStates,pageMeta,styleSettings,variableSettings,buttonSettings,buttonAppearance,visualValues,visualTargets}=ctx;
  const groups=liveRoots.map(groupId);
  const ids=stableFieldIds(model,liveSnapshots);
  const addedCount=new Map();
@@ -71,7 +71,8 @@ export function exportEditableJSON(ctx){
     const role=node?.matches?.('.secondary,[data-button-role="secondary"]')?'secondary':'primary';
     return [id,role];
    }).filter(([id])=>Boolean(id))),
-   sections:'order contains existing section ids; changing section labels updates visible numbered eyebrow labels where present.'
+   sections:'order contains existing section ids; changing section labels updates visible numbered eyebrow labels where present.',
+   elements:'design.elements contains optional per-element fontSize (px), opacity (0-100%), radius (px), padding (px), and gap (px). Only use controls appropriate to the target.'
   },
   page:{title:pageMeta.title,description:pageMeta.description},
   fields,
@@ -79,11 +80,11 @@ export function exportEditableJSON(ctx){
    label:sectionStates[id]?.label??sectionNodes.find(n=>n.getAttribute('data-section')===id)?.getAttribute('aria-label')??id,
    hidden:!!sectionStates[id]?.hidden,deleted:!!sectionStates[id]?.deleted
   }]))},
-  design:{...styleToJSON(styleSettings),variables:{...variableSettings},elementButtons:buttons}
+  design:{...styleToJSON(styleSettings),variables:{...variableSettings},elementButtons:buttons,elements:structuredClone(visualValues||{})}
  };
 }
 export function importEditableJSON(data,ctx){
- const {model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,styleSettings,styleDefaults,styleFonts,originalVariables,buttonAppearance,validImageURL,validURL,validLinkTarget,validFontStack,hexColor}=ctx;
+ const {model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,styleSettings,styleDefaults,styleFonts,originalVariables,buttonAppearance,validImageURL,validURL,validLinkTarget,validFontStack,hexColor,visualTargets}=ctx;
  if(!isRecord(data)||data.version!==2||!Array.isArray(data.fields)||!isRecord(data.page)||!isRecord(data.sections)||!isRecord(data.design))
   throw Error('Expected version 2 editable JSON with page, fields, sections, and design.');
  const groups=liveRoots.map(groupId),byId=new Map(),buttonById=new Map();
@@ -166,5 +167,21 @@ export function importEditableJSON(data,ctx){
   buttons[buttonById.get(id)]={background:color(colors.background,'Button background'),color:color(colors.text,'Button text')};
  }
 
- return {model:next,pageMeta:{title:string(data.page.title,'Page title'),description:string(data.page.description,'Description')},sectionOrder:[...order],sectionStates:states,styleSettings:style,variableSettings:variables,buttonSettings:buttons};
+ if(!isRecord(design.elements))throw Error('Design must include an elements object.');
+ const targetById=new Map(visualTargets.map(target=>[target.id,target]));
+ const ranges={fontSize:[8,120],opacity:[0,100],radius:[0,100],padding:[0,120],gap:[0,120]};
+ const visualValues={};
+ for(const [id,settings] of Object.entries(design.elements)){
+  const target=targetById.get(id);
+  if(!target||!isRecord(settings))throw Error('Unknown visual target: '+id);
+  const values={};
+  for(const [key,value] of Object.entries(settings)){
+   const range=ranges[key];
+   if(!range||!target.controls.includes(key)||typeof value!=='number'||!Number.isFinite(value)||!Number.isInteger(value)||value<range[0]||value>range[1])
+    throw Error('Invalid '+key+' slider value on '+id);
+   values[key]=value;
+  }
+  if(Object.keys(values).length)visualValues[id]=values;
+ }
+ return {model:next,pageMeta:{title:string(data.page.title,'Page title'),description:string(data.page.description,'Description')},sectionOrder:[...order],sectionStates:states,styleSettings:style,variableSettings:variables,buttonSettings:buttons,visualValues};
 }
