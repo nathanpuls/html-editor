@@ -96,7 +96,7 @@ Edits preview on the page immediately. Browser drafts are saved locally and can 
 
 The loader resolves modules relative to its own URL, so installations only need to reference `editor.js`. No JavaScript framework, bundler, or runtime package is required.
 
-The hosted installation uses **`https://edit.built.at`** as its entry point (no `.js` suffix needed). The editor's modules and stylesheet are served at paths such as `https://edit.built.at/interface.js` and `https://edit.built.at/editor.css`. Cloudflare serves these files from this repository via Built.at's Worker routing, so the script URL stays the same across releases. The existing `https://built.at/_editor/editor.js` URL also remains available.
+The hosted installation uses **`https://edit.built.at`** as its entry point (no `.js` suffix needed). The editor's modules and stylesheet are served at paths such as `https://edit.built.at/interface.js` and `https://edit.built.at/editor.css`. Cloudflare serves these files from this repository via Built.at's Worker routing, so the script URL stays the same across releases.
 
 ### Running your own copy
 
