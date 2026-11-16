@@ -12,7 +12,7 @@ const root=resolve(import.meta.dirname,'..');
 const mime={'.js':'application/javascript','.css':'text/css','.html':'text/html'};
 const server=createServer(async(req,res)=>{
  const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
- if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
+ if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|json-schema\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
  try{const data=await readFile(resolve(root,path.slice(1)));res.writeHead(200,{'content-type':mime[extname(path)]||'text/plain','cache-control':'no-store'});res.end(data)}
  catch{res.writeHead(404).end()}
 });
@@ -129,13 +129,13 @@ try{
  check('Copy JSON menu opens from caret',await js("!document.querySelector('#ue-copy-menu').hidden"));
  await js("document.querySelector('#ue-copy-json').click()");
  await waitJS("typeof window.__exportedHTML==='string'");
- check('Copy JSON exports editable data without HTML',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.version===1&&d.fields.some(f=>f.label==='Hero heading'&&f.text==='Changed heading')&&Boolean(d.sections)&&Boolean(d.design)&&Boolean(d.page)&&!('html' in d)&&!window.__exportedHTML.includes('<!DOCTYPE html>')})()"));
+ check('Copy JSON exports editable data without HTML',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.version===2&&d.fields.some(f=>f.id==='intro.hero-heading'&&f.text==='Changed heading')&&d._schema&&d.design.typography.h1FontSizePx>0&&d.fields.every(f=>!('index' in f))&&Boolean(d.sections)&&Boolean(d.design)&&Boolean(d.page)&&!('html' in d)&&!window.__exportedHTML.includes('<!DOCTYPE html>')})()"));
  check('Copy JSON leaves editor open',await js("!document.querySelector('#ue-screen').hidden"));
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-json-input').value='{broken';document.querySelector('#ue-json-apply').click()");
  check('invalid JSON does not change page',await js("!document.querySelector('#ue-json-error').hidden&&document.querySelector('h1').textContent==='Changed heading'"));
- await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.label==='Hero heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.style.font='Inter, -apple-system, BlinkMacSystemFont, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.fields.find(f=>f.id==='intro.hero-heading').text='Bulk changed heading';d.page.title='Bulk title';d.design.typography.fontFamily='Inter, -apple-system, BlinkMacSystemFont, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d)})()");
  await js("document.querySelector('#ue-json-apply').click()");
  check('Import JSON applies bulk content and settings',await js("document.querySelector('h1').textContent==='Bulk changed heading'&&document.title==='Bulk title'&&document.querySelector('#ue-json-dialog').hidden"));
  check('imported Inter CSS stack loads Google Fonts',await js("document.querySelector('#editor-google-font')?.href.includes('family=Inter')&&document.querySelector('#editor-page-style')?.textContent.includes('BlinkMacSystemFont')"));
@@ -144,7 +144,7 @@ try{
  check('undo restores pre-import page content and settings',await js("document.querySelector('h1').textContent==='Changed heading'&&document.title!=='Bulk title'"));
  check('undo removes imported Google Fonts stylesheet',await js("!document.querySelector('#editor-google-font')"));
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
- await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.design.style.font='Unlisted Experimental Font, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d);document.querySelector('#ue-json-apply').click()})()");
+ await js("(()=>{const d=JSON.parse(window.__exportedHTML);d.design.typography.fontFamily='Unlisted Experimental Font, sans-serif';document.querySelector('#ue-json-input').value=JSON.stringify(d);document.querySelector('#ue-json-apply').click()})()");
  check('unknown valid font stack imports with fallback',await js("document.querySelector('#ue-json-dialog').hidden&&document.querySelector('#editor-page-style')?.textContent.includes('Unlisted Experimental Font')&&!document.querySelector('#editor-google-font')"));
  await js("document.querySelector('#ue-undo').click()");
  // Simulate infrastructure-injected markup present in the live document.
