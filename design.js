@@ -17,6 +17,42 @@ export const hexColor=value=>{
 
 export const varLabel=name=>name.slice(2).split(/[-_]+/).filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
 
+// Fonts are content settings, not executable CSS. Accept safe font-family stacks
+// from AI imports, and load recognized Google Fonts through their CSS API.
+export const googleFontFamilies=[
+ 'Inter','Manrope','Roboto','Open Sans','Lato','Montserrat','Poppins','Nunito',
+ 'DM Sans','Outfit','Plus Jakarta Sans','Work Sans','Raleway','Rubik',
+ 'Space Grotesk','Source Sans 3','Playfair Display','Merriweather','Lora',
+ 'Libre Baskerville','Oswald','Ubuntu','Mulish','Figtree','Barlow',
+ 'Noto Sans','Noto Serif','Roboto Slab','Roboto Mono','IBM Plex Sans',
+ 'Cabin','Karla','Quicksand','PT Sans','PT Serif','Archivo','Josefin Sans'
+];
+export function validFontStack(value){
+ return typeof value==='string'&&value.length>0&&value.length<=240&&
+ /^[a-zA-Z0-9 ,"'-]+$/.test(value)&&
+ value.split(',').every(part=>/^(?:[a-zA-Z][a-zA-Z0-9 -]*|"[a-zA-Z][a-zA-Z0-9 -]*"|'[a-zA-Z][a-zA-Z0-9 -]*')$/.test(part.trim()));
+}
+export function fontCSS(value,styleFonts){
+ if(Object.hasOwn(styleFonts,value))return styleFonts[value];
+ return validFontStack(value)?value:styleFonts['system-ui'];
+}
+export function googleFontURL(value){
+ if(!validFontStack(value))return null;
+ const family=value.split(',')[0].trim().replace(/^['"]|['"]$/g,'');
+ const known=googleFontFamilies.find(font=>font.toLowerCase()===family.toLowerCase());
+ if(!known)return null;
+ return 'https://fonts.googleapis.com/css2?family='+encodeURIComponent(known).replace(/%20/g,'+')+'&display=swap';
+}
+export function syncGoogleFontLink(doc,value){
+ const existing=doc.getElementById('editor-google-font');
+ const href=googleFontURL(value);
+ if(!href){existing?.remove();return}
+ if(existing?.getAttribute('href')===href)return;
+ const link=existing||doc.createElement('link');
+ link.id='editor-google-font';link.rel='stylesheet';link.href=href;
+ if(!existing)doc.head.append(link);
+}
+
 export function drawDesign(ctx){
  const {screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel}=ctx;
   stylePanel.replaceChildren();
@@ -39,8 +75,23 @@ export function drawDesign(ctx){
     text.onchange=()=>{const v=text.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){checkpoint();styleSettings[key]=v;swatch.value=v;update()}else text.value=styleSettings[key]};
     pair.append(swatch,text);row.append(pair);
    }else if(kind==='font'){
-    const select=document.createElement('select');for(const font of Object.keys(styleFonts)){const option=document.createElement('option');option.value=font;option.textContent=font;select.append(option)}
-    select.value=styleSettings[key];select.onchange=()=>{checkpoint();styleSettings[key]=select.value;update()};row.append(select);
+    const select=document.createElement('select');
+    for(const font of Object.keys(styleFonts)){const option=document.createElement('option');option.value=font;option.textContent=font;select.append(option)}
+    const other=document.createElement('option');other.value='__custom__';other.textContent='Custom font stack…';select.append(other);
+    const input=document.createElement('input');input.type='text';input.setAttribute('aria-label','Custom font family');input.placeholder='Inter, system-ui, sans-serif';
+    const known=Object.hasOwn(styleFonts,styleSettings[key]);
+    select.value=known?styleSettings[key]:'__custom__';
+    input.value=known?'':styleSettings[key];input.hidden=known;
+    select.onchange=()=>{
+     if(select.value==='__custom__'){input.hidden=false;input.focus();return}
+     checkpoint();styleSettings[key]=select.value;input.hidden=true;update();
+    };
+    input.onchange=()=>{
+     const value=input.value.trim();
+     if(!validFontStack(value)){input.setCustomValidity('Enter a font name or a comma-separated font stack.');input.reportValidity();return}
+     input.setCustomValidity('');checkpoint();styleSettings[key]=value;update();
+    };
+    row.append(select,input);
    }else{
     const input=document.createElement('input');input.type='number';input.min=kind==='radius'?'0':'8';input.max=kind==='radius'?'64':'120';input.step='1';input.value=styleSettings[key];
     input.oninput=()=>{if(input.value==='')return;checkpoint();styleSettings[key]=clamp(input.value,kind==='radius'?0:8,kind==='radius'?64:120);update()};row.append(input);
@@ -147,7 +198,7 @@ export function buildStyleSheet(ctx){
   if(changed('background'))rule('html body','background-color:var(--ue-background)!important');
   if(changed('text'))rule('html body,html body :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,small,span):not(#ue-screen *)','color:var(--ue-text)!important');
   if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a)','color:var(--ue-accent)!important');
-  if(changed('font'))rule('html body','font-family:'+(styleFonts[a.font]||styleFonts['system-ui'])+'!important');
+  if(changed('font'))rule('html body','font-family:'+fontCSS(a.font,styleFonts)+'!important');
   for(const tag of ['h1','h2','h3','p'])if(changed(tag))rule('html body '+tag+':not(#ue-screen '+tag+')','font-size:'+clamp(a[tag],8,120)+'px!important');
   if(changed('radius'))rule('html body :is(button,.button,.btn,[role=button],.card,.hero-visual,.photo,img,input,textarea):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a','border-radius:'+clamp(a.radius,0,64)+'px!important');
   const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
