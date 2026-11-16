@@ -64,8 +64,9 @@ try{
  await js("document.querySelector('#ue-pencil').click()");
  check('panel opens',await js("!document.querySelector('#ue-screen').hidden"));
  check('ellipsis menu exists',await js("Boolean(document.querySelector('#ue-more'))"));
- check('horizontal ellipsis stays in header',await js("Boolean(document.querySelector('#ue-more svg')) && document.querySelector('#ue-more').getAttribute('aria-label')==='More options'"));
+ check('horizontal ellipsis stays in header',await js("(()=>{const circles=[...document.querySelectorAll('#ue-more svg circle')];return circles.length===3&&circles.every(c=>c.getAttribute('cy')==='12')&&circles.map(c=>c.getAttribute('cx')).join(',')==='5,12,19'})()"));
  check('docking controls live only inside ellipsis menu',await js("Boolean(document.querySelector('#ue-more-menu #ue-dock-left')&&document.querySelector('#ue-more-menu #ue-dock-right'))"));
+ check('left and right menu icons render as arrows',await js("Boolean(document.querySelector('#ue-dock-left svg path')&&document.querySelector('#ue-dock-right svg path'))"));
  check('copy split button exists',await js("Boolean(document.querySelector('#ue-copy')&&document.querySelector('#ue-copy-toggle')&&document.querySelector('#ue-copy-json'))"));
  await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-left').click()");
  check('menu docking moves editor left',await js("document.querySelector('#ue-screen').classList.contains('ue-dock-left')"));
