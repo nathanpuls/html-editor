@@ -99,7 +99,8 @@ try{
  await js("document.querySelector('#ue-search').value='';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
  await js("document.querySelector('[data-tab=page]').click()");
  check('Page tab contains global appearance and SEO',await js("!document.querySelector('#ue-settings').hidden&&Boolean(document.querySelector('#ue-page-design [data-ue-style-key=background]'))&&Boolean(document.querySelector('#ue-settings .ue-meta'))&&!document.querySelector('#ue-style-panel [data-ue-style-key=background]"));
- check('page color edits apply',await js("(()=>{const swatch=document.querySelector('#ue-page-design [data-ue-style-key=background] input[type=color]');if(!swatch)return false;swatch.value='#123456';swatch.dispatchEvent(new Event('input',{bubbles:true}));return document.querySelector('#editor-page-style')?.textContent.includes('#123456')})()"));
+ await js("document.querySelector('#ue-page-design input[type=color]').value='#123456';document.querySelector('#ue-page-design input[type=color]').dispatchEvent(new Event('input',{bubbles:true}))");
+ check('page color edits apply',await js("document.querySelector('#editor-page-style').textContent.includes('#123456')"));
  await js("document.querySelector('#ue-undo').click()");
  check('undo page color edit',await js("!document.querySelector('#editor-page-style')?.textContent.includes('#123456')"));
 
