@@ -58,7 +58,8 @@ export function generateHTML(ctx){
    const node=exportedById.get(id);
    const eyebrow=node?.querySelector(':scope > .eyebrow');
    if(!eyebrow||!/^\s*\d{1,2}\s*\//.test(eyebrow.textContent||''))continue;
-   const number=String(visible.filter(key=>key!==sectionOrder[0]).indexOf(id)+1).padStart(2,'0');
+   const numbered=visible.filter(key=>exportedById.get(key)?.querySelector(':scope > .eyebrow')?.textContent?.match(/^\s*\d{1,2}\s*\//));
+   const number=String(numbered.indexOf(id)+1).padStart(2,'0');
    const label=sectionStates[id]?.label??node.getAttribute('aria-label')??id;
    eyebrow.textContent=number+' / '+label;
   }
