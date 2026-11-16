@@ -361,6 +361,33 @@ function init(){
   });
   return result;
  };
+ const refreshButtonSample=(sample,index)=>{
+  if(!sample)return;
+  const node=liveSnapshots[Number(index)]?.node;
+  const item=model.find(x=>!x.added&&x.index===Number(index));
+  if(!node?.isConnected||!item||item.deleted)return;
+  const css=getComputedStyle(node);
+  sample.textContent=item.text||buttonAppearance[index]?.label||'';
+  sample.style.backgroundColor=css.backgroundColor;
+  sample.style.backgroundImage=css.backgroundImage;
+  sample.style.color=css.color;
+  sample.style.border=css.border;
+  sample.style.borderRadius=css.borderRadius;
+  sample.style.boxShadow=css.boxShadow;
+  sample.style.fontFamily=css.fontFamily;
+  sample.style.fontWeight=css.fontWeight;
+  sample.style.fontSize=css.fontSize;
+  sample.style.letterSpacing=css.letterSpacing;
+  sample.style.textAlign=css.textAlign==='left'?'left':'center';
+ };
+ const refreshButtonSamples=()=>{
+  for(const sample of stylePanel.querySelectorAll('[data-ue-button-preview]')){
+   const index=sample.dataset.ueButtonPreview;
+   const item=model.find(x=>!x.added&&x.index===Number(index));
+   if(!item||item.deleted){sample.closest('.ue-button-block')?.remove();continue}
+   refreshButtonSample(sample,index);
+  }
+ };
  const styleSheetText=a=>{
   // Store exact settings, but override only properties changed from the
   // original page, preserving responsive typography and existing CSS.
@@ -394,6 +421,7 @@ function init(){
   let el=document.getElementById('editor-page-style');
   if(!el){el=document.createElement('style');el.id='editor-page-style';document.head.append(el)}
   el.textContent=styleSheetText(styleSettings);
+  refreshButtonSamples();
  };
  const restoreStyle=()=>{
   const el=document.getElementById('editor-page-style');
@@ -494,19 +522,7 @@ function init(){
     // A secondary action within the always-visible summary.
     jump.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();jump.click()}});
     summary.append(jump);
-    const updatePreview=()=>{
-     const live=liveSnapshots[Number(index)]?.node;
-     const visual=live?.isConnected?getComputedStyle(live):null;
-     const current=model.find(x=>!x.added&&x.index===Number(index));
-     preview.textContent=current?.text||info.label;
-     preview.style.backgroundColor=visual?.backgroundColor||buttonSettings[index]?.background||info.background;
-     preview.style.color=visual?.color||buttonSettings[index]?.color||info.color;
-     preview.style.borderRadius=visual?.borderRadius||'8px';
-     preview.style.fontFamily=visual?.fontFamily||'inherit';
-     preview.style.fontWeight=visual?.fontWeight||'600';
-     preview.style.fontSize=visual?.fontSize||'14px';
-     preview.style.textAlign=visual?.textAlign==='left'?'left':'center';
-    };
+    const updatePreview=()=>refreshButtonSample(preview,index);
     updatePreview();
     for(const [key,label] of [['background','Background'],['color','Text color']]){
      const row=document.createElement('div');row.className='ue-setting';
@@ -741,17 +757,7 @@ function init(){
    }
   });
   syncSections();
-  // Keep button samples current as text or styles change in Content.
-  for(const sample of stylePanel.querySelectorAll('[data-ue-button-preview]')){
-   const index=Number(sample.dataset.ueButtonPreview),item=model.find(x=>!x.added&&x.index===index);
-   if(!item||item.deleted){sample.closest('.ue-button-block')?.remove();continue}
-   sample.textContent=item.text||buttonAppearance[index]?.label||'';
-   const node=liveSnapshots[index]?.node;
-   if(node?.isConnected){
-    const css=getComputedStyle(node);
-    sample.style.backgroundColor=css.backgroundColor;sample.style.color=css.color;
-   }
-  }
+  refreshButtonSamples();
   saveDraft();
  }
  const icons=()=>{
