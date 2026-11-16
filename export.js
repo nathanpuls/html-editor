@@ -52,6 +52,16 @@ export function generateHTML(ctx){
    const element=source[item.index];
    if(element?.isConnected)element.remove();
   }
+  // Reflect section order and display labels in numbered template eyebrows.
+  const visible=sectionOrder.filter(id=>!sectionStates[id]?.deleted);
+  for(const id of visible){
+   const node=exportedById.get(id);
+   const eyebrow=node?.querySelector(':scope > .eyebrow');
+   if(!eyebrow||!/^\\s*\\d{1,2}\\s*\\//.test(eyebrow.textContent||''))continue;
+   const number=String(visible.filter(key=>key!==sectionOrder[0]).indexOf(id)+1).padStart(2,'0');
+   const label=sectionStates[id]?.label??node.getAttribute('aria-label')??id;
+   eyebrow.textContent=number+' / '+label;
+  }
   for(const [id,state] of Object.entries(sectionStates)){
    const node=exportedById.get(id);if(!node)continue;
    if(state.deleted)node.remove();
