@@ -10,6 +10,7 @@ editorStyle.textContent+='\n#ue-pencil{border-radius:50%!important;aspect-ratio:
 editorStyle.textContent+="\n#ue-screen:not(.ue-fullscreen){width:min(var(--ue-panel-width,430px),100%)}\n#ue-resize{position:absolute;z-index:4;left:0;top:0;bottom:0;width:11px;cursor:ew-resize;touch-action:none;border:0;background:transparent}\n#ue-resize:before{content:\"\";position:absolute;left:5px;top:43%;height:54px;width:2px;border-radius:6px;background:#d5d5d5}\n#ue-resize:hover:before{background:#888}\n#ue-screen.ue-fullscreen #ue-resize{display:none}\n#ue-head{padding:0 40px}\n#ue-tabs button{display:flex;align-items:center;justify-content:center;gap:7px}\n#ue-tabs button svg{width:16px;height:16px}\n#ue-screen :is(input,textarea,select,button):focus-visible{outline:2px solid #93a6a0!important;outline-offset:1px!important;box-shadow:none!important}\n#ue-screen :is(input,textarea,select):focus{border-color:#9eaaa4!important;box-shadow:none!important}\n#ue-sections-toggle{border:1px solid #e3e3e3!important;border-radius:999px!important;background:#f9f9f9!important;padding:10px 15px!important;margin:3px 0 14px;align-items:center}\n#ue-sections-toggle span{display:flex;align-items:center;gap:5px;font-weight:600;color:#555}\n#ue-sections-toggle[aria-expanded=true]{background:#f1f3f2!important}\n#ue-sections-toggle svg{width:15px;height:15px}\n#ue-section-jump{display:inline-flex}\n.ue-section-row .ue-section-jump{flex:none;width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:8px;background:#f4f5f4;color:#53625b}\n.ue-section-row .ue-section-jump:hover{background:#e6ebe7}\n.ue-section-row .ue-section-jump svg{width:16px;height:16px}\n@media(max-width:640px){#ue-screen:not(.ue-fullscreen){width:100%!important}#ue-resize{display:none}}\n";
 editorStyle.textContent+="\n#ue-actions{display:flex;align-items:center;justify-content:flex-start;gap:5px}\n#ue-actions button{min-width:0;width:auto;flex:none;padding:10px 12px}\n#ue-actions #ue-cancel,#ue-actions #ue-revert{border-color:transparent;background:transparent;color:#686868;font-weight:500}\n#ue-actions #ue-cancel:hover,#ue-actions #ue-revert:hover{background:#f5f5f5;color:#222}\n#ue-actions #ue-copy{margin-left:auto;min-width:110px;padding:11px 20px;font-weight:650}\n#ue-head{padding:0 36px 0 36px}\n@media(max-width:390px){#ue-actions{gap:0}#ue-actions button{font-size:13px;padding:10px 8px}#ue-actions #ue-copy{min-width:90px;padding:10px 13px}}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-custom-heading{font-weight:700;font-size:14px;border-top:1px solid #e7e7e7;padding-top:17px;margin-top:7px;color:#242424}\n";
+editorStyle.textContent+="\n#ue-style-panel .ue-button-title{font-size:13px;font-weight:650;color:#555;padding-top:10px}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -138,11 +139,11 @@ function init(){
  }
  fullscreenButton.onclick=()=>{setFullscreen(!screen.classList.contains('ue-fullscreen'));requestAnimationFrame(()=>fields.querySelectorAll('textarea').forEach(fitTextarea))};
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
- let draftActive=false,initialModel='',styleSettings={},initialStyle='',variableSettings={},initialVariables='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
+ let draftActive=false,initialModel='',styleSettings={},initialStyle='',variableSettings={},initialVariables='',buttonSettings={},buttonAppearance={},initialButtons='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
  let sectionStates={},undoStack=[],pageMeta={},originalMeta={},revertAvailable=false;
  const sectionDisplays=new Map(),sectionLabels=new Map(),sectionStyleAttrs=new Map();
  const touchedNodes=new Set(),touchedRoots=new Set();
- const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,sectionOrder,sectionStates,pageMeta});
+ const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta});
  const revertKey=()=>draftKey+':last-revert';
  const readRevert=()=>{try{const x=JSON.parse(localStorage.getItem(revertKey())||'null');return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null}catch{return null}};
  const clearRevert=()=>{revertAvailable=false;try{localStorage.removeItem(revertKey())}catch{}};
@@ -155,7 +156,7 @@ function init(){
 
  const checkpoint=()=>{if(revertAvailable)clearRevert();const state=snapshot();if(undoStack.at(-1)!==state){undoStack.push(state);if(undoStack.length>80)undoStack.shift()}syncUndoButton()};
  const syncUndoButton=()=>{const b=screen.querySelector('#ue-undo');if(b)b.disabled=!undoStack.length};
- function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;variableSettings=old.variableSettings||{...originalVariables};sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
+ function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;variableSettings=old.variableSettings||Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));buttonSettings=old.buttonSettings||{};sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
  function syncSections(){
   for(const node of sectionNodes){
    const state=sectionStates[node.getAttribute('data-section')]||{};
@@ -263,6 +264,29 @@ function init(){
  }
  if(existingCSS.includes('font-family:'))originalOverrides.add('font');
  if(existingCSS.includes('border-radius:'))originalOverrides.add('radius');
+ const editableButtonSelector=node=>{
+  const tag=node.tagName.toLowerCase(),label=node.getAttribute('data-edit');
+  if(!label)return '';
+  const escape=window.CSS?.escape||((v)=>String(v).replace(/[^a-zA-Z0-9_-]/g,'\\\\ const styleSheetText=a=>{'));
+  const own=tag+'[data-edit='+escape(label)+']';
+  if(document.querySelectorAll(own).length===1)return own;
+  const section=node.closest('[data-section]');
+  if(section){const scoped='[data-section='+escape(section.getAttribute('data-section'))+'] '+own;if(document.querySelectorAll(scoped).length===1)return scoped}
+  return '';
+ };
+ const getButtonAppearance=()=>{
+  const result={};
+  liveSnapshots.forEach((item,index)=>{
+   const node=item.node;
+   if(!node?.matches?.('a.button,a.btn,a[role="button"],button[data-edit],input[type="button"][data-edit]'))return;
+   const selector=editableButtonSelector(node);
+   if(!selector)return;
+   const css=getComputedStyle(node),background=rgbToHex(css.backgroundColor),color=rgbToHex(css.color);
+   if(!background||!color)return;
+   result[index]={selector,background,color,label:node.getAttribute('data-edit')||'Button '+(index+1)};
+  });
+  return result;
+ };
  const styleSheetText=a=>{
   // Store exact settings, but override only properties changed from the
   // original page, preserving responsive typography and existing CSS.
@@ -282,6 +306,14 @@ function init(){
   const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
   if(changed('buttonBackground'))rule(buttonSelectors,'background-color:var(--ue-buttonBackground)!important');
   if(changed('buttonText'))rule(buttonSelectors,'color:var(--ue-buttonText)!important');
+  for(const [index,settings] of Object.entries(buttonSettings)){
+   const original=buttonAppearance[index];
+   if(!original)continue;
+   for(const key of ['background','color']){
+    const value=settings[key];
+    if(value&&hexColor(value)&&value!==original[key])rule(original.selector,key==='background'?'background-color:'+value+'!important':'color:'+value+'!important');
+   }
+  }
   return parts.join('\n');
  };
  const applyStyle=()=>{
@@ -303,8 +335,8 @@ function init(){
    ['Font family','font','font'],['Heading 1 size (px)','h1','number'],['Heading 2 size (px)','h2','number'],
    ['Heading 3 size (px)','h3','number'],['Paragraph size (px)','p','number'],
    ['Corner roundness (px)','radius','radius'],
-   ['Button background','buttonBackground','color'],['Button text color','buttonText','color']
-  ];
+   ['All buttons background','buttonBackground','color'],['All buttons text','buttonText','color']
+  ].filter(([,key])=>!Object.keys(originalVariables).length||!['background','text','accent','buttonBackground','buttonText','radius'].includes(key));
   const update=()=>{applyStyle();saveDraft()};
   for(const [title,key,kind] of controls){
    const row=document.createElement('div');row.className='ue-setting';
@@ -353,6 +385,28 @@ function init(){
     const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+varLabel(name);reset.setAttribute('aria-label',reset.title);reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=value===config.value;
     reset.onclick=()=>{checkpoint();variableSettings[name]=config.value;applyStyle();saveDraft();renderStyle()};
     row.append(reset);stylePanel.append(row);
+   }
+  }
+  const buttons=Object.entries(buttonAppearance);
+  if(buttons.length){
+   const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Individual buttons';stylePanel.append(heading);
+   for(const [index,info] of buttons){
+    const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;stylePanel.append(name);
+    for(const [key,label] of [['background','Background'],['color','Text color']]){
+     const row=document.createElement('div');row.className='ue-setting';
+     const lbl=document.createElement('label');lbl.textContent=label;row.append(lbl);
+     const pair=document.createElement('div');pair.className='ue-color-row';
+     const value=buttonSettings[index]?.[key]||info[key];
+     const swatch=document.createElement('input');swatch.type='color';swatch.value=hexColor(value)||'#000000';
+     const input=document.createElement('input');input.type='text';input.value=value;input.setAttribute('aria-label',info.label+' '+label);
+     const setValue=v=>{checkpoint();buttonSettings[index]={...buttonSettings[index],[key]:v};applyStyle();saveDraft();reset.disabled=v===info[key]};
+     swatch.oninput=()=>{input.value=swatch.value;setValue(swatch.value)};
+     input.onchange=()=>{const color=hexColor(input.value);if(!color){input.value=buttonSettings[index]?.[key]||info[key];return}swatch.value=color;setValue(input.value.trim())};
+     pair.append(swatch,input);row.append(pair);
+     const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+info.label+' '+label;reset.setAttribute('aria-label',reset.title);reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=value===info[key];
+     reset.onclick=()=>{checkpoint();if(buttonSettings[index]){delete buttonSettings[index][key];if(!Object.keys(buttonSettings[index]).length)delete buttonSettings[index]}applyStyle();saveDraft();renderStyle()};
+     row.append(reset);stylePanel.append(row);
+    }
    }
   }
   icons();
@@ -430,7 +484,7 @@ function init(){
  const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
  const saveDraft=()=>{
   try{
-   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,variableSettings,sectionOrder,sectionStates,pageMeta,styleSchema:2}));
+   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,styleSchema:2}));
    else clearDraft();
   }catch{} // file:// and privacy settings may block storage
  };
@@ -443,7 +497,7 @@ function init(){
   if(meta&&meta.getAttribute('content')!==(pageMeta.description||''))meta.setAttribute('content',pageMeta.description||'');
  };
  const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
- const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  // Change only the necessary text nodes. Never flatten formatted descendants.
@@ -766,7 +820,7 @@ function init(){
    if(state.label!==undefined&&!state.deleted)node.setAttribute('aria-label',state.label);
   }
   let pageStyle=doc.getElementById('editor-page-style');
-  if(JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables){
+  if(JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons){
    if(!pageStyle){pageStyle=doc.createElement('style');pageStyle.id='editor-page-style';doc.head.append(pageStyle)}
    pageStyle.textContent=styleSheetText(styleSettings);
   }
@@ -796,6 +850,7 @@ function init(){
   originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
   variableSettings=Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));initialVariables=JSON.stringify(variableSettings);
+  buttonAppearance=getButtonAppearance();buttonSettings={};initialButtons=JSON.stringify(buttonSettings);
   sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));
   sectionStates={};sectionDisplays.clear();sectionLabels.clear();sectionStyleAttrs.clear();
   for(const node of sectionNodes){
@@ -809,6 +864,12 @@ function init(){
   if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
    model=saved.model;
    if(saved.styleSettings&&saved.styleSchema===2)styleSettings={...originalAppearance,...saved.styleSettings};
+   if(saved.buttonSettings&&typeof saved.buttonSettings==='object')for(const [index,settings] of Object.entries(saved.buttonSettings)){
+    if(!Object.hasOwn(buttonAppearance,index)||!settings||typeof settings!=='object')continue;
+    for(const key of ['background','color']){
+     if(hexColor(settings[key]))buttonSettings[index]={...(buttonSettings[index]||{}),[key]:settings[key]};
+    }
+   }
    if(saved.variableSettings&&typeof saved.variableSettings==='object')for(const name of Object.keys(originalVariables)){
     const val=saved.variableSettings[name];if(typeof val==='string'&&(originalVariables[name].kind==='color'?!!hexColor(val):/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(val)))variableSettings[name]=val;
    }
@@ -818,7 +879,7 @@ function init(){
   }
   const lastRevert=readRevert();
   if(lastRevert&&!readDraft()){undoStack=[lastRevert];revertAvailable=true;syncUndoButton()}
-  if(JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables)applyStyle();
+  if(JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons)applyStyle();
   if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))reorderSections();
   syncSections();applyMeta();
   renderStyle();
