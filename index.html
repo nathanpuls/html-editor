@@ -123,10 +123,10 @@ footer a{color:inherit;text-decoration:none}footer a:hover{text-decoration:under
   const preview=document.getElementById("prompt-preview");
   const toggle=document.getElementById("preview-toggle");
   const promptText=()=>[
-    "Create a complete, polished, responsive, single-page HTML website. Return only the full HTML document, beginning with <!DOCTYPE html>.",
+    "Create a responsive, single-page HTML website that faithfully follows the user's design brief. Return only the full HTML document, beginning with <!DOCTYPE html>.",
     "",
     "WEBSITE BRIEF",
-    input.value.trim()||"Design an attractive, original, modern one-page website with clear content, excellent typography, and an approachable visual identity. Choose a cohesive design appropriate to its purpose.",
+    input.value.trim()||"Create a one-page website. Choose a design appropriate to its purpose, without assuming any particular style, level of complexity, or visual trend.",
     "",
     "TECHNICAL REQUIREMENTS — FOLLOW ALL",
     "1. Produce one full standalone HTML document, with inline CSS and only minimal inline JavaScript if essential. No build tools, frameworks, CDNs, icon fonts, remote scripts, or dependency downloads.",
@@ -136,10 +136,10 @@ footer a{color:inherit;text-decoration:none}footer a:hover{text-decoration:under
     "5. Each independently manageable, reorderable section must use a unique data-section value, such as <section data-section=\"about\" aria-label=\"About\">. Keep sections as siblings under the same parent so they can be reordered. Use a stable, unique id and a human-readable aria-label.",
     "6. For a collection of editable links that users can add, remove, and reorder, use <nav data-edit=\"links\"><a data-edit=\"Contact link\" href=\"https://example.com\">Contact<\/a><\/nav>. The exact value links is reserved for such a collection.",
     "7. Use the .button class consistently for button-looking links and buttons. Ordinary hyperlinks must remain visually distinct from buttons. Do not style the editor UI or floating pencil with broad global button rules.",
-    "8. Match the complexity of the design to the website brief. Simple pages should stay simple; do not add unnecessary sections, effects, or visual complexity. Define the colors and dimensions actually used as clearly named CSS custom properties in :root (for example --page-bg, --main-text, --accent, --button-bg, --border-radius). For more elaborate pages, also expose meaningful design choices such as --header-bg, --hero-bg, --section-bg, --card-bg, and decorative colors or sizes. Reuse variables consistently rather than scattering hardcoded values. The HTML Editor discovers supported :root variables automatically in its Design tab. Do not introduce unused variables or complexity solely for editing.",
+    "8. Let the user's brief determine the entire design: aesthetic, layout, density, complexity, color palette, typography, and content. Do not assume a modern, elaborate, minimalist, or any other style unless requested. Do not add decorative effects, sections, or features just to make the page more impressive. For the design choices actually used, expose meaningful colors and dimensions as clearly named CSS custom properties in :root (such as --page-bg, --main-text, --accent, or --hero-bg where relevant). Reuse variables consistently; do not invent unused variables. The HTML Editor discovers supported :root variables automatically in its Design tab.",
     "9. Include a concise, meaningful <title> and a <meta name=\"description\" content=\"...\">.",
     "10. Make the website accessible and mobile responsive: semantic landmarks, alt text, adequate contrast, keyboard-friendly links and buttons, and correct heading hierarchy.",
-    "11. Aim for a finished, visually excellent website with realistic, user-relevant content. Avoid generic filler, debug text, demo instructions, mock UI, or unexplained placeholders. If important details are unknown, make sensible clearly editable assumptions rather than inventing factual credentials or guarantees.",
+    "11. Prioritize fidelity to the user's requested design over visual flourish. Make the page feel finished at whatever level of simplicity or complexity the brief calls for. Avoid generic filler, debug text, demo instructions, mock UI, or unexplained placeholders. If important details are unknown, make sensible clearly editable assumptions rather than inventing factual credentials or guarantees.",
     "12. Keep the finished website usable offline. Prefer system fonts, CSS-generated decoration, and inline SVG. Images that rely on remote URLs will not load offline; avoid remote image dependencies unless requested. If an image needs to be editable using the current HTML Editor, provide an absolute HTTPS image URL and meaningful alt text.",
     "13. Do not change or duplicate the HTML Editor JavaScript. The separate editor.js handles edits, undo, Style, Sections, local drafts, and copying HTML.",
     "",
