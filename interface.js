@@ -203,7 +203,7 @@ function init(){
    button.onclick=()=>{
     setTab(hit.tab);
     if(hit.sectionId!==undefined){setSectionsOpen(true);const input=Array.from(sectionsPanel.querySelectorAll('.ue-section-row')).find(row=>row.dataset.sectionId===hit.sectionId)?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
-    else if(hit.index!==undefined){const row=fields.querySelector('.ue-item[data-edit-index="'+hit.index+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
+    else if(hit.index!==undefined){const row=fields.querySelector('.ue-item[data-edit-index="'+hit.index+'"]');const card=row?.querySelector('details.ue-element-card');if(card){card.open=true;expandedElements.add(hit.index)}row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
     else if(hit.styleKey!==undefined){const panel=settingsPanel;const row=panel.querySelector('[data-ue-style-key="'+hit.styleKey+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
     else if(hit.customDesign!==undefined){const row=[...settingsPanel.querySelectorAll('#ue-page-design .ue-setting')].find(x=>x.querySelector('label')?.textContent===varLabel(hit.customDesign));row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
     else if(hit.buttonDesign!==undefined){const block=fields.querySelector('[data-ue-button-block="'+hit.buttonDesign+'"]');if(block){block.open=true;expandedButtonControls.add(String(hit.buttonDesign));block.scrollIntoView({block:'center',behavior:'instant'});block.querySelector('.ue-setting input')?.focus({preventScroll:true})}}
@@ -257,6 +257,7 @@ function init(){
  const sectionDisplays=new Map(),sectionLabels=new Map(),sectionStyleAttrs=new Map();
  const touchedNodes=new Set(),touchedRoots=new Set();
  const expandedButtonControls=new Set();
+ const expandedElements=new Set();
  const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,visualValues});
  const revertKey=()=>draftKey+':last-revert';
  const readRevert=()=>{const x=readJSON(revertKey());return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null};
@@ -391,6 +392,7 @@ function init(){
  function mountElementAppearance(){
   if(!draftActive)return;
   const targets=getVisualTargets();
+  fields.querySelectorAll('.ue-inline-visual,.ue-inline-button').forEach(node=>node.remove());
   const byId=new Map(targets.map(t=>[t.id,t]));
   const handleChange=(id,key,value)=>{visualValues[id]={...visualValues[id],[key]:value};updateVisual();saveDraft()};
   for(const item of model){
@@ -398,10 +400,11 @@ function init(){
    const card=fields.querySelector('.ue-item[data-edit-index="'+model.indexOf(item)+'"]');
    if(!card)continue;
    const target=targets.find(t=>t.kind==='field'&&t.node===liveSnapshots[item.index]?.node);
-   if(target)drawInlineVisualControls({host:card,target,values:visualValues,onStart:checkpoint,onChange:handleChange});
+   const body=card.querySelector('.ue-element-body');
+   if(target&&body)drawInlineVisualControls({host:body,target,values:visualValues,onStart:checkpoint,onChange:handleChange});
    if(item.index>=0){
     const buttons=stylePanel.querySelector('[data-ue-button-block="'+item.index+'"]');
-    if(buttons){buttons.classList.add('ue-inline-button');card.append(buttons)}
+    if(buttons&&body){buttons.classList.add('ue-inline-button');body.append(buttons)}
    }
   }
   const extra=targets.filter(t=>t.kind!=='field');
@@ -508,7 +511,7 @@ function init(){
   .filter(el=>!el.closest('#ue-screen,#ue-pencil')&&!/^ue-/.test(el.id))
   .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
  const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
- function render(){drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render});renderStyle();mountElementAppearance()}
+ function render(){drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render,expandedElements});renderStyle();mountElementAppearance()}
  function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();visualValues={};document.getElementById('editor-visual-style')?.remove();document.querySelectorAll('[data-ue-visual-id]').forEach(el=>el.removeAttribute('data-ue-visual-id'));if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title='Edit'}
  function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText,visualValues,visualTargets:getVisualTargets()})}
  pencil.onclick=()=>{
