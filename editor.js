@@ -12,6 +12,7 @@ editorStyle.textContent+="\n#ue-actions{display:flex;align-items:center;justify-
 editorStyle.textContent+="\n#ue-style-panel .ue-custom-heading{font-weight:700;font-size:14px;border-top:1px solid #e7e7e7;padding-top:17px;margin-top:7px;color:#242424}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-button-title{font-size:13px;font-weight:650;color:#555;padding-top:10px}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-button-block{display:grid;gap:11px;padding:2px 0 20px;border-bottom:1px solid #e9e9e9}\n#ue-style-panel .ue-button-title{padding-top:8px}\n#ue-style-panel .ue-button-preview{display:block;box-sizing:border-box;min-height:48px;padding:13px 16px;border:1px solid #0002;overflow-wrap:anywhere;line-height:1.4;pointer-events:none}\n#ue-style-panel .ue-button-block .ue-setting{padding-bottom:8px}\n#ue-style-panel .ue-button-block .ue-setting:last-child{border-bottom:0}\n";
+editorStyle.textContent+="\n/* Horizontal, full-height dock: both edges resize; header drags sideways. */\n@media(min-width:641px){\n #ue-screen:not(.ue-fullscreen){top:0!important;bottom:0!important;height:100dvh!important;max-height:100dvh!important;border:1px solid #dedede;border-top:0;border-bottom:0;box-shadow:0 0 38px #00000016}\n #ue-head{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}\n #ue-head:active{cursor:grabbing}\n #ue-head button{cursor:pointer}\n #ue-resize,#ue-resize-right{position:absolute;z-index:4;top:0;bottom:0;width:15px;padding:0;border:0;background:transparent;cursor:ew-resize;touch-action:none;color:#9da3a0}\n #ue-resize{left:0}\n #ue-resize-right{right:0;left:auto}\n #ue-resize-right:before{content:\"\";position:absolute;right:0;top:calc(30% - 19px);width:15px;height:38px;border:1px solid #e1e3e2;border-right:0;border-radius:8px 0 0 8px;background:#f7f8f7;transition:background .15s,border-color .15s}\n #ue-resize-right svg{position:absolute;top:calc(30% - 10px);right:0;width:15px!important;height:20px!important;pointer-events:none;stroke-width:1.7}\n #ue-resize-right:hover:before,#ue-resize-right:focus-visible:before{background:#e9edeb;border-color:#c1c9c4}\n #ue-resize-right:hover,#ue-resize-right:focus-visible{color:#56635d}\n #ue-screen.ue-fullscreen{left:0!important;right:0!important}\n #ue-screen.ue-fullscreen #ue-resize-right{display:none}\n}\n@media(max-width:640px){#ue-resize-right{display:none!important}}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -19,35 +20,81 @@ function init(){
  if(!editable().length)return;
  const pencil=document.createElement('button');pencil.id='ue-pencil';pencil.type='button';pencil.title='Edit';pencil.setAttribute('aria-label','Edit page');pencil.innerHTML='<i data-lucide="pencil"></i>';
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
- screen.innerHTML='<button type="button" id="ue-resize" aria-label="Drag to resize editor" title="Drag left edge to resize"><i data-lucide="grip-vertical"></i></button><div id="ue-wrap"><div id="ue-head"><button type="button" id="ue-undo" title="Undo" aria-label="Undo" disabled><i data-lucide="undo-2"></i></button><strong>Edit page</strong><button id="ue-fullscreen" type="button" aria-label="Expand editor" title="Fullscreen"><i data-lucide="maximize"></i></button></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="file-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Cancel</button><button id="ue-revert" type="button">Revert</button><button id="ue-copy" type="button">Copy</button></div></div>';
+ screen.innerHTML='<button type="button" id="ue-resize" aria-label="Drag left edge to resize editor" title="Drag left edge to resize"><i data-lucide="grip-vertical"></i></button><button type="button" id="ue-resize-right" aria-label="Drag right edge to resize editor" title="Drag right edge to resize"><i data-lucide="grip-vertical"></i></button><div id="ue-wrap"><div id="ue-head"><button type="button" id="ue-undo" title="Undo" aria-label="Undo" disabled><i data-lucide="undo-2"></i></button><strong>Edit page</strong><button id="ue-fullscreen" type="button" aria-label="Expand editor" title="Fullscreen"><i data-lucide="maximize"></i></button></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="file-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Cancel</button><button id="ue-revert" type="button">Revert</button><button id="ue-copy" type="button">Copy</button></div></div>';
  document.body.append(pencil,screen);
  const fields=screen.querySelector('#ue-fields'),add=screen.querySelector('#ue-add'),message=screen.querySelector('#ue-message');
  const fullscreenButton=screen.querySelector('#ue-fullscreen');
  const resizeHandle=screen.querySelector('#ue-resize');
- const widthKey='html-editor:panel-width:v1';
- const widthClamp=value=>Math.round(Math.max(320,Math.min(Number(value)||430,Math.min(850,window.innerWidth-80))));
- let panelWidth=430;
- try{const saved=Number(localStorage.getItem(widthKey));if(saved>=320)panelWidth=saved}catch{}
- screen.style.setProperty('--ue-panel-width',widthClamp(panelWidth)+'px');
- let resizeStart=null;
- resizeHandle.addEventListener('pointerdown',event=>{
-  if(event.button!==0||window.innerWidth<=640)return;
-  resizeStart={x:event.clientX,width:screen.getBoundingClientRect().width};
-  resizeHandle.setPointerCapture(event.pointerId);event.preventDefault();
- });
- resizeHandle.addEventListener('pointermove',event=>{
-  if(!resizeStart)return;
-  panelWidth=widthClamp(resizeStart.width+resizeStart.x-event.clientX);
+ const rightResizeHandle=screen.querySelector('#ue-resize-right');
+ const dragHeader=screen.querySelector('#ue-head');
+ const widthKey='html-editor:panel-width:v1',positionKey='html-editor:panel-x:v1';
+ const desktop=()=>window.innerWidth>640;
+ const widthClamp=value=>Math.round(Math.max(320,Math.min(Number(value)||430,Math.min(850,window.innerWidth-24))));
+ let panelWidth=430, panelX=null;
+ try{
+  const saved=Number(localStorage.getItem(widthKey));
+  if(saved>=320)panelWidth=saved;
+  const x=localStorage.getItem(positionKey);
+  if(x!==null&&Number.isFinite(Number(x)))panelX=Number(x);
+ }catch{}
+ const clampX=(x,width=panelWidth)=>Math.round(Math.max(0,Math.min(window.innerWidth-width,Number(x)||0)));
+ const setGeometry=()=>{
+  if(!desktop()||screen.classList.contains('ue-fullscreen'))return;
+  panelWidth=widthClamp(panelWidth);
+  if(panelX===null)panelX=window.innerWidth-panelWidth;
+  panelX=clampX(panelX);
   screen.style.setProperty('--ue-panel-width',panelWidth+'px');
- });
- const finishResize=()=>{
-  if(!resizeStart)return;
-  resizeStart=null;
-  try{localStorage.setItem(widthKey,String(panelWidth))}catch{}
+  screen.style.left=panelX+'px';
+  screen.style.right='auto';
  };
- resizeHandle.addEventListener('pointerup',finishResize);
- resizeHandle.addEventListener('pointercancel',finishResize);
-
+ const rememberGeometry=()=>{
+  try{localStorage.setItem(widthKey,String(panelWidth));localStorage.setItem(positionKey,String(panelX))}catch{}
+ };
+ setGeometry();
+ // Pointer capture keeps resizing and dragging smooth even when crossing the page.
+ const beginResize=(handle,edge)=>{
+  let start=null;
+  handle.addEventListener('pointerdown',event=>{
+   if(event.button!==0||!desktop()||screen.classList.contains('ue-fullscreen'))return;
+   start={x:event.clientX,width:screen.getBoundingClientRect().width,left:screen.getBoundingClientRect().left};
+   handle.setPointerCapture(event.pointerId);event.preventDefault();
+  });
+  handle.addEventListener('pointermove',event=>{
+   if(!start)return;
+   const dx=event.clientX-start.x;
+   const right=start.left+start.width;
+   if(edge==='left'){
+    const proposed=widthClamp(start.width-dx);
+    const x=clampX(right-proposed,proposed);
+    panelX=x;panelWidth=proposed;
+   }else{
+    panelX=start.left;panelWidth=widthClamp(start.width+dx);
+    panelWidth=Math.min(panelWidth,window.innerWidth-panelX);
+   }
+   setGeometry();
+  });
+  const finish=()=>{if(!start)return;start=null;rememberGeometry()};
+  handle.addEventListener('pointerup',finish);
+  handle.addEventListener('pointercancel',finish);
+ };
+ beginResize(resizeHandle,'left');
+ beginResize(rightResizeHandle,'right');
+ let moving=null;
+ dragHeader.addEventListener('pointerdown',event=>{
+  if(event.button!==0||!desktop()||screen.classList.contains('ue-fullscreen'))return;
+  if(event.target.closest('button,input,textarea,select,a,[contenteditable]'))return;
+  moving={x:event.clientX,left:screen.getBoundingClientRect().left};
+  dragHeader.setPointerCapture(event.pointerId);event.preventDefault();
+ });
+ dragHeader.addEventListener('pointermove',event=>{
+  if(!moving)return;
+  panelX=clampX(moving.left+event.clientX-moving.x);
+  setGeometry();
+ });
+ const finishMove=()=>{if(!moving)return;moving=null;rememberGeometry()};
+ dragHeader.addEventListener('pointerup',finishMove);
+ dragHeader.addEventListener('pointercancel',finishMove);
+ window.addEventListener('resize',()=>{if(desktop())setGeometry();});
  screen.querySelector('#ue-undo').onclick=undo;
  const scrollBody=screen.querySelector('#ue-body');
  const stylePanel=screen.querySelector('#ue-style-panel'),sectionsPanel=screen.querySelector('#ue-sections'),settingsPanel=screen.querySelector('#ue-settings'),contentPanel=screen.querySelector('#ue-content');
@@ -143,6 +190,7 @@ function init(){
  },{passive:false});
  function setFullscreen(on){
   screen.classList.toggle('ue-fullscreen',on);
+  if(!on)setGeometry();
   fullscreenButton.setAttribute('aria-label',on?'Exit fullscreen':'Expand editor');
   fullscreenButton.title=on?'Exit fullscreen':'Fullscreen';
   fullscreenButton.innerHTML='<i data-lucide="'+(on?'minimize':'maximize')+'"></i>';
