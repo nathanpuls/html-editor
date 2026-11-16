@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Little Adventure — Editor Demo</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fbf7f1;color:#252525;font-family:system-ui,sans-serif}
+main{max-width:680px;margin:72px auto;padding:0 24px 80px}
+h1{font-size:clamp(40px,7vw,68px);letter-spacing:-.05em;line-height:1.05}
+.story{font-size:19px;line-height:1.75;color:#454545}
+.story p{margin:0 0 1.35em}
+.photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:30px 0}
+.photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px}
+nav{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+nav a{padding:13px 18px;border-radius:12px;background:#243f35;color:white;text-decoration:none}
+@media(max-width:480px){.photos{grid-template-columns:1fr}}
+</style>
+<script src="./editor.js" defer></script>
+</head>
+<body>
+<main>
+<h1 data-edit data-label="Main Headline">A little adventure.</h1>
+<div class="story" data-edit data-label="Story Body">
+<p>The best ideas often begin simply. You create a page, and then make it your own.</p>
+<p>Press E to edit this entire story in a single field. Leave a blank line between paragraphs to keep them separate.</p>
+<p>The design stays intact while your words change instantly on the page.</p>
+</div>
+<div class="photos">
+<img data-edit data-label="Mountain Photo" src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900" alt="Mountain landscape">
+<img data-edit data-label="Forest Photo" src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=900" alt="Sunlit forest">
+</div>
+<nav data-edit="links"><a data-edit data-label="Contact Link" href="https://example.com">Say hello</a></nav>
+</main>
+</body>
+</html>
