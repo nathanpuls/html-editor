@@ -1,7 +1,8 @@
 import {syncGoogleFontLink} from './design.js';
+import {exportVisual} from './visual-controls.js';
 /* Generate clean standalone page HTML from current editor state. */
 export function generateHTML(ctx){
- const {baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText}=ctx;
+ const {baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText,visualValues,visualTargets}=ctx;
   const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
   doc.title=pageMeta.title;
   let description=doc.querySelector('meta[name="description"]');
@@ -48,6 +49,8 @@ export function generateHTML(ctx){
    const after=siblings[siblings.length-1]?.nextSibling||null;
    for(const el of ordered)node.parentElement.insertBefore(el,after);
   }
+  // Attach unique, targeted CSS selectors before removed fields alter indexes.
+  exportVisual({doc,model,liveSnapshots,values:visualValues||{},sectionNodes:visualTargets.filter(t=>t.kind==='section').map(t=>t.node),liveRoots:[]});
   for(const item of originals.filter(item=>item.deleted)){
    const element=source[item.index];
    if(element?.isConnected)element.remove();
