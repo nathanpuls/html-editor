@@ -51,13 +51,15 @@ Then label anything you want to edit:
 </html>
 ```
 
-Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Use **Page** for the title, description, background, default font and page-wide appearance. Use **Elements** for words, images, links, buttons, sections and their visual adjustments together in expandable cards. Click **Copy** to copy updated HTML. The editor stays open and briefly shows **Copied!** so you can continue editing.
+Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Use **Page** for the title, description, optional logo URL, favicon URL, background, default font and page-wide appearance. Use **Elements** for words, images, links, buttons, sections and their visual adjustments together in expandable cards. Click **Copy** to copy updated HTML. The editor stays open and briefly shows **Copied!** so you can continue editing.
+
+**Branding:** Paste a direct image URL into **Page → Logo image URL** or **Favicon image URL**. Logos can use an initially blank `<img data-site-logo alt="Logo" hidden>` placeholder in the page header; it stays hidden until a valid URL is provided. If no placeholder exists, the editor can add a logo in the header when a URL is entered. Logo and favicon changes are included in live preview, saved drafts, JSON v2, and copied HTML.
 
 **Important:** Copy exports HTML to your clipboard; it does not edit the original file or publish the page. Paste the result into your file, site editor, or publishing workflow.
 
 ### AI-assisted bulk editing (JSON v2)
 
-Open the **Copy** dropdown and choose **Copy editable data (JSON)** to export editable content and design settings without the site's HTML structure. Share that JSON with an AI, ask it to change content or design values, then choose **Import editable data (JSON)** and paste the revised object. The entire import applies as one undoable action.
+Open the **Copy** dropdown and choose **Copy editable data (JSON)** to export editable content and design settings without the site's HTML structure. Share that JSON with an AI, ask it to change content or design values, then choose **Paste editable data (JSON)** and paste the revised object. The entire import applies as one undoable action.
 
 The v2 format uses stable IDs such as `welcome.hero-heading`, descriptive named link groups such as `navLinks` and `contactLinks`, and an embedded `_schema` with editing rules and primary/secondary button hints. Its `design` object separates `colors`, `typography` (pixel units), `borderRadiusPx`, `buttons.primary`, `buttons.secondary`, optional `elementButtons`, and `variables`.
 
