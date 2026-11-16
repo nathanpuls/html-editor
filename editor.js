@@ -5,6 +5,7 @@
 const editorStyle=document.createElement('style');
 editorStyle.id='ue-style';
 editorStyle.textContent="#ue-pencil{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));right:18px;z-index:2147483000;display:grid;place-items:center;width:44px;height:44px;border:1px solid #ddd;border-radius:50%;background:white;color:#111;box-shadow:0 3px 16px #0002;cursor:pointer}\n#ue-pencil svg,#ue-screen svg{width:18px;height:18px}\n#ue-screen{position:fixed;inset:0;z-index:2147483600;overflow:auto;height:100dvh;background:white;color:#171717;padding:calc(22px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));font:15px/1.5 Manrope,system-ui,sans-serif}\n#ue-screen[hidden],#ue-pencil[hidden]{display:none!important}\n#ue-screen *{box-sizing:border-box}\n#ue-wrap{max-width:560px;margin:auto}\n#ue-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:24px}\n#ue-head strong{font-size:21px}\n#ue-screen button{font:inherit;cursor:pointer}\n#ue-head button,#ue-add{border:1px solid #ddd;background:#fff;color:#171717;border-radius:9px;padding:10px 13px}\n#ue-head #ue-copy{background:#171717;color:#fff;border-color:#171717}\n#ue-fields{display:grid;gap:18px}\n.ue-item{display:grid;gap:9px;padding-bottom:18px}\n.ue-item label{display:grid;gap:5px;font:700 12px/1.5 Manrope,system-ui,sans-serif;color:#666}\n.ue-item input,.ue-item textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:11px;background:#fff;color:#171717;font:500 16px/1.5 Manrope,system-ui,sans-serif}\n.ue-item textarea{min-height:110px;max-height:60dvh;resize:vertical;overflow-y:hidden}\n.ue-image-preview{display:block;max-width:100%;max-height:190px;object-fit:contain;object-position:left center;border-radius:8px;background:#f4f4f4}\n.ue-image-preview:not([src]){display:none}\n.ue-item textarea.ue-article{min-height:200px;line-height:1.7}\n#ue-screen.ue-fullscreen .ue-item textarea{max-height:80dvh}\n.ue-controls{display:flex;justify-content:flex-end;gap:5px}\n.ue-controls button{width:38px;height:36px;border:0;border-radius:7px;background:#f3f3f3;display:grid;place-items:center}\n.ue-controls button:disabled{opacity:.3}\n#ue-add{display:flex;align-items:center;gap:8px;margin-top:20px}\n#ue-add[hidden]{display:none!important}\n#ue-message{font-size:13px;color:#a22}\n#ue-screen{box-sizing:border-box;left:auto;right:0;top:0;bottom:0;width:min(430px,100%);height:100dvh;max-height:100dvh;border-left:1px solid #ddd;box-shadow:-12px 0 45px #0002;overflow:hidden;padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}\n#ue-wrap{display:flex;flex-direction:column;height:100%;min-height:0}\n#ue-head{flex:none;margin-bottom:16px;position:relative;justify-content:center;min-height:32px}\n#ue-fullscreen{position:absolute;right:0;top:0;display:grid;place-items:center;width:32px;height:32px;border:0!important;border-radius:7px;padding:0!important;background:transparent!important;color:#555!important}\n#ue-fullscreen:hover{background:#f2f2f2!important}\n#ue-body{scrollbar-width:none}\n#ue-body::-webkit-scrollbar{display:none}\n#ue-screen.ue-fullscreen{inset:0;width:100%;height:100dvh;max-height:100dvh;border:0;box-shadow:none;border-radius:0;padding:calc(22px + env(safe-area-inset-top)) 28px calc(16px + env(safe-area-inset-bottom))}\n#ue-screen.ue-fullscreen #ue-wrap{width:100%;max-width:880px;margin:0 auto}\n#ue-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 3px 24px}\n#ue-actions{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px 2px;background:white}\n#ue-actions button{min-width:104px;padding:11px 18px;border:1px solid #ddd;border-radius:9px;background:#fff;color:#171717}\n#ue-actions #ue-copy{background:#171717;color:white;border-color:#171717}\n@media(max-width:640px){#ue-screen:not(.ue-fullscreen){top:auto;bottom:0;left:0;right:0;width:100%;height:min(62dvh,620px);border-left:0;border-top:1px solid #ddd;border-radius:16px 16px 0 0;box-shadow:0 -12px 40px #0002}#ue-screen.ue-fullscreen{padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}}\n";
+editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -12,11 +13,21 @@ function init(){
  if(!editable().length)return;
  const pencil=document.createElement('button');pencil.id='ue-pencil';pencil.type='button';pencil.title='Edit';pencil.setAttribute('aria-label','Edit page');pencil.innerHTML='<i data-lucide="pencil"></i>';
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
- screen.innerHTML='<div id="ue-wrap"><div id="ue-head"><strong>Edit page</strong><button id="ue-fullscreen" type="button" aria-label="Expand editor" title="Fullscreen"><i data-lucide="maximize"></i></button></div><div id="ue-body"><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Cancel</button><button id="ue-copy" type="button">Copy</button></div></div>';
+ screen.innerHTML='<div id="ue-wrap"><div id="ue-head"><strong>Edit page</strong><button id="ue-fullscreen" type="button" aria-label="Expand editor" title="Fullscreen"><i data-lucide="maximize"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true">Content</button><button type="button" data-tab="style" aria-selected="false">Style</button><button type="button" data-tab="sections" aria-selected="false">Sections</button></div><div id="ue-body"><div id="ue-fields"></div><div id="ue-style-panel" hidden></div><div id="ue-sections" hidden></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Cancel</button><button id="ue-copy" type="button">Copy</button></div></div>';
  document.body.append(pencil,screen);
  const fields=screen.querySelector('#ue-fields'),add=screen.querySelector('#ue-add'),message=screen.querySelector('#ue-message');
  const fullscreenButton=screen.querySelector('#ue-fullscreen');
  const scrollBody=screen.querySelector('#ue-body');
+ const stylePanel=screen.querySelector('#ue-style-panel'),sectionsPanel=screen.querySelector('#ue-sections');
+ let activeTab='content';
+ function setTab(tab){
+  activeTab=tab;
+  screen.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
+  fields.hidden=tab!=='content';stylePanel.hidden=tab!=='style';sectionsPanel.hidden=tab!=='sections';
+  add.hidden=tab!=='content'||!model.some(item=>item.link&&item.group!==null);
+  if(tab==='sections')renderSections();
+ }
+ screen.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  screen.addEventListener('wheel',event=>{
   if(scrollBody.contains(event.target)||event.ctrlKey)return;
   if(scrollBody.scrollHeight<=scrollBody.clientHeight)return;
@@ -33,7 +44,82 @@ function init(){
  }
  fullscreenButton.onclick=()=>{setFullscreen(!screen.classList.contains('ue-fullscreen'));requestAnimationFrame(()=>fields.querySelectorAll('textarea').forEach(fitTextarea))};
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
- let draftActive=false,initialModel='';
+ let draftActive=false,initialModel='',styleSettings={},initialStyle='';
+ const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
+ const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
+ const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||min));
+ const safeColor=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(v)?v:fallback;
+ const styleSheetText=a=>{
+  const color=k=>safeColor(a[k],styleDefaults[k]);
+  const sz=k=>clamp(a[k],8,120);
+  const radius=clamp(a.radius,0,64);
+  const font=styleFonts[a.font]||styleFonts['system-ui'];
+  return '/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */\n'
+   +':root{--editor-accent:'+color('accent')+';--editor-radius:'+radius+'px}\n'
+   +'body{background-color:'+color('background')+'!important;color:'+color('text')+'!important;font-family:'+font+'!important}\n'
+   +'h1{font-size:'+sz('h1')+'px!important}h2{font-size:'+sz('h2')+'px!important}h3{font-size:'+sz('h3')+'px!important}p{font-size:'+sz('p')+'px!important}\n'
+   +'a:not([class]){color:var(--editor-accent)}\n'
+   +'button:not(#ue-pencil):not(#ue-screen button),.button,.btn,a.button,a.btn{background-color:'+color('buttonBackground')+'!important;color:'+color('buttonText')+'!important;border-radius:var(--editor-radius)!important}\n'
+   +'img, input:not(#ue-screen input),textarea:not(#ue-screen textarea),.card{border-radius:var(--editor-radius)}';
+ };
+ const readStyle=()=>{
+  const raw=document.getElementById('editor-page-style')?.textContent||'';
+  const match=raw.match(/\/\* editor-style:(.*?) \*\//);
+  if(match){try{return {...styleDefaults,...JSON.parse(decodeURIComponent(match[1]))}}catch{}}
+  return {...styleDefaults};
+ };
+ const applyStyle=()=>{
+  let el=document.getElementById('editor-page-style');
+  if(!el){el=document.createElement('style');el.id='editor-page-style';document.head.append(el)}
+  el.textContent=styleSheetText(styleSettings);
+ };
+ const restoreStyle=()=>{
+  const el=document.getElementById('editor-page-style');
+  if(originalPageStyle===null)el?.remove();
+  else{if(el)el.textContent=originalPageStyle;else{const node=document.createElement('style');node.id='editor-page-style';node.textContent=originalPageStyle;document.head.append(node)}}
+ };
+ const originalPageStyle=document.getElementById('editor-page-style')?.textContent??null;
+ function renderStyle(){
+  stylePanel.replaceChildren();
+  const controls=[
+   ['Page background','background','color'],['Text color','text','color'],['Accent color','accent','color'],
+   ['Font family','font','font'],['Heading 1 size (px)','h1','number'],['Heading 2 size (px)','h2','number'],
+   ['Heading 3 size (px)','h3','number'],['Paragraph size (px)','p','number'],
+   ['Corner roundness (px)','radius','radius'],
+   ['Button background','buttonBackground','color'],['Button text color','buttonText','color']
+  ];
+  const update=()=>{applyStyle();saveDraft()};
+  for(const [title,key,kind] of controls){
+   const row=document.createElement('div');row.className='ue-setting';
+   const label=document.createElement('label');label.textContent=title;row.append(label);
+   if(kind==='color'){
+    const pair=document.createElement('div');pair.className='ue-color-row';
+    const swatch=document.createElement('input');swatch.type='color';swatch.value=styleSettings[key];
+    const text=document.createElement('input');text.type='text';text.value=styleSettings[key];text.setAttribute('aria-label',title+' hex');
+    swatch.oninput=()=>{styleSettings[key]=swatch.value;text.value=swatch.value;update()};
+    text.onchange=()=>{const v=text.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){styleSettings[key]=v;swatch.value=v;update()}else text.value=styleSettings[key]};
+    pair.append(swatch,text);row.append(pair);
+   }else if(kind==='font'){
+    const select=document.createElement('select');for(const font of Object.keys(styleFonts)){const option=document.createElement('option');option.value=font;option.textContent=font;select.append(option)}
+    select.value=styleSettings[key];select.onchange=()=>{styleSettings[key]=select.value;update()};row.append(select);
+   }else{
+    const input=document.createElement('input');input.type='number';input.min=kind==='radius'?'0':'8';input.max=kind==='radius'?'64':'120';input.step='1';input.value=styleSettings[key];
+    input.oninput=()=>{if(input.value==='')return;styleSettings[key]=clamp(input.value,kind==='radius'?0:8,kind==='radius'?64:120);update()};row.append(input);
+   }
+   stylePanel.append(row);
+  }
+ }
+ function renderSections(){
+  sectionsPanel.replaceChildren();
+  const nodes=Array.from(document.querySelectorAll('main section,body > section,main > article,body > article,main > header,main > footer')).filter(el=>!el.closest('#ue-screen'));
+  if(!nodes.length){const hint=document.createElement('p');hint.textContent='No page sections found. Add semantic <section> elements to your HTML to list them here.';sectionsPanel.append(hint);return}
+  for(const [i,node] of nodes.entries()){
+   const button=document.createElement('button');button.type='button';button.className='ue-section-link';
+   button.textContent=node.getAttribute('aria-label')||node.querySelector('h1,h2,h3')?.textContent?.trim()||'Section '+(i+1);
+   button.onclick=()=>{hideEditor();node.scrollIntoView({behavior:'smooth',block:'start'})};
+   sectionsPanel.append(button);
+  }
+ }
  // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
  const draftKey='html-editor:draft:v1:'+location.href.split('#')[0];
  const pageSignature=()=>{
@@ -44,15 +130,15 @@ function init(){
   return (hash>>>0).toString(36);
  };
  const originalSignature=pageSignature();
- const readDraft=()=>{try{const x=JSON.parse(localStorage.getItem(draftKey)||'null');return x?.signature===originalSignature&&Array.isArray(x.model)?x.model:null}catch{return null}};
+ const readDraft=()=>{try{const x=JSON.parse(localStorage.getItem(draftKey)||'null');return x?.signature===originalSignature&&Array.isArray(x.model)?x:null}catch{return null}};
  const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
  const saveDraft=()=>{
   try{
-   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model}));
+   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings}));
    else clearDraft();
   }catch{} // file:// and privacy settings may block storage
  };
- const hasChanges=()=>draftActive&&JSON.stringify(model)!==initialModel;
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle);
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  const setText=(el,value)=>{el.textContent=value};
@@ -159,7 +245,7 @@ function init(){
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
- function close(restore=true){if(restore)restoreLive();clearDraft();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
+ function close(restore=true){if(restore){restoreLive();restoreStyle()}clearDraft();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
  function copyHTML(){
   const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
   const source=Array.from(doc.querySelectorAll('[data-edit]')).filter(el=>!el.querySelector('[data-edit]'));
@@ -186,6 +272,11 @@ function init(){
     g.append(node);
    }
   });
+  let pageStyle=doc.getElementById('editor-page-style');
+  if(JSON.stringify(styleSettings)!==initialStyle){
+   if(!pageStyle){pageStyle=doc.createElement('style');pageStyle.id='editor-page-style';doc.head.append(pageStyle)}
+   pageStyle.textContent=styleSheetText(styleSettings);
+  }
   doc.querySelector('#ue-pencil')?.remove();doc.querySelector('#ue-screen')?.remove();doc.querySelector('#ue-style')?.remove();doc.querySelector('#ue-script')?.remove();
   return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
  }
@@ -208,12 +299,16 @@ function init(){
    return {index:i,tag:el.tagName.toLowerCase(),article,image,src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalText:text,link:el.tagName==='A',label:(el.getAttribute('data-label')||el.getAttribute('aria-label')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
   });
   draftActive=true;initialModel=JSON.stringify(model);
+  styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
   const saved=readDraft();
-  if(saved&&saved.length>=model.length&&saved.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
-   model=saved;
+  if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
+   model=saved.model;
+   if(saved.styleSettings)styleSettings={...styleDefaults,...saved.styleSettings};
   }
+  if(JSON.stringify(styleSettings)!==initialStyle)applyStyle();
+  renderStyle();
   pencil.hidden=true;screen.hidden=false;message.textContent='';
-  add.hidden=!model.some(item=>item.link&&item.group!==null);render();
+  render();setTab(activeTab);
  };
  add.onclick=()=>{const group=model.find(x=>x.link&&x.group!==null)?.group;if(group===undefined)return;model.push({added:true,index:-1,tag:'a',link:true,text:'',url:'',group});render();fields.lastElementChild?.querySelector('input')?.focus()};
  screen.querySelector('#ue-cancel').textContent='Revert';
