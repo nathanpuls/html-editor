@@ -195,6 +195,9 @@ try{
  check('heading content and size share one card',await js("(()=>{const card=[...document.querySelectorAll('#ue-fields .ue-element-card')].find(n=>n.querySelector('summary')?.textContent.includes('Hero heading'));if(!card)return false;card.open=true;return Boolean(card.querySelector('textarea,input[type=text]')&&card.querySelector('.ue-inline-visual input[type=range]'))})()"));
  await js("(()=>{const card=[...document.querySelectorAll('#ue-fields .ue-element-card')].find(n=>n.querySelector('summary')?.textContent.includes('Hero heading'));card.querySelector('input[type=range]').value='54';card.querySelector('input[type=range]').dispatchEvent(new Event('input',{bubbles:true}))})()");
  check('inline font slider updates preview',await js("getComputedStyle(document.querySelector('h1')).fontSize==='54px'"));
+ await js("(()=>{const card=[...document.querySelectorAll('#ue-fields .ue-element-card')].find(n=>n.querySelector('summary')?.textContent.includes('Hero heading'));const color=card.querySelector('input[aria-label=\"Element text color hex\"]');color.value='#aabbcc';color.dispatchEvent(new Event('change',{bubbles:true}))})()");
+ check('heading color lives beside its text and size',await js("getComputedStyle(document.querySelector('h1')).color==='rgb(170, 187, 204)'"));
+
  await js("(()=>{const card=[...document.querySelectorAll('#ue-fields .ue-element-card')].find(n=>n.querySelector('summary')?.textContent.includes('Hero image'));card.open=true;const number=card.querySelector('input[aria-label=\"Opacity exact value\"]');number.value='65';number.dispatchEvent(new Event('change',{bubbles:true}))})()");
  check('inline image opacity affects image only',await js("getComputedStyle(document.querySelector('img[data-edit=\"Hero image\"]')).opacity==='0.65'&&getComputedStyle(document.querySelector('h1')).opacity==='1'"));
  await js("(()=>{const card=[...document.querySelectorAll('#ue-fields .ue-element-card')].find(n=>n.querySelector('summary')?.textContent.includes('Secondary action'));card.open=true;const slider=card.querySelector('input[aria-label=Padding]');slider.value='24';slider.dispatchEvent(new Event('input',{bubbles:true}))})()");
@@ -208,14 +211,14 @@ try{
  check('section padding changes immediately',await js("getComputedStyle(document.querySelector('[data-section=intro]')).paddingTop==='36px'"));
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-copy-json').click()");
  await waitJS("window.__exportedHTML.includes('\"elements\"')");
- check('JSON v2 contains contextual settings',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.design.elements['intro.hero-heading'].fontSize===54&&d.design.elements['page.hero-image'].opacity===65&&d.design.elements['page.secondary-action'].padding===24&&d.design.elements['group.links.site-links'].gap===18&&d.design.elements['section.intro'].padding===36})()"));
+ check('JSON v2 contains contextual settings',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.design.elements['intro.hero-heading'].fontSize===54&&d.design.elements['intro.hero-heading'].textColor==='#aabbcc'&&d.design.elements['page.hero-image'].opacity===65&&d.design.elements['page.secondary-action'].padding===24&&d.design.elements['group.links.site-links'].gap===18&&d.design.elements['section.intro'].padding===36})()"));
  await send('Page.reload',{ignoreCache:true});
  await waitJS("Boolean(document.querySelector('#ue-screen'))&&!document.querySelector('#ue-screen').hidden");
  check('slider values restore from local draft',await js("getComputedStyle(document.querySelector('h1')).fontSize==='54px'&&getComputedStyle(document.querySelector('img[data-edit=\"Hero image\"]')).opacity==='0.65'"));
  await js("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__exportedHTML=text}}})");
  await js("document.querySelector('#ue-copy').click()");
  await waitJS("typeof window.__exportedHTML==='string'&&window.__exportedHTML.includes('editor-visual-style')");
- check('HTML export contains targeted visual CSS',await js("window.__exportedHTML.includes('font-size:54px!important')&&window.__exportedHTML.includes('opacity:0.65!important')&&window.__exportedHTML.includes('padding:24px!important')&&window.__exportedHTML.includes('gap:18px!important')&&window.__exportedHTML.includes('padding:36px!important')"));
+ check('HTML export contains targeted visual CSS',await js("window.__exportedHTML.includes('font-size:54px!important')&&window.__exportedHTML.includes('color:#aabbcc!important')&&window.__exportedHTML.includes('opacity:0.65!important')&&window.__exportedHTML.includes('padding:24px!important')&&window.__exportedHTML.includes('gap:18px!important')&&window.__exportedHTML.includes('padding:36px!important')"));
  console.log('All browser smoke checks passed');
 }catch(error){console.error(error,chromeError);process.exitCode=1}
 finally{try{ws?.close()}catch{}chrome.kill('SIGKILL');server.close();await rm(profile,{recursive:true,force:true})}
