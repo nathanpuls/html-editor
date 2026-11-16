@@ -61,7 +61,8 @@ export function drawDesign(ctx){
    ['Font family','font','font'],['Heading 1 size (px)','h1','number'],['Heading 2 size (px)','h2','number'],
    ['Heading 3 size (px)','h3','number'],['Paragraph size (px)','p','number'],
    ['Corner roundness (px)','radius','radius'],
-   ['All buttons background','buttonBackground','color'],['All buttons text','buttonText','color']
+   ['Primary buttons background','buttonBackground','color'],['Primary buttons text','buttonText','color'],
+   ['Secondary buttons background','secondaryButtonBackground','color'],['Secondary buttons text','secondaryButtonText','color']
   ].filter(([,key])=>!Object.keys(originalVariables).length||!['background','text','accent','buttonBackground','buttonText','radius'].includes(key));
   const update=()=>{applyStyle();saveDraft()};
   for(const [title,key,kind] of controls){
@@ -190,20 +191,25 @@ export function buildStyleSheet(ctx){
   // original page, preserving responsive typography and existing CSS.
   const parts=['/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */'];
   const changed=k=>originalOverrides.has(k)||String(a[k])!==String(originalAppearance[k]);
-  const colors=['background','text','accent','buttonBackground','buttonText'];
+  const colors=['background','text','accent','buttonBackground','buttonText','secondaryButtonBackground','secondaryButtonText'];
   const vars=colors.filter(changed).map(k=>'--ue-'+k+':'+safeColor(a[k],styleDefaults[k])+';');
   const customVars=Object.keys(originalVariables).filter(name=>originalVariableOverrides.has(name)||variableSettings[name]!==originalVariables[name].value).map(name=>name+':'+variableSettings[name]+';');
   if(vars.length||customVars.length)parts.push(':root{'+[...vars,...customVars].join('')+'}');
   const rule=(selector,declaration)=>parts.push(selector+'{'+declaration+'}');
   if(changed('background'))rule('html body','background-color:var(--ue-background)!important');
   if(changed('text'))rule('html body,html body :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,small,span):not(#ue-screen *)','color:var(--ue-text)!important');
-  if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a)','color:var(--ue-accent)!important');
+  if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a):not(.site-links a):not(.contact-links a):not([data-button-role])','color:var(--ue-accent)!important');
   if(changed('font'))rule('html body','font-family:'+fontCSS(a.font,styleFonts)+'!important');
   for(const tag of ['h1','h2','h3','p'])if(changed(tag))rule('html body '+tag+':not(#ue-screen '+tag+')','font-size:'+clamp(a[tag],8,120)+'px!important');
   if(changed('radius'))rule('html body :is(button,.button,.btn,[role=button],.card,.hero-visual,.photo,img,input,textarea):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a','border-radius:'+clamp(a.radius,0,64)+'px!important');
-  const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
-  if(changed('buttonBackground'))rule(buttonSelectors,'background-color:var(--ue-buttonBackground)!important');
-  if(changed('buttonText'))rule(buttonSelectors,'color:var(--ue-buttonText)!important');
+  // Intentional CTA roles; secondary controls never inherit the primary fill.
+  // The contact link collection uses button colors, not the general link accent.
+  const primary='html body :is(button,.button,.btn,[role=button]):not(.secondary):not([data-button-role=secondary]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links].site-links a,html body nav[data-edit=links].contact-links a';
+  const secondary='html body :is(button,.button,.btn,[role=button]).secondary:not(#ue-screen *),html body [data-button-role=secondary]:not(#ue-screen *)';
+  if(changed('buttonBackground'))rule(primary,'background-color:var(--ue-buttonBackground)!important');
+  if(changed('buttonText'))rule(primary,'color:var(--ue-buttonText)!important');
+  if(changed('secondaryButtonBackground'))rule(secondary,'background-color:var(--ue-secondaryButtonBackground)!important');
+  if(changed('secondaryButtonText'))rule(secondary,'color:var(--ue-secondaryButtonText)!important');
   for(const [index,settings] of Object.entries(buttonSettings)){
    const original=buttonAppearance[index];
    if(!original)continue;
@@ -232,6 +238,8 @@ export function inspectStyle(ctx){
    accent:pageColor(document.querySelector('.site-nav a,a:not(.button):not(.btn)'), 'color',styleDefaults.accent),
    buttonBackground:pageColor(button,'backgroundColor',styleDefaults.buttonBackground),
    buttonText:pageColor(button,'color',styleDefaults.buttonText),
+   secondaryButtonBackground:pageColor(document.querySelector('[data-button-role="secondary"],.button.secondary,.btn.secondary,button.secondary'),'backgroundColor',styleDefaults.secondaryButtonBackground),
+   secondaryButtonText:pageColor(document.querySelector('[data-button-role="secondary"],.button.secondary,.btn.secondary,button.secondary'),'color',styleDefaults.secondaryButtonText),
    font,h1:size('h1'),h2:size('h2'),h3:size('h3'),p:size('p'),
    radius:Math.round(parseFloat(cards?getComputedStyle(cards).borderTopLeftRadius:(button?getComputedStyle(button).borderTopLeftRadius:'8px')))||0
   };
