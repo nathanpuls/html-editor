@@ -1,5 +1,5 @@
 import {setText,articleText,isArticle,setArticle,drawSections,drawContent,restoreEditedDOM,syncEditedDOM} from './content.js';
-import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews} from './design.js';
+import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews,googleFontFamilies,validFontStack,syncGoogleFontLink} from './design.js';
 import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
@@ -279,7 +279,8 @@ function init(){
  }
 
  const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
- const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
+ const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace'};
+ for(const font of googleFontFamilies)styleFonts[font]='"'+font+'", '+(/Serif|Lora|Baskerville|Merriweather|Playfair/.test(font)?'serif':'sans-serif');
  const pageColor=(el,prop,fallback)=>rgbToHex(el?getComputedStyle(el)[prop]:'')||fallback;
  const pageButton=()=>document.querySelector('main .button,main .btn,main button,main [role="button"],main nav[data-edit="links"] a')||document.querySelector('body .button,body .btn');
  function readStyle(){return inspectStyle({styleDefaults,styleFonts,pageColor,pageButton,readStyle})}
@@ -327,6 +328,7 @@ function init(){
   let el=document.getElementById('editor-page-style');
   if(!el){el=document.createElement('style');el.id='editor-page-style';document.head.append(el)}
   el.textContent=styleSheetText(styleSettings);
+  syncGoogleFontLink(document,styleSettings.font);
   refreshButtonSamples();
  };
  const restoreStyle=()=>{
@@ -593,7 +595,7 @@ function init(){
   const allowedStyle=Object.keys(styleDefaults),styles={...styleSettings};
   for(const [key,value] of Object.entries(design.style)){
    if(!allowedStyle.includes(key))throw Error('Unknown design setting: '+key);
-   if(key==='font'){if(!Object.hasOwn(styleFonts,value))throw Error('Unknown font: '+value)}
+   if(key==='font'){if(!validFontStack(value))throw Error('Invalid font family: '+value)}
    else if(['h1','h2','h3','p','radius'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>120)throw Error('Invalid design size: '+key)}
    else if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))throw Error('Invalid design color: '+key);
    styles[key]=value;
