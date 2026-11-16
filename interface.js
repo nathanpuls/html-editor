@@ -16,7 +16,7 @@ function init(){
  if(!editable().length)return;
  const pencil=document.createElement('button');pencil.id='ue-pencil';pencil.type='button';pencil.title='Edit';pencil.setAttribute('aria-label','Edit page');pencil.innerHTML='<i data-lucide="pencil"></i>';
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
- screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="square-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled><i data-lucide="undo-2"></i></button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy JSON</button></div></div></div></div>';
+ screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="square-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled><i data-lucide="undo-2"></i></button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy JSON</button><button id="ue-import-json" type="button" role="menuitem">Import JSON</button></div></div></div><div id="ue-json-dialog" role="dialog" aria-label="Import editable JSON" hidden><div class="ue-json-card"><h2>Import JSON</h2><p>Paste the editable data from Copy JSON. The page structure stays unchanged.</p><textarea id="ue-json-input" spellcheck="false" placeholder='{ "version": 1, "fields": [] }' aria-label="Editable page JSON"></textarea><p id="ue-json-error" role="alert" hidden></p><div class="ue-json-buttons"><button id="ue-json-cancel" type="button">Cancel</button><button id="ue-json-apply" type="button">Apply changes</button></div></div></div></div>';
  document.body.append(pencil,screen);
  const dropPreview=document.createElement('div');
  dropPreview.id='ue-drop-preview';
@@ -518,18 +518,134 @@ function init(){
  const toggleCopyMenu=show=>{copyMenu.hidden=!show;copyToggle.setAttribute('aria-expanded',String(show))};
  copyToggle.onclick=()=>toggleCopyMenu(copyMenu.hidden);
  document.addEventListener('pointerdown',event=>{if(!copyMenu.hidden&&!event.target.closest('#ue-copy-wrap'))toggleCopyMenu(false)});
+
+ const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+ const contentJSON=()=>({
+  version:1,
+  page:{title:pageMeta.title,description:pageMeta.description},
+  fields:model.map(item=>{
+   const field={index:item.index,tag:item.tag,label:item.label,group:item.group,added:!!item.added,hidden:!!item.hidden,deleted:!!item.deleted};
+   if(item.image){field.src=item.src;field.alt=item.alt}
+   else if(!item.decorative){field.text=item.text;if(item.link)field.url=item.url}
+   return field;
+  }),
+  sections:{order:[...sectionOrder],items:Object.fromEntries(sectionOrder.map(id=>[id,{label:sectionStates[id]?.label??sectionNodes.find(n=>n.getAttribute('data-section')===id)?.getAttribute('aria-label')??id,hidden:!!sectionStates[id]?.hidden,deleted:!!sectionStates[id]?.deleted}]))},
+  design:{style:{...styleSettings},variables:{...variableSettings},buttons:structuredClone(buttonSettings)}
+ });
+ // Validate the complete payload before making any change; editable data only,
+ // never HTML, selectors, scripts, or arbitrary DOM mutations.
+ const validateContentJSON=data=>{
+  if(!isRecord(data)||data.version!==1||!Array.isArray(data.fields)||!isRecord(data.page)||!isRecord(data.sections)||!isRecord(data.design))
+   throw Error('Expected Copy JSON data (version 1) with page, fields, sections, and design.');
+  const textField=(value,name)=>{if(typeof value!=='string')throw Error(name+' must be text.');return value};
+  const flag=(value,name)=>{if(typeof value!=='boolean')throw Error(name+' must be true or false.');return value};
+  const candidate=structuredClone(model);
+  // Existing fields are identified by their stable original index. Added
+  // navigation links are rebuilt from JSON in their supplied order.
+  const byIndex=new Map(candidate.filter(item=>!item.added).map(item=>[item.index,item]));
+  const imported=[],seen=new Set();
+  for(const field of data.fields){
+   if(!isRecord(field))throw Error('Each field must be an object.');
+   let item;
+   if(field.added===true){
+    if(field.tag!=='a'||!Number.isInteger(field.group)||field.group<0||field.group>=liveRoots.length)
+     throw Error('Only links may be added to an existing link collection.');
+    item={added:true,index:-1,tag:'a',link:true,article:false,image:false,decorative:false,group:field.group,label:'Navigation link',originalText:'',originalURL:'',text:'',url:'',hidden:false,deleted:false};
+   }else{
+    if(!Number.isInteger(field.index)||seen.has(field.index))throw Error('Duplicate or invalid field index.');
+    seen.add(field.index);
+    const original=byIndex.get(field.index);
+    if(!original||original.tag!==field.tag||original.group!==field.group||original.label!==field.label)
+     throw Error('JSON does not match the editable fields on this page.');
+    item={...original};
+   }
+   item.hidden=flag(field.hidden,'Field hidden');
+   item.deleted=flag(field.deleted,'Field deleted');
+   if(item.image){
+    item.src=textField(field.src,'Image URL');
+    item.alt=textField(field.alt,'Image alt');
+    if(!validImageURL(item.src))throw Error('Invalid image URL in '+item.label);
+   }else if(!item.decorative){
+    item.text=textField(field.text,'Field text');
+    if(item.link){
+     item.url=textField(field.url,'Link URL');
+     if(!item.deleted&&(!item.text.trim()||!validURL(item.url.trim())||!validLinkTarget(item.url)))
+      throw Error('Invalid link in '+item.label);
+    }
+   }
+   imported.push(item);
+  }
+  if(seen.size!==byIndex.size)throw Error('JSON is missing editable fields from this page.');
+  const order=data.sections.order;
+  if(!Array.isArray(order)||order.length!==initialSectionOrder.length||
+     new Set(order).size!==initialSectionOrder.length||!order.every(id=>initialSectionOrder.includes(id)))
+   throw Error('Section order does not match this page.');
+  if(!isRecord(data.sections.items))throw Error('Section data must be an object.');
+  const states={};
+  for(const id of order){
+   const state=data.sections.items[id];
+   if(!isRecord(state))throw Error('Missing section '+id);
+   states[id]={label:textField(state.label,'Section label'),hidden:flag(state.hidden,'Section hidden'),deleted:flag(state.deleted,'Section deleted')};
+  }
+  const nextPage={title:textField(data.page.title,'Page title'),description:textField(data.page.description,'Page description')};
+  const design=data.design;
+  if(!isRecord(design.style)||!isRecord(design.variables)||!isRecord(design.buttons))throw Error('Design must contain style, variables, and buttons.');
+  const allowedStyle=Object.keys(styleDefaults),styles={...styleSettings};
+  for(const [key,value] of Object.entries(design.style)){
+   if(!allowedStyle.includes(key))throw Error('Unknown design setting: '+key);
+   if(key==='font'){if(!Object.hasOwn(styleFonts,value))throw Error('Unknown font: '+value)}
+   else if(['h1','h2','h3','p','radius'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>120)throw Error('Invalid design size: '+key)}
+   else if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))throw Error('Invalid design color: '+key);
+   styles[key]=value;
+  }
+  const variables={...variableSettings};
+  for(const [name,value] of Object.entries(design.variables)){
+   const config=originalVariables[name];
+   if(!config||typeof value!=='string')throw Error('Unknown CSS variable: '+name);
+   if(config.kind==='color'?!hexColor(value):!/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(value))
+    throw Error('Invalid CSS variable: '+name);
+   variables[name]=value;
+  }
+  const buttons={};
+  for(const [index,settings] of Object.entries(design.buttons)){
+   if(!Object.hasOwn(buttonAppearance,index)||!isRecord(settings))throw Error('Unknown button: '+index);
+   buttons[index]={};
+   for(const [key,value] of Object.entries(settings)){
+    if(!['background','color'].includes(key)||typeof value!=='string'||!hexColor(value))throw Error('Invalid button style.');
+    buttons[index][key]=value;
+   }
+  }
+  return {model:imported,sectionOrder:[...order],sectionStates:states,pageMeta:nextPage,styleSettings:styles,variableSettings:variables,buttonSettings:buttons};
+ };
+ const importDialog=screen.querySelector('#ue-json-dialog'),importInput=screen.querySelector('#ue-json-input'),importError=screen.querySelector('#ue-json-error');
+ const dismissImport=()=>{importDialog.hidden=true;importError.hidden=true;importError.textContent=''};
+ screen.querySelector('#ue-import-json').onclick=()=>{
+  toggleCopyMenu(false);
+  importInput.value='';importError.hidden=true;importDialog.hidden=false;importInput.focus();
+ };
+ screen.querySelector('#ue-json-cancel').onclick=dismissImport;
+ screen.querySelector('#ue-json-apply').onclick=()=>{
+  try{
+   const next=validateContentJSON(JSON.parse(importInput.value));
+   checkpoint();
+   model=next.model;sectionOrder=next.sectionOrder;sectionStates=next.sectionStates;pageMeta=next.pageMeta;
+   styleSettings=next.styleSettings;variableSettings=next.variableSettings;buttonSettings=next.buttonSettings;
+   applyMeta();reorderSections();syncSections();syncLive();applyStyle();renderStyle();renderSections();render();
+   saveDraft();dismissImport();message.textContent='JSON imported. All editable changes applied.';
+  }catch(error){importError.textContent=error instanceof SyntaxError?'Invalid JSON: '+error.message:(error.message||'Unable to import JSON');importError.hidden=false}
+ };
  const copyPage=async(format)=>{
   toggleCopyMenu(false);
   try{
-   if(model.some(x=>!x.deleted&&x.link&&(!x.text.trim()||!validURL(x.url.trim())||!validLinkTarget(x.url))))throw Error('Every link needs text and a valid destination on this page or a URL.');
-   const html=copyHTML();
-   const value=format==='json'?JSON.stringify({html},null,2):html;
+   const value=format==='json'?JSON.stringify(contentJSON(),null,2):copyHTML();
    if(window.endsSharedCopyText)await window.endsSharedCopyText(value);else await navigator.clipboard.writeText(value);
    if(format==='html'){
     const sourceTag=document.getElementById('ends-nav-data');
-    if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=html;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
+    if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=value;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
    }
-   saveDraft();hideEditor();
+   saveDraft();
+   if(format==='html')hideEditor();
+   else message.textContent='Editable JSON copied. Paste it into AI, then import the result.';
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
  screen.querySelector('#ue-copy').onclick=()=>copyPage('html');
