@@ -5,7 +5,7 @@
 const editorStyle=document.createElement('style');
 editorStyle.id='ue-style';
 editorStyle.textContent="#ue-pencil{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));right:18px;z-index:2147483000;display:grid;place-items:center;width:44px;height:44px;border:1px solid #ddd;border-radius:50%;background:white;color:#111;box-shadow:0 3px 16px #0002;cursor:pointer}\n#ue-pencil svg,#ue-screen svg{width:18px;height:18px}\n#ue-screen{position:fixed;inset:0;z-index:2147483600;overflow:auto;height:100dvh;background:white;color:#171717;padding:calc(22px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));font:15px/1.5 Manrope,system-ui,sans-serif}\n#ue-screen[hidden],#ue-pencil[hidden]{display:none!important}\n#ue-screen *{box-sizing:border-box}\n#ue-wrap{max-width:560px;margin:auto}\n#ue-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:24px}\n#ue-head strong{font-size:21px}\n#ue-screen button{font:inherit;cursor:pointer}\n#ue-head button,#ue-add{border:1px solid #ddd;background:#fff;color:#171717;border-radius:9px;padding:10px 13px}\n#ue-head #ue-copy{background:#171717;color:#fff;border-color:#171717}\n#ue-fields{display:grid;gap:18px}\n.ue-item{display:grid;gap:9px;padding-bottom:18px}\n.ue-item label{display:grid;gap:5px;font:700 12px/1.5 Manrope,system-ui,sans-serif;color:#666}\n.ue-item input,.ue-item textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:11px;background:#fff;color:#171717;font:500 16px/1.5 Manrope,system-ui,sans-serif}\n.ue-item textarea{min-height:110px;max-height:60dvh;resize:vertical;overflow-y:hidden}\n.ue-image-preview{display:block;max-width:100%;max-height:190px;object-fit:contain;object-position:left center;border-radius:8px;background:#f4f4f4}\n.ue-image-preview:not([src]){display:none}\n.ue-item textarea.ue-article{min-height:200px;line-height:1.7}\n#ue-screen.ue-fullscreen .ue-item textarea{max-height:80dvh}\n.ue-controls{display:flex;justify-content:flex-end;gap:5px}\n.ue-controls button{width:38px;height:36px;border:0;border-radius:7px;background:#f3f3f3;display:grid;place-items:center}\n.ue-controls button:disabled{opacity:.3}\n#ue-add{display:flex;align-items:center;gap:8px;margin-top:20px}\n#ue-add[hidden]{display:none!important}\n#ue-message{font-size:13px;color:#a22}\n#ue-screen{box-sizing:border-box;left:auto;right:0;top:0;bottom:0;width:min(430px,100%);height:100dvh;max-height:100dvh;border-left:1px solid #ddd;box-shadow:-12px 0 45px #0002;overflow:hidden;padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}\n#ue-wrap{display:flex;flex-direction:column;height:100%;min-height:0}\n#ue-head{flex:none;margin-bottom:16px;position:relative;justify-content:center;min-height:32px}\n#ue-fullscreen{position:absolute;right:0;top:0;display:grid;place-items:center;width:32px;height:32px;border:0!important;border-radius:7px;padding:0!important;background:transparent!important;color:#555!important}\n#ue-fullscreen:hover{background:#f2f2f2!important}\n#ue-body{scrollbar-width:none}\n#ue-body::-webkit-scrollbar{display:none}\n#ue-screen.ue-fullscreen{inset:0;width:100%;height:100dvh;max-height:100dvh;border:0;box-shadow:none;border-radius:0;padding:calc(22px + env(safe-area-inset-top)) 28px calc(16px + env(safe-area-inset-bottom))}\n#ue-screen.ue-fullscreen #ue-wrap{width:100%;max-width:880px;margin:0 auto}\n#ue-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 3px 24px}\n#ue-actions{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px 2px;background:white}\n#ue-actions button{min-width:104px;padding:11px 18px;border:1px solid #ddd;border-radius:9px;background:#fff;color:#171717}\n#ue-actions #ue-copy{background:#171717;color:white;border-color:#171717}\n@media(max-width:640px){#ue-screen:not(.ue-fullscreen){top:auto;bottom:0;left:0;right:0;width:100%;height:min(62dvh,620px);border-left:0;border-top:1px solid #ddd;border-radius:16px 16px 0 0;box-shadow:0 -12px 40px #0002}#ue-screen.ue-fullscreen{padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}}\n";
-editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
+editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-section-row{display:flex;gap:8px;align-items:center}.ue-section-row .ue-section-link{flex:1;min-width:0}.ue-section-row .ue-controls{flex:none}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -44,23 +44,27 @@ function init(){
  }
  fullscreenButton.onclick=()=>{setFullscreen(!screen.classList.contains('ue-fullscreen'));requestAnimationFrame(()=>fields.querySelectorAll('textarea').forEach(fitTextarea))};
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
- let draftActive=false,initialModel='',styleSettings={},initialStyle='';
+ let draftActive=false,initialModel='',styleSettings={},initialStyle='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
  const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||min));
  const safeColor=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(v)?v:fallback;
  const styleSheetText=a=>{
-  const color=k=>safeColor(a[k],styleDefaults[k]);
-  const sz=k=>clamp(a[k],8,120);
-  const radius=clamp(a.radius,0,64);
-  const font=styleFonts[a.font]||styleFonts['system-ui'];
-  return '/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */\n'
-   +':root{--editor-accent:'+color('accent')+';--editor-radius:'+radius+'px}\n'
-   +'body{background-color:'+color('background')+'!important;color:'+color('text')+'!important;font-family:'+font+'!important}\n'
-   +'h1{font-size:'+sz('h1')+'px!important}h2{font-size:'+sz('h2')+'px!important}h3{font-size:'+sz('h3')+'px!important}p{font-size:'+sz('p')+'px!important}\n'
-   +'a:not([class]){color:var(--editor-accent)}\n'
-   +'button:not(#ue-pencil):not(#ue-screen button),.button,.btn,a.button,a.btn{background-color:'+color('buttonBackground')+'!important;color:'+color('buttonText')+'!important;border-radius:var(--editor-radius)!important}\n'
-   +'img, input:not(#ue-screen input),textarea:not(#ue-screen textarea),.card{border-radius:var(--editor-radius)}';
+  // Only override controls the user actually changed. Preserve the existing
+  // responsive typography and design when editing an unrelated color.
+  const parts=['/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */'];
+  const changed=k=>String(a[k])!==String(styleDefaults[k]);
+  const rule=(selector,declaration)=>parts.push(selector+'{'+declaration+'}');
+  if(changed('background'))rule('html body','background-color:'+safeColor(a.background,styleDefaults.background)+'!important');
+  if(changed('text'))rule('html body,html body :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,small,span):not(#ue-screen *)','color:'+safeColor(a.text,styleDefaults.text)+'!important');
+  if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a)','color:'+safeColor(a.accent,styleDefaults.accent)+'!important');
+  if(changed('font'))rule('html body','font-family:'+(styleFonts[a.font]||styleFonts['system-ui'])+'!important');
+  for(const tag of ['h1','h2','h3','p'])if(changed(tag))rule('html body '+tag+':not(#ue-screen '+tag+')','font-size:'+clamp(a[tag],8,120)+'px!important');
+  if(changed('radius'))rule('html body :is(button,.button,.btn,[role=button],.card,img,input,textarea):not(#ue-screen *),html body nav[data-edit=links] a','border-radius:'+clamp(a.radius,0,64)+'px!important');
+  const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
+  if(changed('buttonBackground'))rule(buttonSelectors,'background-color:'+safeColor(a.buttonBackground,styleDefaults.buttonBackground)+'!important');
+  if(changed('buttonText'))rule(buttonSelectors,'color:'+safeColor(a.buttonText,styleDefaults.buttonText)+'!important');
+  return parts.join('\\n');
  };
  const readStyle=()=>{
   const raw=document.getElementById('editor-page-style')?.textContent||'';
@@ -109,16 +113,44 @@ function init(){
    stylePanel.append(row);
   }
  }
+ function findSections(root=document){
+  return Array.from(root.querySelectorAll('[data-section]')).filter(el=>!el.parentElement?.closest('[data-section]')&&!el.closest('#ue-screen'));
+ }
+ function reorderSections(order=sectionOrder){
+  if(!sectionNodes.length)return;
+  const byId=new Map(sectionNodes.map(n=>[n.getAttribute('data-section'),n]));
+  for(const id of order){
+   const node=byId.get(id);if(!node||!node.parentElement)continue;
+   // Same-parent sections can be moved safely without changing their internals.
+   const siblings=sectionNodes.filter(n=>n.parentElement===node.parentElement);
+   const parent=node.parentElement;
+   const ordered=order.map(k=>byId.get(k)).filter(n=>n&&n.parentElement===parent&&siblings.includes(n));
+   const after=siblings[siblings.length-1]?.nextSibling||null;
+   for(const item of ordered)parent.insertBefore(item,after);
+  }
+ }
  function renderSections(){
   sectionsPanel.replaceChildren();
-  const nodes=Array.from(document.querySelectorAll('main section,body > section,main > article,body > article,main > header,main > footer')).filter(el=>!el.closest('#ue-screen'));
-  if(!nodes.length){const hint=document.createElement('p');hint.textContent='No page sections found. Add semantic <section> elements to your HTML to list them here.';sectionsPanel.append(hint);return}
-  for(const [i,node] of nodes.entries()){
-   const button=document.createElement('button');button.type='button';button.className='ue-section-link';
-   button.textContent=node.getAttribute('aria-label')||node.querySelector('h1,h2,h3')?.textContent?.trim()||'Section '+(i+1);
-   button.onclick=()=>{hideEditor();node.scrollIntoView({behavior:'smooth',block:'start'})};
-   sectionsPanel.append(button);
+  if(!sectionNodes.length){
+   const hint=document.createElement('p');hint.textContent='No sections found. Add data-section="unique-id" to the page sections you want to reorder.';sectionsPanel.append(hint);return;
   }
+  for(const [i,id] of sectionOrder.entries()){
+   const node=sectionNodes.find(n=>n.getAttribute('data-section')===id);if(!node)continue;
+   const row=document.createElement('div');row.className='ue-section-row';
+   const jump=document.createElement('button');jump.type='button';jump.className='ue-section-link';
+   jump.textContent=node.getAttribute('aria-label')||node.querySelector('h1,h2,h3')?.textContent?.trim()||id;
+   jump.onclick=()=>{hideEditor();node.scrollIntoView({behavior:'smooth',block:'start'})};
+   const controls=document.createElement('div');controls.className='ue-controls';
+   for(const [dir,name] of [[-1,'arrow-up'],[1,'arrow-down']]){
+    const button=document.createElement('button');button.type='button';button.title=dir<0?'Move up':'Move down';button.setAttribute('aria-label',button.title+' '+jump.textContent);
+    button.disabled=(i+dir<0||i+dir>=sectionOrder.length||sectionNodes.find(n=>n.getAttribute('data-section')===sectionOrder[i+dir])?.parentElement!==node.parentElement);
+    button.innerHTML='<i data-lucide="'+name+'"></i>';
+    button.onclick=()=>{const next=i+dir;[sectionOrder[i],sectionOrder[next]]=[sectionOrder[next],sectionOrder[i]];reorderSections();saveDraft();renderSections()};
+    controls.append(button);
+   }
+   row.append(jump,controls);sectionsPanel.append(row);
+  }
+  icons();
  }
  // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
  const draftKey='html-editor:draft:v1:'+location.href.split('#')[0];
@@ -134,11 +166,11 @@ function init(){
  const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
  const saveDraft=()=>{
   try{
-   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings}));
+   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,sectionOrder}));
    else clearDraft();
   }catch{} // file:// and privacy settings may block storage
  };
- const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle);
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder));
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  const setText=(el,value)=>{el.textContent=value};
@@ -245,7 +277,7 @@ function init(){
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
- function close(restore=true){if(restore){restoreLive();restoreStyle()}clearDraft();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
+ function close(restore=true){if(restore){restoreLive();restoreStyle();sectionOrder=[...initialSectionOrder];reorderSections()}clearDraft();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
  function copyHTML(){
   const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
   const source=Array.from(doc.querySelectorAll('[data-edit]')).filter(el=>!el.querySelector('[data-edit]'));
@@ -272,6 +304,15 @@ function init(){
     g.append(node);
    }
   });
+  const exportedSections=Array.from(doc.querySelectorAll('[data-section]'));
+  const exportedById=new Map(exportedSections.map(el=>[el.getAttribute('data-section'),el]));
+  for(const id of sectionOrder){
+   const node=exportedById.get(id);if(!node||!node.parentElement)continue;
+   const siblings=exportedSections.filter(el=>el.parentElement===node.parentElement);
+   const ordered=sectionOrder.map(k=>exportedById.get(k)).filter(el=>el&&el.parentElement===node.parentElement&&siblings.includes(el));
+   const after=siblings[siblings.length-1]?.nextSibling||null;
+   for(const el of ordered)node.parentElement.insertBefore(el,after);
+  }
   let pageStyle=doc.getElementById('editor-page-style');
   if(JSON.stringify(styleSettings)!==initialStyle){
    if(!pageStyle){pageStyle=doc.createElement('style');pageStyle.id='editor-page-style';doc.head.append(pageStyle)}
@@ -300,12 +341,16 @@ function init(){
   });
   draftActive=true;initialModel=JSON.stringify(model);
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
+  sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));
+  initialSectionOrder=[...sectionOrder];
   const saved=readDraft();
   if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
    model=saved.model;
    if(saved.styleSettings)styleSettings={...styleDefaults,...saved.styleSettings};
+   if(Array.isArray(saved.sectionOrder)&&saved.sectionOrder.length===sectionOrder.length&&saved.sectionOrder.every(id=>sectionOrder.includes(id)))sectionOrder=[...saved.sectionOrder];
   }
   if(JSON.stringify(styleSettings)!==initialStyle)applyStyle();
+  if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))reorderSections();
   renderStyle();
   pencil.hidden=true;screen.hidden=false;message.textContent='';
   render();setTab(activeTab);
