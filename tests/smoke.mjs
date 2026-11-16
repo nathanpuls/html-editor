@@ -146,7 +146,9 @@ try{
  await waitJS("typeof window.__exportedHTML==='string'");
  check('HTML export reflects edits',await js("window.__exportedHTML.includes('Changed heading') && !window.__exportedHTML.includes('id=\"ue-stylesheet\"')"));
  check('HTML export omits runtime base tag, analytics, and drag preview',await js("!window.__exportedHTML.includes('<base href=')&&!window.__exportedHTML.includes('static.cloudflareinsights.com')&&!window.__exportedHTML.includes('data-cf-beacon')&&!window.__exportedHTML.includes('ue-drop-preview')"));
- check('HTML export retains installation script and editable structure',await js("window.__exportedHTML.includes('https://edit.built.at')&&window.__exportedHTML.includes('data-edit=')&&window.__exportedHTML.includes('data-section=')"));
+ check('HTML export retains editor installation script',await js("window.__exportedHTML.includes('https://edit.built.at')"));
+ check('HTML export retains editable attributes',await js("window.__exportedHTML.includes('data-edit=')"));
+ check('HTML export retains section identifiers',await js("window.__exportedHTML.includes('data-section=')"));
  await send('Emulation.setDeviceMetricsOverride',{width:375,height:700,deviceScaleFactor:1,mobile:true});
  await js("document.querySelector('#ue-pencil').click()");
  check('mobile editor fills viewport',await js("Math.abs(document.querySelector('#ue-screen').getBoundingClientRect().width-375)<2"));
