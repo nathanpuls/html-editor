@@ -8,6 +8,14 @@ import {tmpdir} from 'node:os';
 import {join,resolve,extname} from 'node:path';
 import {once} from 'node:events';
 
+import {draftStorageKey,recoverDraftModel} from '../storage.js';
+const stable=draftStorageKey('https://live.ends.at/?edit&preview=100')===draftStorageKey('https://live.ends.at/?preview=200');
+assert.ok(stable,'Live preview draft key must ignore changing URL query parameters');
+const oldFields={model:[{index:0,tag:'h1',label:'Headline',group:null,text:'My edited headline'},{index:1,tag:'p',label:'Intro',group:null,text:'My paragraph'}]};
+const shifted=[{index:0,tag:'p',label:'Intro',group:null,text:'Original paragraph'},{index:1,tag:'h1',label:'Headline',group:null,text:'Original heading'},{index:2,tag:'a',label:'Extra link',group:null,text:'Extra'}];
+const restored=recoverDraftModel(oldFields,shifted);
+assert.ok(restored&&restored[0].text==='My paragraph'&&restored[1].text==='My edited headline'&&restored[2].text==='Extra','Draft recovery must match fields after preview layout changes');
+console.log('PASS stable preview draft identity and reordered-field recovery');
 const root=resolve(import.meta.dirname,'..');
 const mime={'.js':'application/javascript','.css':'text/css','.html':'text/html'};
 const server=createServer(async(req,res)=>{
