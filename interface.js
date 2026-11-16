@@ -1,5 +1,5 @@
-import {setText,articleText,isArticle,setArticle} from './content.js';
-import {clamp,safeColor,rgbToHex,hexColor,varLabel} from './design.js';
+import {setText,articleText,isArticle,setArticle,drawSections,drawContent} from './content.js';
+import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet} from './design.js';
 import {pageSignature,draftCompatible} from './storage.js';
 import {generateHTML} from './export.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
@@ -358,35 +358,7 @@ function init(){
    refreshButtonSample(sample,index);
   }
  };
- const styleSheetText=a=>{
-  // Store exact settings, but override only properties changed from the
-  // original page, preserving responsive typography and existing CSS.
-  const parts=['/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */'];
-  const changed=k=>originalOverrides.has(k)||String(a[k])!==String(originalAppearance[k]);
-  const colors=['background','text','accent','buttonBackground','buttonText'];
-  const vars=colors.filter(changed).map(k=>'--ue-'+k+':'+safeColor(a[k],styleDefaults[k])+';');
-  const customVars=Object.keys(originalVariables).filter(name=>originalVariableOverrides.has(name)||variableSettings[name]!==originalVariables[name].value).map(name=>name+':'+variableSettings[name]+';');
-  if(vars.length||customVars.length)parts.push(':root{'+[...vars,...customVars].join('')+'}');
-  const rule=(selector,declaration)=>parts.push(selector+'{'+declaration+'}');
-  if(changed('background'))rule('html body','background-color:var(--ue-background)!important');
-  if(changed('text'))rule('html body,html body :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,small,span):not(#ue-screen *)','color:var(--ue-text)!important');
-  if(changed('accent'))rule('html body a:not(.button):not(.btn):not([role=button]):not(#ue-screen a)','color:var(--ue-accent)!important');
-  if(changed('font'))rule('html body','font-family:'+(styleFonts[a.font]||styleFonts['system-ui'])+'!important');
-  for(const tag of ['h1','h2','h3','p'])if(changed(tag))rule('html body '+tag+':not(#ue-screen '+tag+')','font-size:'+clamp(a[tag],8,120)+'px!important');
-  if(changed('radius'))rule('html body :is(button,.button,.btn,[role=button],.card,.hero-visual,.photo,img,input,textarea):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a','border-radius:'+clamp(a.radius,0,64)+'px!important');
-  const buttonSelectors='html body :is(button,.button,.btn,[role=button]):not(#ue-screen *):not(#ue-pencil),html body nav[data-edit=links] a';
-  if(changed('buttonBackground'))rule(buttonSelectors,'background-color:var(--ue-buttonBackground)!important');
-  if(changed('buttonText'))rule(buttonSelectors,'color:var(--ue-buttonText)!important');
-  for(const [index,settings] of Object.entries(buttonSettings)){
-   const original=buttonAppearance[index];
-   if(!original)continue;
-   for(const key of ['background','color']){
-    const value=settings[key];
-    if(value&&hexColor(value)&&value!==original[key])rule('html body '+original.selector,key==='background'?'background-color:'+value+'!important':'color:'+value+'!important');
-   }
-  }
-  return parts.join('\n');
- };
+ const styleSheetText=a=>buildStyleSheet({selector,pencil,screen,variableSettings,buttonSettings,buttonAppearance,styleDefaults,styleFonts,originalVariables,originalVariableOverrides,originalAppearance,originalOverrides,styleSheetText,clamp,safeColor,hexColor,a});
  const applyStyle=()=>{
   let el=document.getElementById('editor-page-style');
   if(!el){el=document.createElement('style');el.id='editor-page-style';document.head.append(el)}
@@ -400,120 +372,7 @@ function init(){
   else{const node=document.createElement('style');node.id='editor-page-style';node.textContent=originalPageStyle;document.head.append(node)}
  };
  const originalPageStyle=document.getElementById('editor-page-style')?.textContent??null;
- function renderStyle(){
-  stylePanel.replaceChildren();
-  const controls=[
-   ['Page background','background','color'],['Text color','text','color'],['Accent color','accent','color'],
-   ['Font family','font','font'],['Heading 1 size (px)','h1','number'],['Heading 2 size (px)','h2','number'],
-   ['Heading 3 size (px)','h3','number'],['Paragraph size (px)','p','number'],
-   ['Corner roundness (px)','radius','radius'],
-   ['All buttons background','buttonBackground','color'],['All buttons text','buttonText','color']
-  ].filter(([,key])=>!Object.keys(originalVariables).length||!['background','text','accent','buttonBackground','buttonText','radius'].includes(key));
-  const update=()=>{applyStyle();saveDraft()};
-  for(const [title,key,kind] of controls){
-   const row=document.createElement('div');row.className='ue-setting';
-   const label=document.createElement('label');label.textContent=title;row.append(label);
-   if(kind==='color'){
-    const pair=document.createElement('div');pair.className='ue-color-row';
-    const swatch=document.createElement('input');swatch.type='color';swatch.value=styleSettings[key];
-    const text=document.createElement('input');text.type='text';text.value=styleSettings[key];text.setAttribute('aria-label',title+' hex');
-    swatch.oninput=()=>{checkpoint();styleSettings[key]=swatch.value;text.value=swatch.value;update()};
-    text.onchange=()=>{const v=text.value.trim();if(/^#[0-9a-f]{6}$/i.test(v)){checkpoint();styleSettings[key]=v;swatch.value=v;update()}else text.value=styleSettings[key]};
-    pair.append(swatch,text);row.append(pair);
-   }else if(kind==='font'){
-    const select=document.createElement('select');for(const font of Object.keys(styleFonts)){const option=document.createElement('option');option.value=font;option.textContent=font;select.append(option)}
-    select.value=styleSettings[key];select.onchange=()=>{checkpoint();styleSettings[key]=select.value;update()};row.append(select);
-   }else{
-    const input=document.createElement('input');input.type='number';input.min=kind==='radius'?'0':'8';input.max=kind==='radius'?'64':'120';input.step='1';input.value=styleSettings[key];
-    input.oninput=()=>{if(input.value==='')return;checkpoint();styleSettings[key]=clamp(input.value,kind==='radius'?0:8,kind==='radius'?64:120);update()};row.append(input);
-   }
-   const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
-   reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=String(styleSettings[key])===String(originalAppearance[key]);
-   reset.onclick=event=>{event.preventDefault();checkpoint();styleSettings[key]=originalAppearance[key];applyStyle();saveDraft();renderStyle()};
-   const refreshReset=()=>{reset.disabled=String(styleSettings[key])===String(originalAppearance[key])};
-   row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',refreshReset));
-   row.append(reset);stylePanel.append(row);
-  }
-  const custom=Object.entries(originalVariables);
-  if(custom.length){
-   const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Website colors & sizes';stylePanel.append(heading);
-   for(const [name,config] of custom){
-    const row=document.createElement('div');row.className='ue-setting';
-    const label=document.createElement('label');label.textContent=varLabel(name);row.append(label);
-    const value=variableSettings[name];
-    let input;
-    if(config.kind==='color'){
-     const pair=document.createElement('div');pair.className='ue-color-row';
-     const swatch=document.createElement('input');swatch.type='color';swatch.value=hexColor(value)||'#000000';
-     input=document.createElement('input');input.type='text';input.value=value;input.setAttribute('aria-label',varLabel(name)+' color');
-     swatch.oninput=()=>{checkpoint();variableSettings[name]=swatch.value;input.value=swatch.value;applyStyle();saveDraft();reset.disabled=false};
-     input.onchange=()=>{const color=hexColor(input.value);if(!color){input.value=variableSettings[name];return}checkpoint();variableSettings[name]=input.value.trim();swatch.value=color;applyStyle();saveDraft();reset.disabled=variableSettings[name]===config.value};
-     pair.append(swatch,input);row.append(pair);
-    }else{
-     input=document.createElement('input');input.type='text';input.value=value;input.setAttribute('aria-label',varLabel(name)+' size');
-     input.onchange=()=>{const val=input.value.trim();if(!/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(val)){input.value=variableSettings[name];return}checkpoint();variableSettings[name]=val;applyStyle();saveDraft();reset.disabled=val===config.value};
-     row.append(input);
-    }
-    const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+varLabel(name);reset.setAttribute('aria-label',reset.title);reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=value===config.value;
-    reset.onclick=()=>{checkpoint();variableSettings[name]=config.value;applyStyle();saveDraft();renderStyle()};
-    row.append(reset);stylePanel.append(row);
-   }
-  }
-  const buttons=Object.entries(buttonAppearance);
-  if(buttons.length){
-   const heading=document.createElement('div');heading.className='ue-custom-heading';heading.textContent='Individual buttons';stylePanel.append(heading);
-   for(const [index,info] of buttons){
-    const item=model.find(x=>!x.added&&x.index===Number(index));
-    if(!item||item.deleted)continue;
-    const block=document.createElement('details');block.className='ue-button-block';block.dataset.ueButtonBlock=index;
-    block.open=expandedButtonControls.has(index);
-    block.addEventListener('toggle',()=>{if(block.open)expandedButtonControls.add(index);else expandedButtonControls.delete(index)});
-    const summary=document.createElement('summary');summary.className='ue-button-summary';
-    const name=document.createElement('div');name.className='ue-button-title';name.textContent=info.label;summary.append(name);
-    // Preview only: read the source element's appearance; never clone its markup
-    // or insert an interactive duplicate into the website.
-    const preview=document.createElement('div');preview.className='ue-button-preview';
-    preview.dataset.ueButtonPreview=index;
-    preview.setAttribute('aria-label','Preview of '+info.label);
-    summary.append(preview);
-    const hint=document.createElement('div');hint.className='ue-button-hint';hint.textContent='Click to edit colors';
-    summary.append(hint);block.append(summary);
-    const jump=document.createElement('span');jump.className='ue-button-jump';jump.setAttribute('role','button');jump.setAttribute('tabindex','0');
-    jump.title='Find '+info.label+' on the website';jump.setAttribute('aria-label',jump.title);
-    jump.innerHTML='<i data-lucide="arrow-up-right"></i>';
-    jump.onclick=event=>{
-     event?.preventDefault();event?.stopPropagation();
-     const node=liveSnapshots[Number(index)]?.node;
-     if(!node?.isConnected)return;
-     if(screen.classList.contains('ue-fullscreen'))hideEditor();
-     const top=Math.max(0,window.scrollY+node.getBoundingClientRect().top-32);
-     window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-    };
-    // A secondary action within the always-visible summary.
-    jump.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();jump.click()}});
-    summary.append(jump);
-    const updatePreview=()=>refreshButtonSample(preview,index);
-    updatePreview();
-    for(const [key,label] of [['background','Background'],['color','Text color']]){
-     const row=document.createElement('div');row.className='ue-setting';
-     const lbl=document.createElement('label');lbl.textContent=label;row.append(lbl);
-     const pair=document.createElement('div');pair.className='ue-color-row';
-     const value=buttonSettings[index]?.[key]||info[key];
-     const swatch=document.createElement('input');swatch.type='color';swatch.value=hexColor(value)||'#000000';
-     const input=document.createElement('input');input.type='text';input.value=value;input.setAttribute('aria-label',info.label+' '+label);
-     const setValue=v=>{checkpoint();buttonSettings[index]={...buttonSettings[index],[key]:v};applyStyle();updatePreview();saveDraft();reset.disabled=v===info[key]};
-     swatch.oninput=()=>{input.value=swatch.value;setValue(swatch.value)};
-     input.onchange=()=>{const color=hexColor(input.value);if(!color){input.value=buttonSettings[index]?.[key]||info[key];return}swatch.value=color;setValue(input.value.trim())};
-     pair.append(swatch,input);row.append(pair);
-     const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+info.label+' '+label;reset.setAttribute('aria-label',reset.title);reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=value===info[key];
-     reset.onclick=()=>{checkpoint();if(buttonSettings[index]){delete buttonSettings[index][key];if(!Object.keys(buttonSettings[index]).length)delete buttonSettings[index]}applyStyle();saveDraft();renderStyle()};
-     row.append(reset);block.append(row);
-    }
-    stylePanel.append(block);
-   }
-  }
-  icons();
- }
+ function renderStyle(){return drawDesign({screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel})}
  function findSections(root=document){
   return Array.from(root.querySelectorAll('[data-section]')).filter(el=>!el.parentElement?.closest('[data-section]')&&!el.closest('#ue-screen'));
  }
@@ -530,50 +389,7 @@ function init(){
    for(const node of desired)parent.insertBefore(node,after);
   }
  }
- function renderSections(){
-  sectionsPanel.replaceChildren();
-  if(!sectionNodes.length){
-   const hint=document.createElement('p');hint.textContent='No sections found. Add data-section="unique-id" to the page sections you want to reorder.';sectionsPanel.append(hint);return;
-  }
-  const visibleSections=sectionOrder.filter(id=>!sectionStates[id]?.deleted);
-  for(const [i,id] of visibleSections.entries()){
-   const node=sectionNodes.find(n=>n.getAttribute('data-section')===id);if(!node)continue;
-   const row=document.createElement('div');row.className='ue-section-row';row.dataset.sectionId=id;
-   const jump=document.createElement('input');jump.type='text';jump.className='ue-section-link';
-   jump.value=sectionStates[id]?.label??node.getAttribute('aria-label')??node.querySelector('h1,h2,h3')?.textContent?.trim()??id;
-   jump.setAttribute('aria-label','Section name');jump.title='Edit section name';
-   jump.oninput=()=>{checkpoint();sectionStates[id]={...(sectionStates[id]||{}),label:jump.value};syncSections();saveDraft()};
-   const jumpButton=document.createElement('button');jumpButton.type='button';jumpButton.className='ue-section-jump';jumpButton.title='View section on page';jumpButton.setAttribute('aria-label','View '+jump.value+' on page');
-   jumpButton.innerHTML='<i data-lucide="arrow-up-right"></i>';
-   jumpButton.onclick=()=>{
-    if(!node?.isConnected)return;
-    if(sectionStates[id]?.hidden||sectionStates[id]?.deleted)return;
-    if(screen.classList.contains('ue-fullscreen'))hideEditor();
-    const offset=28;
-    const top=Math.max(0,window.scrollY+node.getBoundingClientRect().top-offset);
-    window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
-   };
-   jump.addEventListener('click',()=>jumpButton.click());
-   const controls=document.createElement('div');controls.className='ue-controls';
-   for(const [dir,name] of [[-1,'arrow-up'],[1,'arrow-down']]){
-    const button=document.createElement('button');button.type='button';button.title=dir<0?'Move up':'Move down';button.setAttribute('aria-label',button.title+' '+jump.value);
-    button.disabled=(i+dir<0||i+dir>=visibleSections.length||sectionNodes.find(n=>n.getAttribute('data-section')===visibleSections[i+dir])?.parentElement!==node.parentElement);
-    button.innerHTML='<i data-lucide="'+name+'"></i>';
-    button.onclick=()=>{checkpoint();const nextId=visibleSections[i+dir];const a=sectionOrder.indexOf(id),b=sectionOrder.indexOf(nextId);[sectionOrder[a],sectionOrder[b]]=[sectionOrder[b],sectionOrder[a]];reorderSections();saveDraft();renderSections()};
-    controls.append(button);
-   }
-   const state=sectionStates[id]||{};
-   for(const [action,icon,field] of [[state.hidden?'Show':'Hide',state.hidden?'eye-off':'eye','hidden'],['Delete','trash-2','deleted']]){
-    const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+jump.value);
-    button.innerHTML='<i data-lucide="'+icon+'"></i>';
-    button.onclick=()=>{checkpoint();sectionStates[id]={...(sectionStates[id]||{}),[field]:!Boolean(sectionStates[id]?.[field])};syncSections();saveDraft();renderSections()};
-    controls.append(button);
-   }
-   row.classList.toggle('ue-hidden',Boolean(state.hidden));
-   row.append(jump,jumpButton,controls);sectionsPanel.append(row);
-  }
-  icons();
- }
+ function renderSections(){return drawSections({screen,sectionsPanel,sectionOrder,sectionNodes,sectionStates,checkpoint,syncSections,reorderSections,renderSections,saveDraft,hideEditor,icons})}
  // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
  const draftKey='html-editor:draft:v1:'+location.href.split('#')[0];
  const originalSignature=pageSignature();
@@ -747,95 +563,7 @@ function init(){
   .filter(el=>!el.closest('#ue-screen,#ue-pencil')&&!/^ue-/.test(el.id))
   .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
  const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
- function render(){
-  fields.replaceChildren();
-  const metaBox=document.createElement('div');metaBox.className='ue-meta';
-  const heading=document.createElement('strong');heading.textContent='Page details';metaBox.append(heading);
-  for(const [key,title] of [['title','Page title'],['description','Page description']]){
-   const label=document.createElement('label');label.textContent=title;
-   const input=document.createElement(key==='description'?'textarea':'input');if(key==='title')input.type='text';
-   input.value=pageMeta[key]||'';input.setAttribute('aria-label',title);
-   input.oninput=()=>{checkpoint();pageMeta[key]=input.value;applyMeta();saveDraft()};
-   label.append(input);
-   const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
-   reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=pageMeta[key]===originalMeta[key];
-   reset.onclick=event=>{event.preventDefault();event.stopPropagation();checkpoint();pageMeta[key]=originalMeta[key];applyMeta();render();saveDraft()};
-   input.addEventListener('input',()=>{reset.disabled=pageMeta[key]===originalMeta[key]});
-   label.style.position='relative';label.style.paddingRight='35px';label.append(reset);metaBox.append(label);
-  }
-  settingsPanel.replaceChildren(metaBox);
-  for(const item of model){
-   if(item.deleted)continue; // Keep the model for Undo/Revert/export, not in the sidebar.
-   const box=document.createElement('div');box.className='ue-item';
-   const label=document.createElement('label');label.textContent=item.label|| (item.image?'Image':item.link?'Link text':item.tag==='p'?'Paragraph':'Text');
-   box.dataset.editIndex=String(model.indexOf(item));
-   if(item.hidden)box.classList.add('ue-hidden')
-   if(item.decorative){
-    const hint=document.createElement('span');hint.textContent='Divider';hint.style.color='#777';hint.style.fontSize='13px';box.append(hint);
-   }else if(item.image){
-    const preview=document.createElement('img');preview.className='ue-image-preview';preview.alt='Image preview';
-    const updatePreview=()=>{if(validImageURL(item.src)){preview.src=normalizeURL(item.src)}else{preview.removeAttribute('src')}};
-    updatePreview();box.append(preview);
-    const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='example.com/photo.jpg';url.value=displayURL(item.src);
-    url.oninput=()=>{checkpoint();item.src=url.value;updatePreview();syncLive()};
-    label.dataset.ueField='src';label.append(url);box.append(label);
-    const altLabel=document.createElement('label');altLabel.textContent='Alt text';
-    const altInput=document.createElement('input');altInput.type='text';altInput.value=item.alt;
-    altInput.oninput=()=>{checkpoint();item.alt=altInput.value;syncLive()};
-    altLabel.dataset.ueField='alt';altLabel.append(altInput);box.append(altLabel);
-   }else{
-    const input=document.createElement(item.article||item.tag==='p'?'textarea':'input');if(input.tagName==='INPUT')input.type='text';if(item.article)input.classList.add('ue-article');input.value=item.text;input.oninput=()=>{checkpoint();item.text=input.value;if(input.tagName==='TEXTAREA')fitTextarea(input);syncLive()};label.dataset.ueField='text';label.append(input);box.append(label);
-   }
-   if(item.link){
-    const lbl=document.createElement('label');lbl.textContent='Link destination';lbl.dataset.ueField='url';
-    const destinations=internalDestinations();
-    const selection=document.createElement('select');selection.setAttribute('aria-label','Link destination');
-    for(const dest of destinations){
-     const option=document.createElement('option');option.value='#'+dest.id;option.textContent=dest.label+' (#'+dest.id+')';selection.append(option);
-    }
-    const external=document.createElement('option');external.value='__custom__';external.textContent='External URL, email, or other link';selection.append(external);
-    const isInternal=String(item.url||'').startsWith('#');
-    const available=isInternal&&destinations.some(dest=>'#'+dest.id===item.url);
-    if(isInternal&&!available){const option=document.createElement('option');option.value=item.url;option.textContent='Missing section ('+item.url+')';option.disabled=true;selection.prepend(option)}
-    selection.value=isInternal?item.url:'__custom__';
-    const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='https://example.com or mailto:name@example.com';url.value=isInternal?'':item.url.replace(/^https:\/\//i,'');
-    url.hidden=isInternal;
-    selection.onchange=()=>{
-     checkpoint();
-     if(selection.value==='__custom__'){item.url='';url.value='';url.hidden=false}
-     else{item.url=selection.value;url.hidden=true}
-     syncLive();render();
-    };
-    url.oninput=()=>{checkpoint();item.url=url.value;syncLive()};
-    lbl.append(selection,url);box.append(lbl);
-   }
-   const controls=document.createElement('div');controls.className='ue-controls';
-   const addControl=(action,icon,fn)=>{
-    const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+(item.label||item.text||'element'));button.innerHTML='<i data-lucide="'+icon+'"></i>';button.onclick=fn;controls.append(button);
-   };
-   addControl(item.hidden?'Show':'Hide',item.hidden?'eye-off':'eye',()=>{checkpoint();item.hidden=!item.hidden;render()});
-   addControl('Delete','trash-2',()=>{checkpoint();item.deleted=true;render()});
-   if(item.group!==null){
-    for(const [direction,icon] of [[-1,'arrow-up'],[1,'arrow-down']]){
-     addControl(direction<0?'Move up':'Move down',icon,()=>{
-      const group=model.filter(x=>x.group===item.group&&!x.deleted);const index=group.indexOf(item),other=group[index+direction];
-      if(!other)return;checkpoint();const a=model.indexOf(item),b=model.indexOf(other);[model[a],model[b]]=[model[b],model[a]];render();
-     });
-    }
-   }
-   box.append(controls);
-   const resetField=(key,name,original,fn)=>{
-    const button=document.createElement('button');button.type='button';button.className='ue-field-reset';button.title='Reset '+name;button.setAttribute('aria-label','Reset '+name);
-    button.innerHTML='<i data-lucide="rotate-ccw"></i>';button.disabled=String(item[key]??'')===String(original??'');
-    button.onclick=event=>{event.preventDefault();event.stopPropagation();checkpoint();item[key]=original;fn?.();syncLive();render()};
-    const target=box.querySelector('[data-ue-field="'+key+'"]');if(target){target.style.position='relative';target.style.paddingRight='35px';target.append(button);const input=target.querySelector('input,textarea,select');if(input)input.addEventListener('input',()=>{button.disabled=String(item[key]??'')===String(original??'')})}
-   };
-   if(item.image){resetField('src','image URL',item.originalSrc);resetField('alt','alt text',item.originalAlt)}
-   else if(!item.decorative)resetField('text','text',item.originalText);
-   if(item.link)resetField('url','link destination',item.originalURL);
-   fields.append(box);
-  }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
- }
+ function render(){return drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render})}
  function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
  function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText})}
  pencil.onclick=()=>{
