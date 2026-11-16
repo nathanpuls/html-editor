@@ -360,9 +360,14 @@ function init(){
  const articleText=el=>Array.from(el.children).map(p=>p.textContent.trim()).join('\n\n');
  const isArticle=el=>/^(DIV|SECTION|ARTICLE|MAIN)$/.test(el.tagName)&&el.children.length>0&&Array.from(el.children).every(c=>c.tagName==='P');
  const setArticle=(el,value)=>{
-  const doc=el.ownerDocument;
   const paragraphs=value.replace(/\r\n?/g,'\n').trim().split(/\n\s*\n/);
-  el.replaceChildren(...paragraphs.map(text=>{const p=doc.createElement('p');p.textContent=text.trim().replace(/\n/g,' ');return p}));
+  const existing=Array.from(el.children).filter(n=>n.tagName==='P');
+  paragraphs.forEach((text,i)=>{
+   const next=text.trim().replace(/\n/g,' ');
+   if(existing[i])setText(existing[i],next);
+   else{const p=el.ownerDocument.createElement('p');p.textContent=next;el.append(p)}
+  });
+  for(let i=paragraphs.length;i<existing.length;i++)existing[i].remove();
  };
  function restoreLive(){
   liveRoots.forEach((root,i)=>{if(root.innerHTML!==rootSnapshots[i])root.innerHTML=rootSnapshots[i]});
@@ -409,9 +414,9 @@ function init(){
    }else if(node.innerHTML!==original.html){
     node.innerHTML=original.html;
    }
-   if(item.link&&validURL(item.url)){
-    const href=normalizeURL(item.url);
-    if(node.getAttribute('href')!==href)node.setAttribute('href',href);
+   if(item.link){
+    const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
+    if(href&&node.getAttribute('href')!==href)node.setAttribute('href',href);
    }
   }
   liveRoots.forEach((root,gi)=>{
@@ -426,7 +431,8 @@ function init(){
     const node=item.added?document.createElement('a'):liveSnapshots[item.index]?.clone.cloneNode(true);
     if(!node)continue;
     if(item.added)node.setAttribute('data-edit',item.label||'Navigation link');
-    if(node.getAttribute('href')!==normalizeURL(item.url))node.setAttribute('href',normalizeURL(item.url)||'#');
+    const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
+    if(node.getAttribute('href')!==href)node.setAttribute('href',href||'#');
     if(item.added||item.text!==item.originalText)setText(node,item.text);
     if(item.hidden)node.style.display='none';
     else if(item.added)node.style.removeProperty('display');
@@ -582,7 +588,7 @@ function init(){
    const element=source[item.index];if(!element)throw Error('Editable element missing.');
    if(item.deleted)continue;
    if(item.hidden){element.hidden=true;element.style.display='none'}
-   if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}element.setAttribute('alt',item.alt);continue}
+   if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}if(item.alt!==item.originalAlt)element.setAttribute('alt',item.alt);continue}
    if(item.decorative)continue;
    if(item.text!==item.originalText){if(item.article)setArticle(element,item.text);else setText(element,item.text)}
    if(item.link){if(!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');if(item.url!==item.originalURL)element.setAttribute('href',normalizeURL(item.url))}
@@ -599,7 +605,8 @@ function init(){
     if(!item.link||!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');
     const node=item.added?doc.createElement('a'):source[item.index].cloneNode(true);
     if(item.added)node.setAttribute('data-edit',item.label||'Navigation link');
-    if(node.getAttribute('href')!==normalizeURL(item.url))node.setAttribute('href',normalizeURL(item.url));
+    const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
+    if(node.getAttribute('href')!==href)node.setAttribute('href',href);
     if(item.added||item.text!==item.originalText)setText(node,item.text);
     if(item.hidden){node.hidden=true;node.style.display='none'}
     if(g.lastChild&&g.lastChild.nodeType!==3)g.append(doc.createTextNode(' '));
