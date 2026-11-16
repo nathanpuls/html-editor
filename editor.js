@@ -277,7 +277,7 @@ function init(){
  };
  function restoreLive(){
   liveRoots.forEach((root,i)=>{root.innerHTML=rootSnapshots[i]});
-  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes})=>{if(!node.isConnected)return;if(node.tagName==='IMG'){for(const [k,v] of [['src',src],['alt',alt],['srcset',srcset],['sizes',sizes]]){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}else{node.innerHTML=html;if(href===null)node.removeAttribute('href');else node.setAttribute('href',href)}});
+  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display})=>{if(!node.isConnected)return;node.style.display=display||'';if(node.tagName==='IMG'){for(const [k,v] of [['src',src],['alt',alt],['srcset',srcset],['sizes',sizes]]){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}else{node.innerHTML=html;if(href===null)node.removeAttribute('href');else node.setAttribute('href',href)}});
  }
  function syncLive(){
   for(const item of model){
