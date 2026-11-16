@@ -11,6 +11,15 @@ export const groupId=(root,index)=>{
  const section=root.closest('[data-section]')?.getAttribute('data-section');
  return section?section+'Links':index===0?'navLinks':'navigationLinks'+(index+1);
 };
+export function stableFieldIds(model,liveSnapshots){
+ const counts=new Map(),ids=new Map();
+ for(const item of model.filter(x=>!x.added).sort((a,b)=>a.index-b.index)){
+  const sectionId=liveSnapshots[item.index]?.node?.closest('[data-section]')?.getAttribute('data-section')||'page';
+  const base=fieldId(item,sectionId),n=(counts.get(base)||0)+1;
+  counts.set(base,n);ids.set(item.index,n===1?base:base+'-'+n);
+ }
+ return ids;
+}
 export const styleToJSON=s=>({
  colors:{background:s.background,text:s.text,accent:s.accent},
  typography:{fontFamily:s.font,h1FontSizePx:s.h1,h2FontSizePx:s.h2,h3FontSizePx:s.h3,bodyFontSizePx:s.p},
@@ -23,13 +32,7 @@ export const styleToJSON=s=>({
 export function exportEditableJSON(ctx){
  const {model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,sectionStates,pageMeta,styleSettings,variableSettings,buttonSettings,buttonAppearance}=ctx;
  const groups=liveRoots.map(groupId);
- const ids=new Map(),used=new Set();
- for(const item of model.filter(x=>!x.added)){
-  const sectionId=liveSnapshots[item.index]?.node?.closest('[data-section]')?.getAttribute('data-section')||'page';
-  const id=fieldId(item,sectionId);
-  if(used.has(id))throw Error('Duplicate editable field identity: '+id+'. Give each data-edit a unique label within its section.');
-  used.add(id);ids.set(item.index,id);
- }
+ const ids=stableFieldIds(model,liveSnapshots);
  const addedCount=new Map();
  const fields=model.map(item=>{
   const gid=item.group===null?null:groups[item.group];
@@ -79,10 +82,9 @@ export function importEditableJSON(data,ctx){
  if(!isRecord(data)||data.version!==2||!Array.isArray(data.fields)||!isRecord(data.page)||!isRecord(data.sections)||!isRecord(data.design))
   throw Error('Expected version 2 editable JSON with page, fields, sections, and design.');
  const groups=liveRoots.map(groupId),byId=new Map(),buttonById=new Map();
+ const ids=stableFieldIds(model,liveSnapshots);
  for(const item of model.filter(x=>!x.added)){
-  const sectionId=liveSnapshots[item.index]?.node?.closest('[data-section]')?.getAttribute('data-section')||'page';
-  const id=fieldId(item,sectionId);
-  if(byId.has(id))throw Error('Duplicate editable field identity: '+id);
+  const id=ids.get(item.index);
   byId.set(id,item);
   if(Object.hasOwn(buttonAppearance,item.index))buttonById.set(id,item.index);
  }
