@@ -9,6 +9,12 @@ import {join,resolve,extname} from 'node:path';
 import {once} from 'node:events';
 
 import {draftStorageKey,recoverDraftModel} from '../storage.js';
+import {validBrandURL} from '../branding.js';
+assert.ok(validBrandURL('/_brand/favicon.svg'),'Existing site-relative favicons must remain valid');
+assert.ok(validBrandURL('data:image/svg+xml,%3Csvg%3E%3C/svg%3E'),'Existing data-uri favicons must remain valid');
+assert.ok(validBrandURL('https://images.example/logo.png'),'External logo URLs remain valid');
+assert.ok(!validBrandURL('javascript:alert(1)'),'Unsafe URL protocols remain invalid');
+console.log('PASS relative and image-data favicon URL validation');
 const stable=draftStorageKey('https://live.ends.at/?edit&preview=100')===draftStorageKey('https://live.ends.at/?preview=200');
 assert.ok(stable,'Live preview draft key must ignore changing URL query parameters');
 const oldFields={model:[{index:0,tag:'h1',label:'Headline',group:null,text:'My edited headline'},{index:1,tag:'p',label:'Intro',group:null,text:'My paragraph'}]};
