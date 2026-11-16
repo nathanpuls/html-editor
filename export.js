@@ -1,3 +1,4 @@
+import {syncGoogleFontLink} from './design.js';
 /* Generate clean standalone page HTML from current editor state. */
 export function generateHTML(ctx){
  const {baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText}=ctx;
@@ -69,6 +70,8 @@ export function generateHTML(ctx){
   // The Built.at editor route adds a base tag so its relative demo links work.
   // That routing detail is not part of the authored website.
   doc.querySelectorAll('base[href="/editor/"]').forEach(node=>node.remove());
+  // Preserve the selected web font when the exported HTML is opened elsewhere.
+  syncGoogleFontLink(doc,styleSettings.font);
   // Cloudflare injects Web Analytics into the response; exporting the website
   // should not silently carry the hosting account's analytics configuration.
   doc.querySelectorAll('script[data-cf-beacon],script[src*="static.cloudflareinsights.com/beacon.min.js"]').forEach(node=>node.remove());
