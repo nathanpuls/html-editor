@@ -323,6 +323,7 @@ function init(){
     const top=Math.max(0,window.scrollY+node.getBoundingClientRect().top-offset);
     window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
    };
+   jump.addEventListener('click',()=>jumpButton.click());
    const controls=document.createElement('div');controls.className='ue-controls';
    for(const [dir,name] of [[-1,'arrow-up'],[1,'arrow-down']]){
     const button=document.createElement('button');button.type='button';button.title=dir<0?'Move up':'Move down';button.setAttribute('aria-label',button.title+' '+jump.value);
