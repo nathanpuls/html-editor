@@ -3,7 +3,7 @@ export const validBrandURL=value=>{
  if(value==='')return true;
  if(typeof value!=='string'||!value.trim())return false;
  // Favicons already on a page may use data URIs or site-relative paths.
- if(value.toLowerCase().startsWith('data:image/'))return ['png','jpeg','gif','webp','svg+xml','x-icon'].some(t=>value.slice(11).toLowerCase().startsWith(t+';'));
+ if(value.toLowerCase().startsWith('data:image/'))return ['png','jpeg','gif','webp','svg+xml','x-icon'].some(t=>{const type=value.slice(11).toLowerCase();return type.startsWith(t+';')||type.startsWith(t+',')});
  try{
   const url=new URL(value,'https://site.example/');
   return ['https:','http:'].includes(url.protocol)&&!!url.hostname;
