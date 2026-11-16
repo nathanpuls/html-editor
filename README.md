@@ -61,6 +61,8 @@ Open the **Copy** dropdown and choose **Copy JSON** to export editable content a
 
 The v2 format uses stable IDs such as `welcome.hero-heading`, descriptive named link groups such as `navLinks` and `contactLinks`, and an embedded `_schema` with editing rules and primary/secondary button hints. Its `design` object separates `colors`, `typography` (pixel units), `borderRadiusPx`, `buttons.primary`, `buttons.secondary`, optional `elementButtons`, and `variables`.
 
+**Contextual visual controls:** In the Design tab, choose an element in **Adjust element**. Relevant controls appear for font size, opacity (0–100%), roundness, padding, or gap. Drag a slider for an immediate preview, or enter an exact numeric value. Sliders affect only the chosen element or group and are included in local drafts, undo, copied HTML, and JSON v2 under `design.elements`.
+
 Preserve field IDs, tags, and existing section IDs. Editable values include text, image URL/alt, link destinations, visibility, labels, section order, and design settings. Only new links can be added to an existing named link collection. An invalid import makes no changes. **Version 1 JSON is no longer supported.**
 
 
