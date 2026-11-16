@@ -51,13 +51,13 @@ Then label anything you want to edit:
 </html>
 ```
 
-Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Make your changes, then click **Copy** to copy the updated HTML.
+Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Use **Content** to edit words, images and links; **Page** for title, description, background, default font and page-wide appearance; and **Design** for individual elements, buttons and spacing. Click **Copy** to copy updated HTML. The editor stays open and briefly shows **Copied!** so you can continue editing.
 
 **Important:** Copy exports HTML to your clipboard; it does not edit the original file or publish the page. Paste the result into your file, site editor, or publishing workflow.
 
 ### AI-assisted bulk editing (JSON v2)
 
-Open the **Copy** dropdown and choose **Copy JSON** to export editable content and design settings without the site's HTML structure. Share that JSON with an AI, ask it to change content or design values, then choose **Import JSON** and paste the revised object. The entire import applies as one undoable action.
+Open the **Copy** dropdown and choose **Copy editable data (JSON)** to export editable content and design settings without the site's HTML structure. Share that JSON with an AI, ask it to change content or design values, then choose **Import editable data (JSON)** and paste the revised object. The entire import applies as one undoable action.
 
 The v2 format uses stable IDs such as `welcome.hero-heading`, descriptive named link groups such as `navLinks` and `contactLinks`, and an embedded `_schema` with editing rules and primary/secondary button hints. Its `design` object separates `colors`, `typography` (pixel units), `borderRadiusPx`, `buttons.primary`, `buttons.secondary`, optional `elementButtons`, and `variables`.
 
@@ -77,7 +77,7 @@ Preserve field IDs, tags, and existing section IDs. Editable values include text
 | `<div data-edit="About copy"><p>…</p></div>` | Edits direct child paragraphs as an article-style block |
 | `<nav data-edit="links">…</nav>` | Enables add, remove, and reorder for editable links inside |
 | `data-section="about" aria-label="About"` | Makes a uniquely identified section manageable and reorderable |
-| `:root { --accent: … }` | Exposes supported CSS custom properties to the Design controls |
+| `:root { --accent: … }` | Exposes supported CSS custom properties to the Page controls |
 
 Use a **descriptive value directly in `data-edit`**, not a separate `data-label` attribute. Avoid nesting editable elements inside other editable fields, except for the reserved `data-edit="links"` collection. Give each manageable section a unique `data-section` value; sibling sections under the same parent can be reordered.
 
@@ -85,8 +85,8 @@ Use a **descriptive value directly in `data-edit`**, not a separate `data-label`
 
 - **Content:** headings, paragraphs, article copy, image sources and alt text, link labels and destinations, and editable link collections.
 - **Sections:** show, hide, reorder, and manage labeled `data-section` blocks.
-- **Design:** page appearance, supported CSS variables, typography, colors, and button styles.
-- **Page settings:** title and meta description.
+- **Page:** title, meta description, background, default font and page-wide colors and typography.
+- **Design:** individual elements, buttons, padding, gap, roundness, opacity and other contextual visual adjustments.
 - **Workflow:** search across editor controls, dock or resize the panel, use full screen, undo changes, revert to the original page, and copy the resulting HTML.
 
 Edits preview on the page immediately. Browser drafts are saved locally and can be restored after a refresh when compatible with the original page. Use **Copy** for a durable result: local storage can be cleared, blocked, or scoped to a different origin.
