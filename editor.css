@@ -309,3 +309,15 @@
 #ue-drop-preview[data-side="right"]{right:12px;left:auto}
 #ue-drop-label{padding:9px 16px;border-radius:999px;border:1px solid #cbd5e1;background:white;box-shadow:0 3px 12px #0001}
 @media(max-width:640px){#ue-drop-preview{display:none!important}}
+
+/* JSON import keeps structure separate from bulk-editable content. */
+#ue-json-dialog{position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:#0006}
+#ue-json-dialog[hidden]{display:none!important}
+#ue-json-dialog .ue-json-card{display:flex;flex-direction:column;gap:12px;width:min(100%,520px);max-height:min(85dvh,700px);background:#fff;padding:22px;border-radius:14px;box-shadow:0 18px 50px #0003}
+#ue-json-dialog h2{font-size:19px;font-weight:750;margin:0;color:#111}
+#ue-json-dialog p{font-size:13px;line-height:1.5;margin:0;color:#666}
+#ue-json-dialog #ue-json-input{display:block;flex:1;min-height:210px;max-height:55dvh;width:100%;resize:vertical;border:1px solid #d8d8d8;border-radius:9px;padding:12px;background:#fafafa;color:#171717;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}
+#ue-json-dialog #ue-json-error{color:#b91c1c;font-weight:550}
+#ue-json-dialog .ue-json-buttons{display:flex;justify-content:flex-end;gap:9px}
+#ue-json-dialog .ue-json-buttons button{padding:10px 15px;border:1px solid #ddd;border-radius:9px;background:#fff;color:#111}
+#ue-json-dialog #ue-json-apply{background:#171717;color:white;border-color:#171717}
