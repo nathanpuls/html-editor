@@ -17,8 +17,8 @@ export function visualTargets({model,liveSnapshots,sectionNodes,liveRoots,root=d
  for(const item of model.filter(x=>!x.added&&!x.deleted)){
   const node=liveSnapshots[item.index]?.node;
   if(!node)continue;
-  const button=node.matches('button,a.button,a.btn,a[role="button"],[data-button-role]');
-  const text=textTags.has(item.tag)&&!item.article||item.article;
+  const button=node.matches('button,a.button,a.btn,a[role="button"],[data-button-role],.site-links a,.contact-links a');
+  const text=textTags.has(item.tag)||item.article;
   const controls=[
    ...(text?['fontSize']:[]),
    ...((item.image||button)?['opacity','radius']:[]),
@@ -34,7 +34,7 @@ export function visualTargets({model,liveSnapshots,sectionNodes,liveRoots,root=d
  const nodes=[...root.querySelectorAll('main *,body > header *,body > footer *')].filter(node=>!node.closest('#ue-screen')&&!node.closest('#ue-pencil'));
  const seen=new Map();
  for(const node of nodes){
-  if(node.hasAttribute('data-edit')||node.hasAttribute('data-section'))continue;
+  if((node.hasAttribute('data-edit')&&node.getAttribute('data-edit')!=='links')||node.hasAttribute('data-section'))continue;
   const css=getComputedStyle(node);
   const isGroup=/(?:flex|grid)/.test(css.display)&&node.children.length>=2;
   const isContainer=node.matches('.card,.photo,.hero-visual,[data-editor-container]');
@@ -74,10 +74,11 @@ export function visualStylesheet(values,targets){
 export function applyVisual({values,targets,doc=document}){
  const byId=new Map(targets.map(t=>[t.id,t]));
  doc.querySelectorAll('[data-ue-visual-id]').forEach(node=>{
-  if(![...byId.values()].some(t=>t.node===node))node.removeAttribute('data-ue-visual-id');
+  const target=byId.get(node.getAttribute('data-ue-visual-id'));
+  if(!target||target.node!==node||!Object.keys(values?.[target.id]||{}).length)node.removeAttribute('data-ue-visual-id');
  });
  for(const t of targets){
-  if(doc===document)t.node.setAttribute('data-ue-visual-id',t.id);
+  if(doc===document&&Object.keys(values?.[t.id]||{}).length)t.node.setAttribute('data-ue-visual-id',t.id);
  }
  let el=doc.getElementById('editor-visual-style');
  const css=visualStylesheet(values,targets);
@@ -113,7 +114,7 @@ export function exportVisual({doc,model,liveSnapshots,liveRoots,sectionNodes,val
    for(const i of segments)node=node?.children[i];
    if(!node?.tagName||node.tagName!==liveNode.tagName)node=null;
   }
-  if(node)node.setAttribute('data-ue-visual-id',t.id);
+  if(node&&Object.keys(values?.[t.id]||{}).length)node.setAttribute('data-ue-visual-id',t.id);
  }
  const style=doc.getElementById('editor-visual-style')||doc.createElement('style');
  const css=visualStylesheet(values,targets);
