@@ -77,11 +77,13 @@ function init(){
   resultsPanel.hidden=false;contentPanel.hidden=true;stylePanel.hidden=true;settingsPanel.hidden=true;resultsPanel.replaceChildren();
   const matches=[];
   model.forEach((item,index)=>{
+   if(item.deleted)return;
    if([item.label,item.text,item.url,item.alt,item.src].some(v=>String(v||'').toLocaleLowerCase().includes(q)))matches.push({tab:'content',label:item.label||item.text||'Content field',detail:(item.text||item.url||'').slice(0,120),index});
   });
   sectionOrder.forEach((id,index)=>{
+   if(sectionStates[id]?.deleted)return;
    const node=sectionNodes.find(n=>n.getAttribute('data-section')===id),label=sectionStates[id]?.label||node?.getAttribute('aria-label')||id;
-   if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'content',label:label+' section',detail:'Section controls',section:index});
+   if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'content',label:label+' section',detail:'Section controls',sectionId:id});
   });
   const genericLabels=designLabels.filter((_,index)=>!Object.keys(originalVariables).length||![0,1,2,8,9,10].includes(index));
   genericLabels.forEach((label,index)=>{if((label+' design style').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Design',design:index})});
@@ -94,8 +96,8 @@ function init(){
    const detail=document.createElement('small');detail.textContent=hit.detail||hit.tab;button.append(title,detail);
    button.onclick=()=>{
     setTab(hit.tab);
-    if(hit.section!==undefined){setSectionsOpen(true);const input=sectionsPanel.children[hit.section]?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
-    else if(hit.index!==undefined){const row=fields.querySelectorAll('.ue-item')[hit.index];row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
+    if(hit.sectionId!==undefined){setSectionsOpen(true);const input=Array.from(sectionsPanel.querySelectorAll('.ue-section-row')).find(row=>row.dataset.sectionId===hit.sectionId)?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
+    else if(hit.index!==undefined){const row=fields.querySelector('.ue-item[data-edit-index="'+hit.index+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
     else if(hit.design!==undefined){const row=stylePanel.children[hit.design];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
     else if(hit.customDesign!==undefined){const keys=Object.keys(originalVariables);const row=stylePanel.querySelectorAll('.ue-setting')[genericLabels.length+keys.indexOf(hit.customDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
     else if(hit.buttonDesign!==undefined){const keys=Object.keys(buttonAppearance);const row=stylePanel.querySelectorAll('.ue-button-title')[keys.indexOf(hit.buttonDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.nextElementSibling?.querySelector('input')?.focus({preventScroll:true})}
@@ -445,9 +447,10 @@ function init(){
   if(!sectionNodes.length){
    const hint=document.createElement('p');hint.textContent='No sections found. Add data-section="unique-id" to the page sections you want to reorder.';sectionsPanel.append(hint);return;
   }
-  for(const [i,id] of sectionOrder.entries()){
+  const visibleSections=sectionOrder.filter(id=>!sectionStates[id]?.deleted);
+  for(const [i,id] of visibleSections.entries()){
    const node=sectionNodes.find(n=>n.getAttribute('data-section')===id);if(!node)continue;
-   const row=document.createElement('div');row.className='ue-section-row';
+   const row=document.createElement('div');row.className='ue-section-row';row.dataset.sectionId=id;
    const jump=document.createElement('input');jump.type='text';jump.className='ue-section-link';
    jump.value=sectionStates[id]?.label??node.getAttribute('aria-label')??node.querySelector('h1,h2,h3')?.textContent?.trim()??id;
    jump.setAttribute('aria-label','Section name');jump.title='Edit section name';
@@ -466,19 +469,19 @@ function init(){
    const controls=document.createElement('div');controls.className='ue-controls';
    for(const [dir,name] of [[-1,'arrow-up'],[1,'arrow-down']]){
     const button=document.createElement('button');button.type='button';button.title=dir<0?'Move up':'Move down';button.setAttribute('aria-label',button.title+' '+jump.value);
-    button.disabled=(i+dir<0||i+dir>=sectionOrder.length||sectionNodes.find(n=>n.getAttribute('data-section')===sectionOrder[i+dir])?.parentElement!==node.parentElement);
+    button.disabled=(i+dir<0||i+dir>=visibleSections.length||sectionNodes.find(n=>n.getAttribute('data-section')===visibleSections[i+dir])?.parentElement!==node.parentElement);
     button.innerHTML='<i data-lucide="'+name+'"></i>';
-    button.onclick=()=>{checkpoint();const next=i+dir;[sectionOrder[i],sectionOrder[next]]=[sectionOrder[next],sectionOrder[i]];reorderSections();saveDraft();renderSections()};
+    button.onclick=()=>{checkpoint();const nextId=visibleSections[i+dir];const a=sectionOrder.indexOf(id),b=sectionOrder.indexOf(nextId);[sectionOrder[a],sectionOrder[b]]=[sectionOrder[b],sectionOrder[a]];reorderSections();saveDraft();renderSections()};
     controls.append(button);
    }
    const state=sectionStates[id]||{};
-   for(const [action,icon,field] of [[state.hidden?'Show':'Hide',state.hidden?'eye-off':'eye','hidden'],[state.deleted?'Restore':'Delete',state.deleted?'undo-2':'trash-2','deleted']]){
+   for(const [action,icon,field] of [[state.hidden?'Show':'Hide',state.hidden?'eye-off':'eye','hidden'],['Delete','trash-2','deleted']]){
     const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+jump.value);
     button.innerHTML='<i data-lucide="'+icon+'"></i>';
     button.onclick=()=>{checkpoint();sectionStates[id]={...(sectionStates[id]||{}),[field]:!Boolean(sectionStates[id]?.[field])};syncSections();saveDraft();renderSections()};
     controls.append(button);
    }
-   row.classList.toggle('ue-deleted',Boolean(state.deleted));row.classList.toggle('ue-hidden',Boolean(state.hidden));
+   row.classList.toggle('ue-hidden',Boolean(state.hidden));
    row.append(jump,jumpButton,controls);sectionsPanel.append(row);
   }
   icons();
@@ -704,10 +707,11 @@ function init(){
   }
   settingsPanel.replaceChildren(metaBox);
   for(const item of model){
+   if(item.deleted)continue; // Keep the model for Undo/Revert/export, not in the sidebar.
    const box=document.createElement('div');box.className='ue-item';
    const label=document.createElement('label');label.textContent=item.label|| (item.image?'Image':item.link?'Link text':item.tag==='p'?'Paragraph':'Text');
    box.dataset.editIndex=String(model.indexOf(item));
-   if(item.deleted){box.classList.add('ue-deleted')}else if(item.hidden){box.classList.add('ue-hidden')}
+   if(item.hidden)box.classList.add('ue-hidden')
    if(item.decorative){
     const hint=document.createElement('span');hint.textContent='Divider';hint.style.color='#777';hint.style.fontSize='13px';box.append(hint);
    }else if(item.image){
@@ -752,11 +756,11 @@ function init(){
     const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+(item.label||item.text||'element'));button.innerHTML='<i data-lucide="'+icon+'"></i>';button.onclick=fn;controls.append(button);
    };
    addControl(item.hidden?'Show':'Hide',item.hidden?'eye-off':'eye',()=>{checkpoint();item.hidden=!item.hidden;render()});
-   addControl(item.deleted?'Restore':'Delete',item.deleted?'undo-2':'trash-2',()=>{checkpoint();item.deleted=!item.deleted;render()});
+   addControl('Delete','trash-2',()=>{checkpoint();item.deleted=true;render()});
    if(item.group!==null){
     for(const [direction,icon] of [[-1,'arrow-up'],[1,'arrow-down']]){
      addControl(direction<0?'Move up':'Move down',icon,()=>{
-      const group=model.filter(x=>x.group===item.group);const index=group.indexOf(item),other=group[index+direction];
+      const group=model.filter(x=>x.group===item.group&&!x.deleted);const index=group.indexOf(item),other=group[index+direction];
       if(!other)return;checkpoint();const a=model.indexOf(item),b=model.indexOf(other);[model[a],model[b]]=[model[b],model[a]];render();
      });
     }
