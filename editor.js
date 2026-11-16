@@ -78,11 +78,21 @@ function init(){
   };
  }
  const originalAppearance=readStyle();
+ // Preserve previously exported appearance overrides when editing an exported page again.
+ const existingCSS=document.getElementById('editor-page-style')?.textContent||'';
+ const originalOverrides=new Set(
+  ['background','text','accent','buttonBackground','buttonText'].filter(k=>existingCSS.includes('--ue-'+k+':'))
+ );
+ for(const tag of ['h1','h2','h3','p']){
+  if(new RegExp('html body '+tag+'[^\\{]*\\{').test(existingCSS))originalOverrides.add(tag);
+ }
+ if(existingCSS.includes('font-family:'))originalOverrides.add('font');
+ if(existingCSS.includes('border-radius:'))originalOverrides.add('radius');
  const styleSheetText=a=>{
   // Store exact settings, but override only properties changed from the
   // original page, preserving responsive typography and existing CSS.
   const parts=['/* editor-style:'+encodeURIComponent(JSON.stringify(a))+' */'];
-  const changed=k=>String(a[k])!==String(originalAppearance[k]);
+  const changed=k=>originalOverrides.has(k)||String(a[k])!==String(originalAppearance[k]);
   const colors=['background','text','accent','buttonBackground','buttonText'];
   const vars=colors.filter(changed).map(k=>'--ue-'+k+':'+safeColor(a[k],styleDefaults[k])+';');
   if(vars.length)parts.push(':root{'+vars.join('')+'}');
@@ -192,7 +202,7 @@ function init(){
  const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
  const saveDraft=()=>{
   try{
-   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,sectionOrder}));
+   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,sectionOrder,styleSchema:2}));
    else clearDraft();
   }catch{} // file:// and privacy settings may block storage
  };
@@ -372,7 +382,7 @@ function init(){
   const saved=readDraft();
   if(saved&&saved.model.length>=model.length&&saved.model.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
    model=saved.model;
-   if(saved.styleSettings)styleSettings={...styleDefaults,...saved.styleSettings};
+   if(saved.styleSettings&&saved.styleSchema===2)styleSettings={...originalAppearance,...saved.styleSettings};
    if(Array.isArray(saved.sectionOrder)&&saved.sectionOrder.length===sectionOrder.length&&saved.sectionOrder.every(id=>sectionOrder.includes(id)))sectionOrder=[...saved.sectionOrder];
   }
   if(JSON.stringify(styleSettings)!==initialStyle)applyStyle();
