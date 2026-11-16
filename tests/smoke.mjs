@@ -1,0 +1,92 @@
+/* Dependency-free Chrome DevTools Protocol integration smoke test. */
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {createServer} from 'node:http';
+import {readFile,mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve,extname} from 'node:path';
+import {once} from 'node:events';
+
+const root=resolve(import.meta.dirname,'..');
+const mime={'.js':'application/javascript','.css':'text/css','.html':'text/html'};
+const server=createServer(async(req,res)=>{
+ const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+ if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
+ try{const data=await readFile(resolve(root,path.slice(1)));res.writeHead(200,{'content-type':mime[extname(path)]||'text/plain','cache-control':'no-store'});res.end(data)}
+ catch{res.writeHead(404).end()}
+});
+server.listen(0,'127.0.0.1');await once(server,'listening');
+const origin='http://127.0.0.1:'+server.address().port;
+const profile=await mkdtemp(join(tmpdir(),'ue-chrome-'));
+const chrome=spawn(process.env.CHROME_BIN||'google-chrome',[
+ '--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check',
+ '--disable-dev-shm-usage','--remote-debugging-address=127.0.0.1','--remote-debugging-port=9222',
+ '--user-data-dir='+profile,'about:blank'
+],{stdio:'ignore'});
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function waitFor(fn,ms=12000){const until=Date.now()+ms;let err;while(Date.now()<until){try{const result=await fn();if(result)return result}catch(e){err=e}await sleep(100)}throw err||Error('Timed out')}
+let ws;
+let seq=0;
+const pending=new Map();
+function send(method,params={}){
+ const id=++seq;return new Promise((resolve,reject)=>{
+ pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));
+ });
+}
+async function js(expression){
+ const result=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+ if(result.exceptionDetails)throw Error('Page exception: '+JSON.stringify(result.exceptionDetails));
+ return result.result?.value;
+}
+async function waitJS(expression){return waitFor(async()=>await js(expression))}
+function check(name,value){assert.ok(value,name);console.log('PASS',name)}
+try{
+ await waitFor(async()=>{const r=await fetch('http://127.0.0.1:9222/json/version');return r.ok});
+ const page=await (await fetch('http://127.0.0.1:9222/json/new?'+encodeURIComponent(origin+'/tests/fixture.html'),{method:'PUT'})).json();
+ ws=new WebSocket(page.webSocketDebuggerUrl);
+ await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true})});
+ ws.addEventListener('message',event=>{
+  const msg=JSON.parse(event.data);if(!msg.id)return;
+  const item=pending.get(msg.id);if(!item)return;pending.delete(msg.id);
+  if(msg.error)item.reject(Error(JSON.stringify(msg.error)));else item.resolve(msg.result);
+ });
+ await send('Runtime.enable');await send('Page.enable');
+ await waitJS("Boolean(document.querySelector('#ue-pencil'))");
+ check('pencil available',await js("Boolean(document.querySelector('#ue-pencil'))"));
+ await js("document.querySelector('#ue-pencil').click()");
+ check('panel opens',await js("!document.querySelector('#ue-screen').hidden"));
+ check('ellipsis menu exists',await js("Boolean(document.querySelector('#ue-more'))"));
+ check('CSS loaded',await js("Boolean(document.querySelector('#ue-stylesheet')?.sheet)"));
+ const edit="(()=>{const label=[...document.querySelectorAll('#ue-fields label')].find(el=>el.textContent.includes('Hero heading'));const input=label?.querySelector('input,textarea');if(!input)return false;input.value='Changed heading';input.dispatchEvent(new Event('input',{bubbles:true}));return true})()";
+ check('editable field works',await js(edit));
+ check('live preview updates',await js("document.querySelector('h1').textContent==='Changed heading'"));
+ await js("document.querySelector('#ue-undo').click()");
+ check('undo restores text',await js("document.querySelector('h1').textContent==='Original heading'"));
+ await js(edit);
+ await js("document.querySelector('#ue-search').value='hero';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
+ check('search results appear',await js("!document.querySelector('#ue-results').hidden"));
+ await js("document.querySelector('#ue-search').value='';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
+ await js("document.querySelector('[data-tab=design]').click()");
+ check('design controls display',await js("!document.querySelector('#ue-style-panel').hidden && Boolean(document.querySelector('#ue-style-panel input'))"));
+ await js("document.querySelector('#ue-cancel').click()");
+ check('close preserves preview',await js("document.querySelector('h1').textContent==='Changed heading'"));
+ await send('Page.reload',{ignoreCache:true});
+ await waitJS("Boolean(document.querySelector('#ue-pencil')) && document.querySelector('h1')?.textContent==='Changed heading'");
+ check('draft restored on refresh',await js("document.querySelector('h1').textContent==='Changed heading'"));
+ await js("document.querySelector('#ue-pencil').click()");
+ await js("document.querySelector('#ue-more').click()");
+ check('overflow menu opens',await js("!document.querySelector('#ue-more-menu').hidden"));
+ await js("document.querySelector('#ue-revert').click()");
+ check('revert restores original',await js("document.querySelector('h1').textContent==='Original heading'"));
+ await js("document.querySelector('#ue-pencil').click()");
+ await js(edit);
+ await js("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__exportedHTML=text}}})");
+ await js("document.querySelector('#ue-copy').click()");
+ await waitJS("typeof window.__exportedHTML==='string'");
+ check('HTML export reflects edits',await js("window.__exportedHTML.includes('Changed heading') && !window.__exportedHTML.includes('id=\"ue-stylesheet\"')"));
+ await send('Emulation.setDeviceMetricsOverride',{width:375,height:700,deviceScaleFactor:1,mobile:true});
+ await js("document.querySelector('#ue-pencil').click()");
+ check('mobile editor fills viewport',await js("Math.abs(document.querySelector('#ue-screen').getBoundingClientRect().width-375)<2"));
+ console.log('All browser smoke checks passed');
+}catch(error){console.error(error);process.exitCode=1}
+finally{try{ws?.close()}catch{}chrome.kill('SIGKILL');server.close();await rm(profile,{recursive:true,force:true})}
