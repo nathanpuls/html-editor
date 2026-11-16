@@ -1,7 +1,7 @@
 name: Editor module tests
 on:
   push:
-    branches: [refactor/native-modules]
+    branches: [main]
   pull_request:
 jobs:
   editor:
