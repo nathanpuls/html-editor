@@ -16,7 +16,7 @@ function init(){
  if(!editable().length)return;
  const pencil=document.createElement('button');pencil.id='ue-pencil';pencil.type='button';pencil.title='Edit';pencil.setAttribute('aria-label','Edit page');pencil.innerHTML='<i data-lucide="pencil"></i>';
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
- screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><button type="button" id="ue-dock-left" aria-label="Dock editor left" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i></button><button type="button" id="ue-dock-right" aria-label="Dock editor right" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i></button><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="square-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled><i data-lucide="undo-2"></i></button><button id="ue-copy" type="button">Copy</button></div></div>';
+ screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="panel-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="panel-right"></i><span>Move right</span></button><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="square-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled><i data-lucide="undo-2"></i></button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy JSON</button></div></div></div></div>';
  document.body.append(pencil,screen);
  const fields=screen.querySelector('#ue-fields'),add=screen.querySelector('#ue-add'),message=screen.querySelector('#ue-message');
  const fullscreenButton=screen.querySelector('#ue-fullscreen');
@@ -57,9 +57,24 @@ function init(){
    dockSide=side;setGeometry();rememberGeometry();
   }
  };
- dockLeftButton.onclick=()=>dock('left');
- dockRightButton.onclick=()=>dock('right');
+ dockLeftButton.onclick=()=>{dock('left');toggleMore(false)};
+ dockRightButton.onclick=()=>{dock('right');toggleMore(false)};
  setGeometry();
+ // Drag the heading toward either side to dock the panel there.
+ const dragHandle=screen.querySelector('#ue-heading');
+ let dragStart=null;
+ dragHandle.addEventListener('pointerdown',event=>{
+  if(event.button!==0||!desktop()||screen.classList.contains('ue-fullscreen'))return;
+  dragStart={id:event.pointerId,x:event.clientX,y:event.clientY};
+  dragHandle.setPointerCapture(event.pointerId);
+ });
+ dragHandle.addEventListener('pointerup',event=>{
+  if(!dragStart||event.pointerId!==dragStart.id)return;
+  const moved=Math.hypot(event.clientX-dragStart.x,event.clientY-dragStart.y)>35;
+  if(moved)dock(event.clientX<window.innerWidth/2?'left':'right');
+  dragStart=null;
+ });
+ dragHandle.addEventListener('pointercancel',()=>{dragStart=null});
  // Only the edge facing the website is resizable.
  const beginResize=(handle,edge)=>{
   let start=null;
@@ -458,16 +473,26 @@ function init(){
   if(screen.contains(event.target)||pencil.contains(event.target))return;
   hideEditor();
  });
- screen.querySelector('#ue-copy').onclick=async()=>{
+ const copyToggle=screen.querySelector('#ue-copy-toggle'),copyMenu=screen.querySelector('#ue-copy-menu');
+ const toggleCopyMenu=show=>{copyMenu.hidden=!show;copyToggle.setAttribute('aria-expanded',String(show))};
+ copyToggle.onclick=()=>toggleCopyMenu(copyMenu.hidden);
+ document.addEventListener('pointerdown',event=>{if(!copyMenu.hidden&&!event.target.closest('#ue-copy-wrap'))toggleCopyMenu(false)});
+ const copyPage=async(format)=>{
+  toggleCopyMenu(false);
   try{
    if(model.some(x=>!x.deleted&&x.link&&(!x.text.trim()||!validURL(x.url.trim())||!validLinkTarget(x.url))))throw Error('Every link needs text and a valid destination on this page or a URL.');
-   const value=copyHTML();
+   const html=copyHTML();
+   const value=format==='json'?JSON.stringify({html},null,2):html;
    if(window.endsSharedCopyText)await window.endsSharedCopyText(value);else await navigator.clipboard.writeText(value);
-   const sourceTag=document.getElementById('ends-nav-data');
-   if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=value;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
+   if(format==='html'){
+    const sourceTag=document.getElementById('ends-nav-data');
+    if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=html;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
+   }
    saveDraft();hideEditor();
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
+ screen.querySelector('#ue-copy').onclick=()=>copyPage('html');
+ screen.querySelector('#ue-copy-json').onclick=()=>copyPage('json');
  // Recover a compatible local draft immediately, including its live preview.
  if(readDraft()){
   // Initialize from the unedited document first, then apply the saved model to
