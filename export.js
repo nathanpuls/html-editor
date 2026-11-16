@@ -1,5 +1,6 @@
 import {syncGoogleFontLink} from './design.js';
 import {exportVisual} from './visual-controls.js';
+import {applyBranding,validBrandURL} from './branding.js';
 /* Generate clean standalone page HTML from current editor state. */
 export function generateHTML(ctx){
  const {baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText,visualValues,visualTargets}=ctx;
@@ -8,6 +9,9 @@ export function generateHTML(ctx){
   let description=doc.querySelector('meta[name="description"]');
   if(!description&&pageMeta.description){description=doc.createElement('meta');description.name='description';doc.head.append(description)}
   if(description)description.setAttribute('content',pageMeta.description);
+  if(!validBrandURL(pageMeta.logoUrl||'')||!validBrandURL(pageMeta.faviconUrl||''))throw Error('Logo and favicon must use valid http(s) URLs.');
+  applyBranding(doc,pageMeta);
+  doc.querySelectorAll('[data-editor-generated-logo]').forEach(node=>node.removeAttribute('data-editor-generated-logo'));
   const source=Array.from(doc.querySelectorAll('[data-edit]')).filter(el=>!el.querySelector('[data-edit]'));
   const originals=model.filter(x=>!x.added);
   if(source.length!==liveSnapshots.length)throw Error('Page structure changed. Reload and try again.');
