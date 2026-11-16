@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Editor smoke test</title>
+<meta name="description" content="Testing the HTML editor">
+<style>:root{--page-bg:#ffffff;--main-text:#111111}body{margin:0;background:var(--page-bg);color:var(--main-text);font:16px Arial,sans-serif}main{max-width:700px;margin:70px auto;padding:20px}.button{display:inline-block;padding:10px 15px;border-radius:7px;background:#222;color:white}</style>
+<script src="../editor.js" defer></script></head><body>
+<main><section data-section="intro" aria-label="Introduction"><h1 data-edit="Hero heading">Original heading</h1><p data-edit="Intro paragraph">Original paragraph.</p></section>
+<section data-section="links" aria-label="Links"><nav data-edit="links"><a data-edit="Resource link" href="https://example.com">Resource</a></nav></section>
+<a class="button" data-edit="Action button" href="https://example.com">Get started</a>
+<img data-edit="Hero image" src="https://example.com/old.jpg" alt="A placeholder image" width="120" height="80"></main>
+</body></html>
