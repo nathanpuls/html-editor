@@ -5,7 +5,7 @@
 const editorStyle=document.createElement('style');
 editorStyle.id='ue-style';
 editorStyle.textContent="#ue-pencil{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));right:18px;z-index:2147483000;display:grid;place-items:center;width:44px;height:44px;border:1px solid #ddd;border-radius:50%;background:white;color:#111;box-shadow:0 3px 16px #0002;cursor:pointer}\n#ue-pencil svg,#ue-screen svg{width:18px;height:18px}\n#ue-screen{position:fixed;inset:0;z-index:2147483600;overflow:auto;height:100dvh;background:white;color:#171717;padding:calc(22px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));font:15px/1.5 Manrope,system-ui,sans-serif}\n#ue-screen[hidden],#ue-pencil[hidden]{display:none!important}\n#ue-screen *{box-sizing:border-box}\n#ue-wrap{max-width:560px;margin:auto}\n#ue-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:24px}\n#ue-head strong{font-size:21px}\n#ue-screen button{font:inherit;cursor:pointer}\n#ue-head button,#ue-add{border:1px solid #ddd;background:#fff;color:#171717;border-radius:9px;padding:10px 13px}\n#ue-head #ue-copy{background:#171717;color:#fff;border-color:#171717}\n#ue-fields{display:grid;gap:18px}\n.ue-item{display:grid;gap:9px;padding-bottom:18px}\n.ue-item label{display:grid;gap:5px;font:700 12px/1.5 Manrope,system-ui,sans-serif;color:#666}\n.ue-item input,.ue-item textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:11px;background:#fff;color:#171717;font:500 16px/1.5 Manrope,system-ui,sans-serif}\n.ue-item textarea{min-height:110px;max-height:60dvh;resize:vertical;overflow-y:hidden}\n.ue-image-preview{display:block;max-width:100%;max-height:190px;object-fit:contain;object-position:left center;border-radius:8px;background:#f4f4f4}\n.ue-image-preview:not([src]){display:none}\n.ue-item textarea.ue-article{min-height:200px;line-height:1.7}\n#ue-screen.ue-fullscreen .ue-item textarea{max-height:80dvh}\n.ue-controls{display:flex;justify-content:flex-end;gap:5px}\n.ue-controls button{width:38px;height:36px;border:0;border-radius:7px;background:#f3f3f3;display:grid;place-items:center}\n.ue-controls button:disabled{opacity:.3}\n#ue-add{display:flex;align-items:center;gap:8px;margin-top:20px}\n#ue-add[hidden]{display:none!important}\n#ue-message{font-size:13px;color:#a22}\n#ue-screen{box-sizing:border-box;left:auto;right:0;top:0;bottom:0;width:min(430px,100%);height:100dvh;max-height:100dvh;border-left:1px solid #ddd;box-shadow:-12px 0 45px #0002;overflow:hidden;padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}\n#ue-wrap{display:flex;flex-direction:column;height:100%;min-height:0}\n#ue-head{flex:none;margin-bottom:16px;position:relative;justify-content:center;min-height:32px}\n#ue-undo{position:absolute;left:0;top:0;border:0!important;background:transparent!important;color:#555!important;padding:5px!important;width:32px;height:32px}#ue-undo:disabled{opacity:.25}#ue-fullscreen{position:absolute;right:0;top:0;display:grid;place-items:center;width:32px;height:32px;border:0!important;border-radius:7px;padding:0!important;background:transparent!important;color:#555!important}\n#ue-fullscreen:hover{background:#f2f2f2!important}\n#ue-body{scrollbar-width:none}\n#ue-body::-webkit-scrollbar{display:none}\n#ue-screen.ue-fullscreen{inset:0;width:100%;height:100dvh;max-height:100dvh;border:0;box-shadow:none;border-radius:0;padding:calc(22px + env(safe-area-inset-top)) 28px calc(16px + env(safe-area-inset-bottom))}\n#ue-screen.ue-fullscreen #ue-wrap{width:100%;max-width:880px;margin:0 auto}\n#ue-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 3px 24px}\n#ue-actions{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px 2px;background:white}\n#ue-actions button{min-width:104px;padding:11px 18px;border:1px solid #ddd;border-radius:9px;background:#fff;color:#171717}\n#ue-actions #ue-copy{background:#171717;color:white;border-color:#171717}\n@media(max-width:640px){#ue-screen:not(.ue-fullscreen){top:auto;bottom:0;left:0;right:0;width:100%;height:min(62dvh,620px);border-left:0;border-top:1px solid #ddd;border-radius:16px 16px 0 0;box-shadow:0 -12px 40px #0002}#ue-screen.ue-fullscreen{padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}}\n";
-editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-deleted{opacity:.45}.ue-hidden{opacity:.65}.ue-section-row .ue-controls{gap:3px}\n.ue-section-row{display:flex;gap:8px;align-items:center}.ue-section-row .ue-section-link{flex:1;min-width:0}.ue-section-row .ue-controls{flex:none}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
+editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-setting{position:relative;padding-right:35px!important}.ue-field-reset{position:absolute;right:0;top:2px;width:28px;height:28px;padding:5px!important;border:0!important;border-radius:6px;background:transparent!important;color:#666!important;cursor:pointer}.ue-field-reset:disabled{opacity:.25;cursor:default}.ue-field-reset svg{width:16px;height:16px}.ue-meta{display:grid;gap:12px;padding-bottom:16px;margin-bottom:18px;border-bottom:1px solid #eee}.ue-meta label{font:700 12px Manrope,system-ui,sans-serif;color:#666;display:grid;gap:6px}.ue-meta input,.ue-meta textarea{padding:10px;border:1px solid #ddd;border-radius:8px;font:14px Manrope,system-ui,sans-serif;width:100%;color:#171717;background:white}.ue-meta textarea{min-height:78px;resize:vertical}\n.ue-deleted{opacity:.45}.ue-hidden{opacity:.65}.ue-section-row .ue-controls{gap:3px}\n.ue-section-row{display:flex;gap:8px;align-items:center}.ue-section-row .ue-section-link{flex:1;min-width:0}.ue-section-row .ue-controls{flex:none}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -46,12 +46,12 @@ function init(){
  fullscreenButton.onclick=()=>{setFullscreen(!screen.classList.contains('ue-fullscreen'));requestAnimationFrame(()=>fields.querySelectorAll('textarea').forEach(fitTextarea))};
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
  let draftActive=false,initialModel='',styleSettings={},initialStyle='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
- let sectionStates={},undoStack=[];
+ let sectionStates={},undoStack=[],pageMeta={},originalMeta={};
  const sectionDisplays=new Map();
- const snapshot=()=>JSON.stringify({model,styleSettings,sectionOrder,sectionStates});
+ const snapshot=()=>JSON.stringify({model,styleSettings,sectionOrder,sectionStates,pageMeta});
  const checkpoint=()=>{const state=snapshot();if(undoStack.at(-1)!==state){undoStack.push(state);if(undoStack.length>80)undoStack.shift()}syncUndoButton()};
  const syncUndoButton=()=>{const b=screen.querySelector('#ue-undo');if(b)b.disabled=!undoStack.length};
- function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());model=old.model;styleSettings=old.styleSettings;sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
+ function undo(){if(!undoStack.length)return;const old=JSON.parse(undoStack.pop());model=old.model;styleSettings=old.styleSettings;sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
  function syncSections(){for(const node of sectionNodes){const state=sectionStates[node.getAttribute('data-section')]||{};if(state.hidden||state.deleted)node.style.display='none';else node.style.display=sectionDisplays.get(node)||''}}
 
  const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
@@ -155,8 +155,12 @@ function init(){
     const input=document.createElement('input');input.type='number';input.min=kind==='radius'?'0':'8';input.max=kind==='radius'?'64':'120';input.step='1';input.value=styleSettings[key];
     input.oninput=()=>{if(input.value==='')return;checkpoint();styleSettings[key]=clamp(input.value,kind==='radius'?0:8,kind==='radius'?64:120);update()};row.append(input);
    }
-   stylePanel.append(row);
+   const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
+   reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=String(styleSettings[key])===String(originalAppearance[key]);
+   reset.onclick=()=>{checkpoint();styleSettings[key]=originalAppearance[key];applyStyle();saveDraft();renderStyle()};
+   row.append(reset);stylePanel.append(row);
   }
+  icons();
  }
  function findSections(root=document){
   return Array.from(root.querySelectorAll('[data-section]')).filter(el=>!el.parentElement?.closest('[data-section]')&&!el.closest('#ue-screen'));
@@ -219,11 +223,14 @@ function init(){
  const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
  const saveDraft=()=>{
   try{
-   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,sectionOrder,sectionStates,styleSchema:2}));
+   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model,styleSettings,sectionOrder,sectionStates,pageMeta,styleSchema:2}));
    else clearDraft();
   }catch{} // file:// and privacy settings may block storage
  };
- const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted));
+ const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||''});
+ const applyMeta=()=>{document.title=pageMeta.title||'';let meta=document.querySelector('meta[name="description"]');if(!meta&&pageMeta.description){meta=document.createElement('meta');meta.name='description';document.head.append(meta)}if(meta)meta.setAttribute('content',pageMeta.description||'')};
+ const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||JSON.stringify(pageMeta)!==JSON.stringify(originalMeta));
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  const setText=(el,value)=>{el.textContent=value};
@@ -274,6 +281,7 @@ function init(){
    plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
    'arrow-up':'<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
    'arrow-down':'<path d="m5 12 7 7 7-7"/><path d="M12 5v14"/>',
+   'rotate-ccw':'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
    'undo-2':'<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-2"/>',
    eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
    'eye-off':'<path d="m3 3 18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 5.2A11 11 0 0 1 12 5c7 0 10 7 10 7a14 14 0 0 1-3.2 4.1"/><path d="M6.4 6.4A14 14 0 0 0 2 12s3 7 10 7c1.5 0 2.8-.3 3.9-.8"/>',
@@ -305,6 +313,20 @@ function init(){
  }
  function render(){
   fields.replaceChildren();
+  const metaBox=document.createElement('div');metaBox.className='ue-meta';
+  const heading=document.createElement('strong');heading.textContent='Page details';metaBox.append(heading);
+  for(const [key,title] of [['title','Page title'],['description','Page description']]){
+   const label=document.createElement('label');label.textContent=title;
+   const input=document.createElement(key==='description'?'textarea':'input');if(key==='title')input.type='text';
+   input.value=pageMeta[key]||'';input.setAttribute('aria-label',title);
+   input.oninput=()=>{checkpoint();pageMeta[key]=input.value;applyMeta();saveDraft()};
+   label.append(input);
+   const reset=document.createElement('button');reset.type='button';reset.className='ue-field-reset';reset.title='Reset '+title;reset.setAttribute('aria-label','Reset '+title);
+   reset.innerHTML='<i data-lucide="rotate-ccw"></i>';reset.disabled=pageMeta[key]===originalMeta[key];
+   reset.onclick=()=>{checkpoint();pageMeta[key]=originalMeta[key];applyMeta();render();saveDraft()};
+   label.style.position='relative';label.style.paddingRight='35px';label.append(reset);metaBox.append(label);
+  }
+  fields.append(metaBox);
   for(const item of model){
    const box=document.createElement('div');box.className='ue-item';
    const label=document.createElement('label');label.textContent=item.label|| (item.image?'Image':item.link?'Link text':item.tag==='p'?'Paragraph':'Text');
@@ -315,16 +337,16 @@ function init(){
     updatePreview();box.append(preview);
     const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='example.com/photo.jpg';url.value=displayURL(item.src);
     url.oninput=()=>{checkpoint();item.src=url.value;updatePreview();syncLive()};
-    label.append(url);box.append(label);
+    label.dataset.ueField='src';label.append(url);box.append(label);
     const altLabel=document.createElement('label');altLabel.textContent='Alt text';
     const altInput=document.createElement('input');altInput.type='text';altInput.value=item.alt;
     altInput.oninput=()=>{checkpoint();item.alt=altInput.value;syncLive()};
-    altLabel.append(altInput);box.append(altLabel);
+    altLabel.dataset.ueField='alt';altLabel.append(altInput);box.append(altLabel);
    }else{
-    const input=document.createElement(item.article||item.tag==='p'?'textarea':'input');if(input.tagName==='INPUT')input.type='text';if(item.article)input.classList.add('ue-article');input.value=item.text;input.oninput=()=>{checkpoint();item.text=input.value;if(input.tagName==='TEXTAREA')fitTextarea(input);syncLive()};label.append(input);box.append(label);
+    const input=document.createElement(item.article||item.tag==='p'?'textarea':'input');if(input.tagName==='INPUT')input.type='text';if(item.article)input.classList.add('ue-article');input.value=item.text;input.oninput=()=>{checkpoint();item.text=input.value;if(input.tagName==='TEXTAREA')fitTextarea(input);syncLive()};label.dataset.ueField='text';label.append(input);box.append(label);
    }
    if(item.link){
-    const lbl=document.createElement('label');lbl.textContent='URL';const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='example.com';url.value=item.url.replace(/^https:\/\//i,'');url.oninput=()=>{checkpoint();item.url=url.value;syncLive()};lbl.append(url);box.append(lbl);
+    const lbl=document.createElement('label');lbl.textContent='URL';const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='example.com';url.value=item.url.replace(/^https:\/\//i,'');url.oninput=()=>{checkpoint();item.url=url.value;syncLive()};lbl.dataset.ueField='url';lbl.append(url);box.append(lbl);
    }
    const controls=document.createElement('div');controls.className='ue-controls';
    const addControl=(action,icon,fn)=>{
@@ -341,12 +363,25 @@ function init(){
     }
    }
    box.append(controls);
+   const resetField=(key,name,original,fn)=>{
+    const button=document.createElement('button');button.type='button';button.className='ue-field-reset';button.title='Reset '+name;button.setAttribute('aria-label','Reset '+name);
+    button.innerHTML='<i data-lucide="rotate-ccw"></i>';button.disabled=String(item[key]??'')===String(original??'');
+    button.onclick=()=>{checkpoint();item[key]=original;fn?.();render()};
+    const target=box.querySelector('[data-ue-field="'+key+'"]');if(target){target.style.position='relative';target.style.paddingRight='35px';target.append(button)}
+   };
+   if(item.image){resetField('src','image URL',item.originalSrc);resetField('alt','alt text',item.originalAlt)}
+   else resetField('text','text',item.originalText);
+   if(item.link)resetField('url','link URL',item.originalURL);
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
- function close(restore=true){if(restore){restoreLive();restoreStyle();sectionOrder=[...initialSectionOrder];sectionStates={};reorderSections();syncSections()}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
+ function close(restore=true){if(restore){restoreLive();restoreStyle();restoreMeta();sectionOrder=[...initialSectionOrder];sectionStates={};reorderSections();syncSections()}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
  function copyHTML(){
   const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
+  doc.title=pageMeta.title;
+  let description=doc.querySelector('meta[name="description"]');
+  if(!description&&pageMeta.description){description=doc.createElement('meta');description.name='description';doc.head.append(description)}
+  if(description)description.setAttribute('content',pageMeta.description);
   const source=Array.from(doc.querySelectorAll('[data-edit]')).filter(el=>!el.querySelector('[data-edit]'));
   const originals=model.filter(x=>!x.added);
   if(source.length!==liveSnapshots.length)throw Error('Page structure changed. Reload and try again.');
@@ -416,9 +451,10 @@ function init(){
   model=liveNodes.map((el,i)=>{
    const group=el.closest('[data-edit="links"]');
    const article=isArticle(el),image=el.tagName==='IMG',text=article?articleText(el):el.textContent.trim();
-   return {index:i,tag:el.tagName.toLowerCase(),article,image,src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalText:text,hidden:false,deleted:false,link:el.tagName==='A',label:(el.getAttribute('data-label')||el.getAttribute('aria-label')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
+   return {index:i,tag:el.tagName.toLowerCase(),article,image,src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalAlt:el.getAttribute('alt')||'',originalURL:el.getAttribute('href')||'',originalText:text,hidden:false,deleted:false,link:el.tagName==='A',label:(el.getAttribute('data-label')||el.getAttribute('aria-label')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
   });
   draftActive=true;initialModel=JSON.stringify(model);
+  originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
   sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));sectionStates={};sectionDisplays.clear();for(const node of sectionNodes)sectionDisplays.set(node,node.style.display);undoStack=[];syncUndoButton();
   initialSectionOrder=[...sectionOrder];
@@ -427,11 +463,12 @@ function init(){
    model=saved.model;
    if(saved.styleSettings&&saved.styleSchema===2)styleSettings={...originalAppearance,...saved.styleSettings};
    if(saved.sectionStates&&typeof saved.sectionStates==='object')sectionStates=saved.sectionStates;
+   if(saved.pageMeta&&typeof saved.pageMeta==='object')pageMeta={title:String(saved.pageMeta.title||''),description:String(saved.pageMeta.description||'')};
    if(Array.isArray(saved.sectionOrder)&&saved.sectionOrder.length===sectionOrder.length&&saved.sectionOrder.every(id=>sectionOrder.includes(id)))sectionOrder=[...saved.sectionOrder];
   }
   if(JSON.stringify(styleSettings)!==initialStyle)applyStyle();
   if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))reorderSections();
-  syncSections();
+  syncSections();applyMeta();
   renderStyle();
   pencil.hidden=true;screen.hidden=false;message.textContent='';
   render();setTab(activeTab);
