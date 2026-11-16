@@ -1,4 +1,5 @@
 import {setText,articleText,isArticle,setArticle,drawSections,drawContent,restoreEditedDOM,syncEditedDOM} from './content.js';
+import {exportEditableJSON,importEditableJSON} from './json-schema.js';
 import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews,googleFontFamilies,validFontStack,syncGoogleFontLink} from './design.js';
 import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
@@ -275,10 +276,18 @@ function init(){
     if(targetLabel===null)node.removeAttribute('aria-label');
     else node.setAttribute('aria-label',targetLabel);
    }
+   // Numbered eyebrow labels are presentation, not page structure.
+   // Keep them synchronized with the visible section order and editable label.
+   const eyebrow=node.querySelector(':scope > .eyebrow');
+   if(eyebrow&&/^\\s*\\d{1,2}\\s*\\//.test(eyebrow.textContent||'')){
+    const number=String(sectionOrder.filter(key=>key!==sectionOrder[0]&&!sectionStates[key]?.deleted).indexOf(node.getAttribute('data-section'))+1).padStart(2,'0');
+    const label=state.label??sectionLabels.get(node)??node.getAttribute('data-section');
+    eyebrow.textContent=number+' / '+label;
+   }
   }
  }
 
- const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff'};
+ const styleDefaults={background:'#ffffff',text:'#171717',accent:'#2563eb',font:'system-ui',h1:40,h2:30,h3:24,p:16,radius:8,buttonBackground:'#171717',buttonText:'#ffffff',secondaryButtonBackground:'#e8e7e0',secondaryButtonText:'#25302d'};
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace'};
  for(const font of googleFontFamilies)styleFonts[font]='"'+font+'", '+(/Serif|Lora|Baskerville|Merriweather|Playfair/.test(font)?'serif':'sans-serif');
  const pageColor=(el,prop,fallback)=>rgbToHex(el?getComputedStyle(el)[prop]:'')||fallback;
@@ -527,104 +536,8 @@ function init(){
  copyToggle.onclick=()=>toggleCopyMenu(copyMenu.hidden);
  document.addEventListener('pointerdown',event=>{if(!copyMenu.hidden&&!event.target.closest('#ue-copy-wrap'))toggleCopyMenu(false)});
 
- const isRecord=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
- const contentJSON=()=>({
-  version:1,
-  page:{title:pageMeta.title,description:pageMeta.description},
-  fields:model.map(item=>{
-   const field={index:item.index,tag:item.tag,label:item.label,group:item.group,added:!!item.added,hidden:!!item.hidden,deleted:!!item.deleted};
-   if(item.image){field.src=item.src;field.alt=item.alt}
-   else if(!item.decorative){field.text=item.text;if(item.link)field.url=item.url}
-   return field;
-  }),
-  sections:{order:[...sectionOrder],items:Object.fromEntries(sectionOrder.map(id=>[id,{label:sectionStates[id]?.label??sectionNodes.find(n=>n.getAttribute('data-section')===id)?.getAttribute('aria-label')??id,hidden:!!sectionStates[id]?.hidden,deleted:!!sectionStates[id]?.deleted}]))},
-  design:{style:{...styleSettings},variables:{...variableSettings},buttons:structuredClone(buttonSettings)}
- });
- // Validate the complete payload before making any change; editable data only,
- // never HTML, selectors, scripts, or arbitrary DOM mutations.
- const validateContentJSON=data=>{
-  if(!isRecord(data)||data.version!==1||!Array.isArray(data.fields)||!isRecord(data.page)||!isRecord(data.sections)||!isRecord(data.design))
-   throw Error('Expected Copy JSON data (version 1) with page, fields, sections, and design.');
-  const textField=(value,name)=>{if(typeof value!=='string')throw Error(name+' must be text.');return value};
-  const flag=(value,name)=>{if(typeof value!=='boolean')throw Error(name+' must be true or false.');return value};
-  const candidate=structuredClone(model);
-  // Existing fields are identified by their stable original index. Added
-  // navigation links are rebuilt from JSON in their supplied order.
-  const byIndex=new Map(candidate.filter(item=>!item.added).map(item=>[item.index,item]));
-  const imported=[],seen=new Set();
-  for(const field of data.fields){
-   if(!isRecord(field))throw Error('Each field must be an object.');
-   let item;
-   if(field.added===true){
-    if(field.tag!=='a'||!Number.isInteger(field.group)||field.group<0||field.group>=liveRoots.length)
-     throw Error('Only links may be added to an existing link collection.');
-    item={added:true,index:-1,tag:'a',link:true,article:false,image:false,decorative:false,group:field.group,label:'Navigation link',originalText:'',originalURL:'',text:'',url:'',hidden:false,deleted:false};
-   }else{
-    if(!Number.isInteger(field.index)||seen.has(field.index))throw Error('Duplicate or invalid field index.');
-    seen.add(field.index);
-    const original=byIndex.get(field.index);
-    if(!original||original.tag!==field.tag||original.group!==field.group||original.label!==field.label)
-     throw Error('JSON does not match the editable fields on this page.');
-    item={...original};
-   }
-   item.hidden=flag(field.hidden,'Field hidden');
-   item.deleted=flag(field.deleted,'Field deleted');
-   if(item.image){
-    item.src=textField(field.src,'Image URL');
-    item.alt=textField(field.alt,'Image alt');
-    if(!validImageURL(item.src))throw Error('Invalid image URL in '+item.label);
-   }else if(!item.decorative){
-    item.text=textField(field.text,'Field text');
-    if(item.link){
-     item.url=textField(field.url,'Link URL');
-     if(!item.deleted&&(!item.text.trim()||!validURL(item.url.trim())||!validLinkTarget(item.url)))
-      throw Error('Invalid link in '+item.label);
-    }
-   }
-   imported.push(item);
-  }
-  if(seen.size!==byIndex.size)throw Error('JSON is missing editable fields from this page.');
-  const order=data.sections.order;
-  if(!Array.isArray(order)||order.length!==initialSectionOrder.length||
-     new Set(order).size!==initialSectionOrder.length||!order.every(id=>initialSectionOrder.includes(id)))
-   throw Error('Section order does not match this page.');
-  if(!isRecord(data.sections.items))throw Error('Section data must be an object.');
-  const states={};
-  for(const id of order){
-   const state=data.sections.items[id];
-   if(!isRecord(state))throw Error('Missing section '+id);
-   states[id]={label:textField(state.label,'Section label'),hidden:flag(state.hidden,'Section hidden'),deleted:flag(state.deleted,'Section deleted')};
-  }
-  const nextPage={title:textField(data.page.title,'Page title'),description:textField(data.page.description,'Page description')};
-  const design=data.design;
-  if(!isRecord(design.style)||!isRecord(design.variables)||!isRecord(design.buttons))throw Error('Design must contain style, variables, and buttons.');
-  const allowedStyle=Object.keys(styleDefaults),styles={...styleSettings};
-  for(const [key,value] of Object.entries(design.style)){
-   if(!allowedStyle.includes(key))throw Error('Unknown design setting: '+key);
-   if(key==='font'){if(!validFontStack(value))throw Error('Invalid font family: '+value)}
-   else if(['h1','h2','h3','p','radius'].includes(key)){if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>120)throw Error('Invalid design size: '+key)}
-   else if(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value))throw Error('Invalid design color: '+key);
-   styles[key]=value;
-  }
-  const variables={...variableSettings};
-  for(const [name,value] of Object.entries(design.variables)){
-   const config=originalVariables[name];
-   if(!config||typeof value!=='string')throw Error('Unknown CSS variable: '+name);
-   if(config.kind==='color'?!hexColor(value):!/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(value))
-    throw Error('Invalid CSS variable: '+name);
-   variables[name]=value;
-  }
-  const buttons={};
-  for(const [index,settings] of Object.entries(design.buttons)){
-   if(!Object.hasOwn(buttonAppearance,index)||!isRecord(settings))throw Error('Unknown button: '+index);
-   buttons[index]={};
-   for(const [key,value] of Object.entries(settings)){
-    if(!['background','color'].includes(key)||typeof value!=='string'||!hexColor(value))throw Error('Invalid button style.');
-    buttons[index][key]=value;
-   }
-  }
-  return {model:imported,sectionOrder:[...order],sectionStates:states,pageMeta:nextPage,styleSettings:styles,variableSettings:variables,buttonSettings:buttons};
- };
+ const contentJSON=()=>exportEditableJSON({model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,sectionStates,pageMeta,styleSettings,variableSettings,buttonSettings,buttonAppearance});
+ const validateContentJSON=data=>importEditableJSON(data,{model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,styleSettings,styleDefaults,styleFonts,originalVariables,buttonAppearance,validImageURL,validURL,validLinkTarget,validFontStack,hexColor});
  const importDialog=screen.querySelector('#ue-json-dialog'),importInput=screen.querySelector('#ue-json-input'),importError=screen.querySelector('#ue-json-error');
  const dismissImport=()=>{importDialog.hidden=true;importError.hidden=true;importError.textContent=''};
  screen.querySelector('#ue-import-json').onclick=()=>{
