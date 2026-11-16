@@ -5,7 +5,7 @@
 const editorStyle=document.createElement('style');
 editorStyle.id='ue-style';
 editorStyle.textContent="#ue-pencil{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));right:18px;z-index:2147483000;display:grid;place-items:center;width:44px;height:44px;border:1px solid #ddd;border-radius:50%;background:white;color:#111;box-shadow:0 3px 16px #0002;cursor:pointer}\n#ue-pencil svg,#ue-screen svg{width:18px;height:18px}\n#ue-screen{position:fixed;inset:0;z-index:2147483600;overflow:auto;height:100dvh;background:white;color:#171717;padding:calc(22px + env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));font:15px/1.5 Manrope,system-ui,sans-serif}\n#ue-screen[hidden],#ue-pencil[hidden]{display:none!important}\n#ue-screen *{box-sizing:border-box}\n#ue-wrap{max-width:560px;margin:auto}\n#ue-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:24px}\n#ue-head strong{font-size:21px}\n#ue-screen button{font:inherit;cursor:pointer}\n#ue-head button,#ue-add{border:1px solid #ddd;background:#fff;color:#171717;border-radius:9px;padding:10px 13px}\n#ue-head #ue-copy{background:#171717;color:#fff;border-color:#171717}\n#ue-fields{display:grid;gap:18px}\n.ue-item{display:grid;gap:9px;padding-bottom:18px}\n.ue-item label{display:grid;gap:5px;font:700 12px/1.5 Manrope,system-ui,sans-serif;color:#666}\n.ue-item input,.ue-item textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:11px;background:#fff;color:#171717;font:500 16px/1.5 Manrope,system-ui,sans-serif}\n.ue-item textarea{min-height:110px;max-height:60dvh;resize:vertical;overflow-y:hidden}\n.ue-image-preview{display:block;max-width:100%;max-height:190px;object-fit:contain;object-position:left center;border-radius:8px;background:#f4f4f4}\n.ue-image-preview:not([src]){display:none}\n.ue-item textarea.ue-article{min-height:200px;line-height:1.7}\n#ue-screen.ue-fullscreen .ue-item textarea{max-height:80dvh}\n.ue-controls{display:flex;justify-content:flex-end;gap:5px}\n.ue-controls button{width:38px;height:36px;border:0;border-radius:7px;background:#f3f3f3;display:grid;place-items:center}\n.ue-controls button:disabled{opacity:.3}\n#ue-add{display:flex;align-items:center;gap:8px;margin-top:20px}\n#ue-add[hidden]{display:none!important}\n#ue-message{font-size:13px;color:#a22}\n#ue-screen{box-sizing:border-box;left:auto;right:0;top:0;bottom:0;width:min(430px,100%);height:100dvh;max-height:100dvh;border-left:1px solid #ddd;box-shadow:-12px 0 45px #0002;overflow:hidden;padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}\n#ue-wrap{display:flex;flex-direction:column;height:100%;min-height:0}\n#ue-head{flex:none;margin-bottom:16px;position:relative;justify-content:center;min-height:32px}\n#ue-undo{position:absolute;left:0;top:0;border:0!important;background:transparent!important;color:#555!important;padding:5px!important;width:32px;height:32px}#ue-undo:disabled{opacity:.25}#ue-fullscreen{position:absolute;right:0;top:0;display:grid;place-items:center;width:32px;height:32px;border:0!important;border-radius:7px;padding:0!important;background:transparent!important;color:#555!important}\n#ue-fullscreen:hover{background:#f2f2f2!important}\n#ue-body{scrollbar-width:none}\n#ue-body::-webkit-scrollbar{display:none}\n#ue-screen.ue-fullscreen{inset:0;width:100%;height:100dvh;max-height:100dvh;border:0;box-shadow:none;border-radius:0;padding:calc(22px + env(safe-area-inset-top)) 28px calc(16px + env(safe-area-inset-bottom))}\n#ue-screen.ue-fullscreen #ue-wrap{width:100%;max-width:880px;margin:0 auto}\n#ue-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 3px 24px}\n#ue-actions{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px 2px;background:white}\n#ue-actions button{min-width:104px;padding:11px 18px;border:1px solid #ddd;border-radius:9px;background:#fff;color:#171717}\n#ue-actions #ue-copy{background:#171717;color:white;border-color:#171717}\n@media(max-width:640px){#ue-screen:not(.ue-fullscreen){top:auto;bottom:0;left:0;right:0;width:100%;height:min(62dvh,620px);border-left:0;border-top:1px solid #ddd;border-radius:16px 16px 0 0;box-shadow:0 -12px 40px #0002}#ue-screen.ue-fullscreen{padding:calc(22px + env(safe-area-inset-top)) 20px calc(12px + env(safe-area-inset-bottom))}}\n";
-editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-section-row{display:flex;gap:8px;align-items:center}.ue-section-row .ue-section-link{flex:1;min-width:0}.ue-section-row .ue-controls{flex:none}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
+editorStyle.textContent+="\n#ue-tabs{display:flex;gap:4px;flex:none;margin:0 0 15px;border-bottom:1px solid #e8e8e8}\n#ue-tabs button{flex:1;border:0;background:transparent;color:#777;padding:10px 4px;font:600 13px Manrope,system-ui,sans-serif;border-bottom:2px solid transparent;cursor:pointer}\n#ue-tabs button[aria-selected=\"true\"]{color:#111;border-bottom-color:#111}\n#ue-fields[hidden],#ue-style-panel[hidden],#ue-sections[hidden]{display:none!important}\n#ue-style-panel,#ue-sections{display:grid;gap:13px}\n.ue-deleted{opacity:.45}.ue-hidden{opacity:.65}.ue-section-row .ue-controls{gap:3px}\n.ue-section-row{display:flex;gap:8px;align-items:center}.ue-section-row .ue-section-link{flex:1;min-width:0}.ue-section-row .ue-controls{flex:none}\n.ue-setting{display:grid;gap:7px;padding-bottom:12px;border-bottom:1px solid #eee}\n.ue-setting label{font:700 12px Manrope,system-ui,sans-serif;color:#555}\n.ue-setting input,.ue-setting select{min-height:40px;width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;background:white;color:#111;font:14px Manrope,system-ui,sans-serif}\n.ue-color-row{display:grid;grid-template-columns:45px minmax(0,1fr);gap:9px;align-items:center}\n.ue-color-row input[type=color]{padding:3px;width:45px;height:40px;cursor:pointer}\n.ue-section-link{display:block;width:100%;text-align:left;border:1px solid #ddd!important;border-radius:8px!important;background:#fff!important;padding:11px 12px!important;font:14px Manrope,system-ui,sans-serif}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -193,6 +193,14 @@ function init(){
     button.onclick=()=>{checkpoint();const next=i+dir;[sectionOrder[i],sectionOrder[next]]=[sectionOrder[next],sectionOrder[i]];reorderSections();saveDraft();renderSections()};
     controls.append(button);
    }
+   const state=sectionStates[id]||{};
+   for(const [action,icon,field] of [[state.hidden?'Show':'Hide',state.hidden?'eye':'eye-off','hidden'],[state.deleted?'Restore':'Delete',state.deleted?'undo-2':'trash-2','deleted']]){
+    const button=document.createElement('button');button.type='button';button.title=action;button.setAttribute('aria-label',action+' '+jump.textContent);
+    button.innerHTML='<i data-lucide="'+icon+'"></i>';
+    button.onclick=()=>{checkpoint();sectionStates[id]={...(sectionStates[id]||{}),[field]:!Boolean(sectionStates[id]?.[field])};syncSections();saveDraft();renderSections()};
+    controls.append(button);
+   }
+   row.classList.toggle('ue-deleted',Boolean(state.deleted));row.classList.toggle('ue-hidden',Boolean(state.hidden));
    row.append(jump,controls);sectionsPanel.append(row);
   }
   icons();
@@ -300,7 +308,7 @@ function init(){
   for(const item of model){
    const box=document.createElement('div');box.className='ue-item';
    const label=document.createElement('label');label.textContent=item.label|| (item.image?'Image':item.link?'Link text':item.tag==='p'?'Paragraph':'Text');
-   if(item.deleted){box.classList.add('ue-deleted');}
+   if(item.deleted){box.classList.add('ue-deleted')}else if(item.hidden){box.classList.add('ue-hidden')}
    if(item.image){
     const preview=document.createElement('img');preview.className='ue-image-preview';preview.alt='Image preview';
     const updatePreview=()=>{if(validImageURL(item.src)){preview.src=normalizeURL(item.src)}else{preview.removeAttribute('src')}};
@@ -344,6 +352,8 @@ function init(){
   if(source.length!==liveSnapshots.length)throw Error('Page structure changed. Reload and try again.');
   for(const item of originals){
    const element=source[item.index];if(!element)throw Error('Editable element missing.');
+   if(item.deleted)continue;
+   if(item.hidden)element.hidden=true;else element.hidden=false;
    if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}element.setAttribute('alt',item.alt);continue}
    if(item.article){if(item.text!==item.originalText)setArticle(element,item.text)}else element.textContent=item.text;
    if(item.link){if(!validURL(item.url.trim()))throw Error('Invalid link URL.');element.setAttribute('href',normalizeURL(item.url))}
@@ -355,10 +365,11 @@ function init(){
    const old=Array.from(g.children).filter(el=>el.matches('a[data-edit]'));
    old.forEach(el=>el.remove());
    for(const item of members){
+    if(item.deleted)continue;
     if(!item.link||!validURL(item.url.trim()))throw Error('Enter a valid link URL.');
     const node=item.added?doc.createElement('a'):source[item.index].cloneNode(true);
     node.setAttribute('data-edit','');node.setAttribute('href',normalizeURL(item.url));
-    node.textContent=item.text;
+    node.textContent=item.text;if(item.hidden)node.hidden=true;else node.hidden=false;
     if(g.lastChild&&g.lastChild.nodeType!==3)g.append(doc.createTextNode(' '));
     g.append(node);
    }
@@ -371,6 +382,15 @@ function init(){
    const ordered=sectionOrder.map(k=>exportedById.get(k)).filter(el=>el&&el.parentElement===node.parentElement&&siblings.includes(el));
    const after=siblings[siblings.length-1]?.nextSibling||null;
    for(const el of ordered)node.parentElement.insertBefore(el,after);
+  }
+  for(const item of originals.filter(item=>item.deleted)){
+   const element=source[item.index];
+   if(element?.isConnected)element.remove();
+  }
+  for(const [id,state] of Object.entries(sectionStates)){
+   const node=exportedById.get(id);if(!node)continue;
+   if(state.deleted)node.remove();
+   else if(state.hidden)node.hidden=true;
   }
   let pageStyle=doc.getElementById('editor-page-style');
   if(JSON.stringify(styleSettings)!==initialStyle){
@@ -411,6 +431,7 @@ function init(){
   }
   if(JSON.stringify(styleSettings)!==initialStyle)applyStyle();
   if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))reorderSections();
+  syncSections();
   renderStyle();
   pencil.hidden=true;screen.hidden=false;message.textContent='';
   render();setTab(activeTab);
@@ -425,7 +446,7 @@ function init(){
  });
  screen.querySelector('#ue-copy').onclick=async()=>{
   try{
-   if(model.some(x=>x.link&&(!x.text.trim()||!validURL(x.url.trim()))))throw Error('Every link needs text and a valid URL.');
+   if(model.some(x=>!x.deleted&&x.link&&(!x.text.trim()||!validURL(x.url.trim()))))throw Error('Every link needs text and a valid URL.');
    const value=copyHTML();
    if(window.endsSharedCopyText)await window.endsSharedCopyText(value);else await navigator.clipboard.writeText(value);
    const sourceTag=document.getElementById('ends-nav-data');
