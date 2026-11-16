@@ -38,8 +38,5 @@ export function applyBranding(doc,meta,original={}){
  if(faviconUrl){
   if(!icon){icon=doc.createElement('link');icon.rel='icon';doc.head.append(icon)}
   if(icon.getAttribute('href')!==faviconUrl)icon.setAttribute('href',faviconUrl);
- }else if(icon){
-  if(original.faviconUrl)icon.setAttribute('href',original.faviconUrl);
-  else icon.remove();
- }
+ }else icon?.remove();
 }
