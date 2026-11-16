@@ -250,3 +250,45 @@
 /* Copy is the primary bottom-right action: a simple rounded pill. */
 #ue-actions #ue-copy{margin-left:auto!important;border-radius:999px!important;min-width:110px;padding:11px 24px!important;font-weight:650}
 @media(max-width:390px){#ue-actions #ue-copy{min-width:90px;padding:10px 18px!important}}
+
+/* The horizontal ellipsis owns docking controls; the heading is the drag handle. */
+#ue-head #ue-dock-left,#ue-head #ue-dock-right{
+ position:static!important;top:auto!important;left:auto!important;right:auto!important;
+ display:flex!important;align-items:center!important;justify-content:flex-start!important;
+ width:100%!important;height:38px!important;min-width:0!important;
+ padding:0 10px!important;border:0!important;border-radius:7px!important;
+ background:transparent!important;color:#333!important;opacity:1!important;
+ font-size:13px!important;text-align:left!important;gap:10px!important
+}
+#ue-head #ue-dock-left:disabled,#ue-head #ue-dock-right:disabled{opacity:.35!important;cursor:default!important}
+#ue-head #ue-dock-left:not(:disabled):hover,#ue-head #ue-dock-right:not(:disabled):hover{background:#f4f4f4!important}
+#ue-head #ue-heading{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+#ue-head #ue-heading:active{cursor:grabbing}
+#ue-screen.ue-fullscreen #ue-head #ue-dock-left,#ue-screen.ue-fullscreen #ue-head #ue-dock-right{display:none!important}
+@media(max-width:640px){#ue-head #ue-dock-left,#ue-head #ue-dock-right{display:none!important}#ue-head #ue-heading{cursor:default;touch-action:auto}}
+
+/* Accessible primary Copy action with an attached JSON dropdown. */
+#ue-actions #ue-copy-wrap{position:relative;display:flex;align-items:stretch;margin-left:auto}
+#ue-actions #ue-copy-wrap #ue-copy{
+ margin-left:0!important;border-radius:999px 0 0 999px!important;min-width:94px;
+ padding:11px 20px!important;border-right:1px solid #ffffff45!important
+}
+#ue-actions #ue-copy-toggle{
+ display:grid;place-items:center;min-width:34px!important;width:34px!important;
+ padding:0 8px!important;border:1px solid #171717!important;border-left:0!important;
+ border-radius:0 999px 999px 0!important;background:#171717!important;color:white!important
+}
+#ue-actions #ue-copy-toggle:hover,#ue-actions #ue-copy-toggle[aria-expanded="true"]{background:#303030!important}
+#ue-actions #ue-copy-toggle svg{width:15px;height:15px}
+#ue-actions #ue-copy-menu{
+ position:absolute;bottom:calc(100% + 8px);right:0;z-index:30;min-width:160px;
+ background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:5px;
+ box-shadow:0 8px 28px #0002
+}
+#ue-actions #ue-copy-menu[hidden]{display:none!important}
+#ue-actions #ue-copy-menu button{
+ width:100%;display:block;text-align:left;font-size:13px;padding:10px 12px!important;
+ border:0!important;border-radius:7px;background:#fff!important;color:#222!important
+}
+#ue-actions #ue-copy-menu button:hover{background:#f4f4f4!important}
+@media(max-width:390px){#ue-actions #ue-copy-wrap #ue-copy{min-width:75px;padding:10px 14px!important}}
