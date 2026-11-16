@@ -1,3 +1,4 @@
+import {validBrandURL} from './branding.js';
 /* Version 2: readable content contract, independent of DOM positions. */
 const isRecord=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const slug=v=>String(v||'').trim().replace(/([a-z])([A-Z])/g,'$1-$2').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'item';
@@ -60,6 +61,7 @@ export function exportEditableJSON(ctx){
   version:2,
   _schema:{
    purpose:'Edit only values; the original HTML layout and elements remain unchanged.',
+   branding:'Optional page.logoUrl and page.faviconUrl are absolute http(s) image URLs. Leave empty for no image.',
    fields:'Preserve id and tag. You may edit text, URLs, image src/alt, hidden and deleted. Only new links may be added to an existing group.',
    groups:groups,
    fonts:'Google Font names or safe CSS font-family stacks. Unknown installed font names use browser fallback.',
@@ -74,7 +76,7 @@ export function exportEditableJSON(ctx){
    sections:'order contains existing section ids; changing section labels updates visible numbered eyebrow labels where present.',
    elements:'design.elements contains optional per-element fontSize (px), textColor (#RRGGBB), opacity (0-100%), radius (px), padding (px), and gap (px). Only use controls appropriate to the target.'
   },
-  page:{title:pageMeta.title,description:pageMeta.description},
+  page:{title:pageMeta.title,description:pageMeta.description,logoUrl:pageMeta.logoUrl||'',faviconUrl:pageMeta.faviconUrl||''},
   fields,
   sections:{order:[...sectionOrder],items:Object.fromEntries(sectionOrder.map(id=>[id,{
    label:sectionStates[id]?.label??sectionNodes.find(n=>n.getAttribute('data-section')===id)?.getAttribute('aria-label')??id,
@@ -136,6 +138,7 @@ export function importEditableJSON(data,ctx){
   if(!isRecord(x))throw Error('Missing section: '+id);
   states[id]={label:string(x.label,'Section label'),hidden:boolean(x.hidden,'Section hidden'),deleted:boolean(x.deleted,'Section deleted')};
  }
+ if(!validBrandURL(data.page.logoUrl??'')||!validBrandURL(data.page.faviconUrl??''))throw Error('Logo and favicon must be valid http(s) URLs.');
  const design=data.design;
  if(!isRecord(design.colors)||!isRecord(design.typography)||!isRecord(design.buttons)||!isRecord(design.buttons.primary)||!isRecord(design.buttons.secondary)||!isRecord(design.variables)||!isRecord(design.elementButtons))
   throw Error('Design requires colors, typography, buttons, variables, and elementButtons.');
@@ -183,5 +186,5 @@ export function importEditableJSON(data,ctx){
   }
   if(Object.keys(values).length)visualValues[id]=values;
  }
- return {model:next,pageMeta:{title:string(data.page.title,'Page title'),description:string(data.page.description,'Description')},sectionOrder:[...order],sectionStates:states,styleSettings:style,variableSettings:variables,buttonSettings:buttons,visualValues};
+ return {model:next,pageMeta:{title:string(data.page.title,'Page title'),description:string(data.page.description,'Description'),logoUrl:string(data.page.logoUrl??'','Logo URL'),faviconUrl:string(data.page.faviconUrl??'','Favicon URL')},sectionOrder:[...order],sectionStates:states,styleSettings:style,variableSettings:variables,buttonSettings:buttons,visualValues};
 }
