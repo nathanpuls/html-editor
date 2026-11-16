@@ -336,8 +336,14 @@ function init(){
   if(originalPageStyle===null)el?.remove();
   else if(el){if(el.textContent!==originalPageStyle)el.textContent=originalPageStyle}
   else{const node=document.createElement('style');node.id='editor-page-style';node.textContent=originalPageStyle;document.head.append(node)}
+  const fontLink=document.getElementById('editor-google-font');
+  if(originalGoogleFontHref){
+   if(fontLink)fontLink.href=originalGoogleFontHref;
+   else{const link=document.createElement('link');link.id='editor-google-font';link.rel='stylesheet';link.href=originalGoogleFontHref;document.head.append(link)}
+  }else fontLink?.remove();
  };
  const originalPageStyle=document.getElementById('editor-page-style')?.textContent??null;
+ const originalGoogleFontHref=document.getElementById('editor-google-font')?.getAttribute('href')??null;
  function renderStyle(){return drawDesign({screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel})}
  function findSections(root=document){
   return Array.from(root.querySelectorAll('[data-section]')).filter(el=>!el.parentElement?.closest('[data-section]')&&!el.closest('#ue-screen'));
