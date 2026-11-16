@@ -30,7 +30,7 @@ export const googleFontFamilies=[
 export function validFontStack(value){
  return typeof value==='string'&&value.length>0&&value.length<=240&&
  /^[a-zA-Z0-9 ,"'-]+$/.test(value)&&
- value.split(',').every(part=>/^(?:[a-zA-Z][a-zA-Z0-9 -]*|"[a-zA-Z][a-zA-Z0-9 -]*"|'[a-zA-Z][a-zA-Z0-9 -]*')$/.test(part.trim()));
+ value.split(',').every(part=>/^(?:-apple-system|[a-zA-Z][a-zA-Z0-9 -]*|"[a-zA-Z][a-zA-Z0-9 -]*"|'[a-zA-Z][a-zA-Z0-9 -]*')$/.test(part.trim()));
 }
 export function fontCSS(value,styleFonts){
  if(Object.hasOwn(styleFonts,value))return styleFonts[value];
