@@ -23,14 +23,14 @@ const chromePath=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/goog
 console.log('Using browser:',chromePath);
 const chrome=spawn(chromePath,[
  '--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--no-default-browser-check',
- '--disable-dev-shm-usage','--remote-debugging-address=127.0.0.1','--remote-debugging-port=9222',
+ '--disable-dev-shm-usage','--remote-debugging-address=127.0.0.1','--remote-debugging-port=0',
  '--user-data-dir='+profile,'about:blank'
 ],{stdio:['ignore','pipe','pipe']});
 let chromeError='';
 chrome.stderr?.on('data',chunk=>{chromeError=(chromeError+chunk.toString()).slice(-4000)});
 chrome.on('error',error=>{chromeError=String(error)});
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function waitFor(fn,ms=12000){const until=Date.now()+ms;let err;while(Date.now()<until){try{const result=await fn();if(result)return result}catch(e){err=e}await sleep(100)}throw err||Error('Timed out')}
+async function waitFor(fn,ms=30000){const until=Date.now()+ms;let err;while(Date.now()<until){try{const result=await fn();if(result)return result}catch(e){err=e}await sleep(100)}throw err||Error('Timed out')}
 let ws;
 let seq=0;
 const pending=new Map();
@@ -47,8 +47,10 @@ async function js(expression){
 async function waitJS(expression){return waitFor(async()=>await js(expression))}
 function check(name,value){assert.ok(value,name);console.log('PASS',name)}
 try{
- await waitFor(async()=>{const r=await fetch('http://127.0.0.1:9222/json/version');return r.ok});
- const page=await (await fetch('http://127.0.0.1:9222/json/new?'+encodeURIComponent(origin+'/tests/fixture.html'),{method:'PUT'})).json();
+ const debugPort=await waitFor(async()=>{try{const p=await readFile(join(profile,'DevToolsActivePort'),'utf8');return Number(p.split('\\n')[0])||false}catch{return false}});
+ const debuggerUrl='http://127.0.0.1:'+debugPort;
+ await waitFor(async()=>{const r=await fetch(debuggerUrl+'/json/version');return r.ok});
+ const page=await (await fetch(debuggerUrl+'/json/new?'+encodeURIComponent(origin+'/tests/fixture.html'),{method:'PUT'})).json();
  ws=new WebSocket(page.webSocketDebuggerUrl);
  await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true})});
  ws.addEventListener('message',event=>{
