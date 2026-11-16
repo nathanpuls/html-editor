@@ -140,9 +140,13 @@ try{
  check('Import JSON applies bulk content and settings',await js("document.querySelector('h1').textContent==='Bulk changed heading'&&document.title==='Bulk title'&&document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-undo').click()");
  check('undo restores pre-import page content and settings',await js("document.querySelector('h1').textContent==='Changed heading'&&document.title!=='Bulk title'"));
+ // Simulate infrastructure-injected markup present in the live document.
+ await js("(()=>{const base=document.createElement('base');base.href='/editor/';document.head.prepend(base);const beacon=document.createElement('script');beacon.src='https://static.cloudflareinsights.com/beacon.min.js/example';beacon.setAttribute('data-cf-beacon','{}');document.body.append(beacon)})()");
  await js("document.querySelector('#ue-copy').click()");
  await waitJS("typeof window.__exportedHTML==='string'");
  check('HTML export reflects edits',await js("window.__exportedHTML.includes('Changed heading') && !window.__exportedHTML.includes('id=\"ue-stylesheet\"')"));
+ check('HTML export omits runtime base tag, analytics, and drag preview',await js("!window.__exportedHTML.includes('<base href=')&&!window.__exportedHTML.includes('static.cloudflareinsights.com')&&!window.__exportedHTML.includes('data-cf-beacon')&&!window.__exportedHTML.includes('ue-drop-preview')"));
+ check('HTML export retains installation script and editable structure',await js("window.__exportedHTML.includes('https://edit.built.at')&&window.__exportedHTML.includes('data-edit=')&&window.__exportedHTML.includes('data-section=')"));
  await send('Emulation.setDeviceMetricsOverride',{width:375,height:700,deviceScaleFactor:1,mobile:true});
  await js("document.querySelector('#ue-pencil').click()");
  check('mobile editor fills viewport',await js("Math.abs(document.querySelector('#ue-screen').getBoundingClientRect().width-375)<2"));
