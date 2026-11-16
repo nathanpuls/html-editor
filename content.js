@@ -100,7 +100,9 @@ export function drawContent(ctx){
    input.addEventListener('input',()=>{reset.disabled=pageMeta[key]===originalMeta[key]});
    label.style.position='relative';label.style.paddingRight='35px';label.append(reset);metaBox.append(label);
   }
+  const pageDesign=settingsPanel.querySelector('#ue-page-design');
   settingsPanel.replaceChildren(metaBox);
+  if(pageDesign)settingsPanel.append(pageDesign);
   for(const item of model){
    if(item.deleted)continue; // Keep the model for Undo/Revert/export, not in the sidebar.
    const box=document.createElement('div');box.className='ue-item';
