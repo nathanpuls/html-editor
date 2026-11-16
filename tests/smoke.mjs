@@ -192,8 +192,9 @@ try{
  await send('Page.reload',{ignoreCache:true});
  await waitJS("Boolean(document.querySelector('#ue-screen'))&&!document.querySelector('#ue-screen').hidden");
  check('slider values restore from local draft',await js("getComputedStyle(document.querySelector('h1')).fontSize==='54px'&&getComputedStyle(document.querySelector('img[data-edit=\"Hero image\"]')).opacity==='0.65'"));
+ await js("Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__exportedHTML=text}}})");
  await js("document.querySelector('#ue-copy').click()");
- await waitJS("window.__exportedHTML.includes('editor-visual-style')");
+ await waitJS("typeof window.__exportedHTML==='string'&&window.__exportedHTML.includes('editor-visual-style')");
  check('HTML export contains targeted visual CSS',await js("window.__exportedHTML.includes('font-size:54px!important')&&window.__exportedHTML.includes('opacity:0.65!important')&&window.__exportedHTML.includes('padding:24px!important')"));
  console.log('All browser smoke checks passed');
 }catch(error){console.error(error,chromeError);process.exitCode=1}
