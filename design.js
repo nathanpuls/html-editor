@@ -103,7 +103,7 @@ export function drawDesign(ctx){
    reset.onclick=event=>{event.preventDefault();checkpoint();styleSettings[key]=originalAppearance[key];applyStyle();saveDraft();renderStyle()};
    const refreshReset=()=>{reset.disabled=String(styleSettings[key])===String(originalAppearance[key])};
    row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',refreshReset));
-   row.append(reset);(['background','text','accent','font','h1','h2','h3','p','radius'].includes(key)?pageDesign:stylePanel).append(row);
+   row.append(reset);pageDesign.append(row);
   }
   const custom=Object.entries(originalVariables);
   if(custom.length){
