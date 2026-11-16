@@ -18,6 +18,12 @@ function init(){
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
  screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, design, and settings"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="square-text"></i>Content</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button><button type="button" data-tab="settings" aria-selected="false"><i data-lucide="settings-2"></i>Settings</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled><i data-lucide="undo-2"></i></button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy JSON</button></div></div></div></div>';
  document.body.append(pencil,screen);
+ const dropPreview=document.createElement('div');
+ dropPreview.id='ue-drop-preview';
+ dropPreview.setAttribute('aria-hidden','true');
+ dropPreview.hidden=true;
+ dropPreview.innerHTML='<span id="ue-drop-label"></span>';
+ document.body.append(dropPreview);
  const fields=screen.querySelector('#ue-fields'),add=screen.querySelector('#ue-add'),message=screen.querySelector('#ue-message');
  const fullscreenButton=screen.querySelector('#ue-fullscreen');
  const moreButton=screen.querySelector('#ue-more'),moreMenu=screen.querySelector('#ue-more-menu');
@@ -29,6 +35,18 @@ function init(){
  const rightResizeHandle=screen.querySelector('#ue-resize-right');
  const dockLeftButton=screen.querySelector('#ue-dock-left'),dockRightButton=screen.querySelector('#ue-dock-right');
  const widthKey='html-editor:panel-width:v1',sideKey='html-editor:panel-side:v1';
+ const editRequested=()=>new URL(location.href).searchParams.has('edit');
+ const setEditURL=open=>{
+  const url=new URL(location.href);
+  if(open)url.searchParams.set('edit','');
+  else url.searchParams.delete('edit');
+  // Native URLSearchParams serializes an empty value as ?edit=; remove the
+  // equals sign while keeping all other query parameters and the hash intact.
+  let target=url.pathname+url.search+url.hash;
+  if(open)target=target.replace(/([?&])edit=(?=&|#|$)/,'$1edit');
+  if(target!==location.pathname+location.search+location.hash)
+   history.replaceState(history.state,'',target);
+ };
  const desktop=()=>window.innerWidth>640;
  const widthClamp=value=>Math.round(Math.max(320,Math.min(Number(value)||430,Math.min(850,window.innerWidth-24))));
  let panelWidth=430,dockSide='right';
@@ -60,21 +78,40 @@ function init(){
  dockLeftButton.onclick=()=>{dock('left');toggleMore(false)};
  dockRightButton.onclick=()=>{dock('right');toggleMore(false)};
  setGeometry();
- // Drag the heading toward either side to dock the panel there.
+ // Drag the heading to preview a left/right docking destination.
  const dragHandle=screen.querySelector('#ue-heading');
  let dragStart=null;
+ const clearDrag=()=>{
+  dragStart=null;dropPreview.hidden=true;
+  screen.classList.remove('ue-dragging');
+  screen.style.removeProperty('--ue-drag-shift');
+ };
  dragHandle.addEventListener('pointerdown',event=>{
   if(event.button!==0||!desktop()||screen.classList.contains('ue-fullscreen'))return;
-  dragStart={id:event.pointerId,x:event.clientX,y:event.clientY};
+  dragStart={id:event.pointerId,x:event.clientX,y:event.clientY,active:false};
   dragHandle.setPointerCapture(event.pointerId);
+ });
+ dragHandle.addEventListener('pointermove',event=>{
+  if(!dragStart||event.pointerId!==dragStart.id)return;
+  const dx=event.clientX-dragStart.x,dy=event.clientY-dragStart.y;
+  if(!dragStart.active&&Math.hypot(dx,dy)<10)return;
+  dragStart.active=true;
+  const target=event.clientX<window.innerWidth/2?'left':'right';
+  screen.classList.add('ue-dragging');
+  screen.style.setProperty('--ue-drag-shift',Math.max(-140,Math.min(140,dx*.35))+'px');
+  dropPreview.dataset.side=target;
+  dropPreview.style.width=screen.getBoundingClientRect().width+'px';
+  dropPreview.querySelector('#ue-drop-label').textContent='Move '+target;
+  dropPreview.hidden=false;
  });
  dragHandle.addEventListener('pointerup',event=>{
   if(!dragStart||event.pointerId!==dragStart.id)return;
-  const moved=Math.hypot(event.clientX-dragStart.x,event.clientY-dragStart.y)>35;
-  if(moved)dock(event.clientX<window.innerWidth/2?'left':'right');
-  dragStart=null;
+  const target=event.clientX<window.innerWidth/2?'left':'right';
+  const active=dragStart.active;
+  clearDrag();
+  if(active)dock(target);
  });
- dragHandle.addEventListener('pointercancel',()=>{dragStart=null});
+ dragHandle.addEventListener('pointercancel',clearDrag);
  // Only the edge facing the website is resizable.
  const beginResize=(handle,edge)=>{
   let start=null;
@@ -338,7 +375,7 @@ function init(){
  };
  const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
  const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
- function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
+ function hideEditor(){if(!draftActive||screen.hidden)return;clearDrag();screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  // Change only the necessary text nodes. Never flatten formatted descendants.
  function restoreLive(){return restoreEditedDOM({liveSnapshots,liveRoots,rootSnapshots,touchedNodes,touchedRoots,restoreLive})}
@@ -404,10 +441,10 @@ function init(){
   .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
  const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
  function render(){return drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render})}
- function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
+ function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title='Edit'}
  function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText})}
  pencil.onclick=()=>{
-  if(draftActive){screen.hidden=false;pencil.hidden=true;return}
+  if(draftActive){screen.hidden=false;pencil.hidden=true;setEditURL(true);return}
   const sourceTag=document.getElementById('ends-nav-data');
   let sourceHTML;
   try{sourceHTML=JSON.parse(sourceTag?.textContent||'{}').source}catch{}
@@ -462,7 +499,7 @@ function init(){
   if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))reorderSections();
   syncSections();applyMeta();
   renderStyle();
-  pencil.hidden=true;screen.hidden=false;message.textContent='';
+  pencil.hidden=true;screen.hidden=false;setEditURL(true);message.textContent='';
   render();setTab(activeTab);
  };
  add.onclick=()=>{checkpoint();const group=model.find(x=>x.link&&x.group!==null)?.group;if(group===undefined)return;model.push({added:true,index:-1,tag:'a',link:true,text:'',url:'',group});render();fields.lastElementChild?.querySelector('input')?.focus()};
@@ -494,10 +531,13 @@ function init(){
  screen.querySelector('#ue-copy').onclick=()=>copyPage('html');
  screen.querySelector('#ue-copy-json').onclick=()=>copyPage('json');
  // Recover a compatible local draft immediately, including its live preview.
+ const resumeEditorOnLoad=editRequested();
  if(readDraft()){
-  // Initialize from the unedited document first, then apply the saved model to
-  // the live page. Do not discard a draft merely because its style changed.
-  pencil.click();hideEditor();
+  // Initialize the editable model and recover any stored live changes.
+  pencil.click();
+  if(!resumeEditorOnLoad)hideEditor();
+ }else if(resumeEditorOnLoad){
+  pencil.click();
  }
  document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!e.shiftKey&&draftActive&&!screen.hidden&&!e.target?.closest?.('input,textarea,[contenteditable]')){
