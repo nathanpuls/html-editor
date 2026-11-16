@@ -3,35 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>A Little Adventure — Editor Demo</title>
+<title>Studio North — HTML Editor Playground</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#fbf7f1;color:#252525;font-family:system-ui,sans-serif}
-main{max-width:680px;margin:72px auto;padding:0 24px 80px}
-h1{font-size:clamp(40px,7vw,68px);letter-spacing:-.05em;line-height:1.05}
-.story{font-size:19px;line-height:1.75;color:#454545}
-.story p{margin:0 0 1.35em}
-.photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:30px 0}
-.photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px}
-nav{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-nav a{padding:13px 18px;border-radius:12px;background:#243f35;color:white;text-decoration:none}
-@media(max-width:480px){.photos{grid-template-columns:1fr}}
+html{scroll-behavior:smooth}
+body{margin:0;background:#faf8f4;color:#25302d;font-family:system-ui,-apple-system,sans-serif}
+main{max-width:990px;margin:0 auto;padding:28px 24px 90px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:10px 0 36px}
+.brand{font-size:15px;font-weight:800;letter-spacing:.08em}
+.site-nav{display:flex;gap:18px}
+.site-nav a{font-size:14px;color:#394c45;text-decoration:none}
+section{padding:48px 0;border-bottom:1px solid #deded8}
+section:last-child{border-bottom:0}
+.eyebrow{color:#ac6845;text-transform:uppercase;letter-spacing:.16em;font-weight:700;font-size:12px}
+h1{font-size:clamp(42px,7vw,76px);letter-spacing:-.055em;line-height:1.08;margin:12px 0 18px}
+h2{font-size:clamp(30px,5vw,46px);line-height:1.14;letter-spacing:-.035em;margin:10px 0 18px}
+h3{font-size:22px;letter-spacing:-.02em;margin:10px 0}
+p{font-size:17px;line-height:1.72;color:#5a625d;max-width:65ch}
+.intro{font-size:21px}
+.hero-grid,.two-cols{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
+.hero-visual{background:#ebe8df;min-height:335px;border-radius:24px;overflow:hidden}
+.hero-visual img,.photo img{display:block;width:100%;height:100%;object-fit:cover}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+.button,.btn{display:inline-flex;padding:13px 20px;background:#273d35;color:white;text-decoration:none;border:0;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+.button.secondary{background:#e8e7e0;color:#25302d}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:30px 0}
+.card{border:1px solid #d9ddd6;border-radius:22px;padding:24px;background:white}
+.card p{font-size:15px;margin-bottom:0}
+.photo{height:285px;overflow:hidden;border-radius:24px;background:#e4e2dc}
+.swatches{display:flex;gap:10px;margin-top:20px}
+.swatches i{display:block;width:44px;height:44px;border-radius:12px;background:#273d35}
+.swatches i:nth-child(2){background:#ba8364}
+.swatches i:nth-child(3){background:#d2d9c9}
+.site-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.site-links a{display:inline-flex;background:#273d35;color:#fff;text-decoration:none;border-radius:12px;padding:12px 18px}
+footer{padding:40px 0;color:#6d746d;font-size:13px}
+@media(max-width:680px){.hero-grid,.two-cols,.cards{grid-template-columns:1fr}.topbar{align-items:flex-start}.site-nav{flex-wrap:wrap}.hero-visual{min-height:250px}section{padding:34px 0}}
 </style>
 <script src="./editor.js" defer></script>
 </head>
 <body>
 <main>
-<h1 data-edit data-label="Main Headline">A little adventure.</h1>
-<div class="story" data-edit data-label="Story Body">
-<p>The best ideas often begin simply. You create a page, and then make it your own.</p>
-<p>Press E to edit this entire story in a single field. Leave a blank line between paragraphs to keep them separate.</p>
-<p>The design stays intact while your words change instantly on the page.</p>
-</div>
-<div class="photos">
-<img data-edit data-label="Mountain Photo" src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900" alt="Mountain landscape">
-<img data-edit data-label="Forest Photo" src="https://images.unsplash.com/photo-1448375240586-882707db888b?w=900" alt="Sunlit forest">
-</div>
-<nav data-edit="links"><a data-edit data-label="Contact Link" href="https://example.com">Say hello</a></nav>
+<header class="topbar"><div class="brand">STUDIO NORTH</div><nav class="site-nav"><a href="#about">About</a><a href="#work">Work</a><a href="#contact">Contact</a></nav></header>
+<section id="welcome" data-section="welcome" aria-label="Welcome">
+ <div class="hero-grid">
+  <div>
+   <div class="eyebrow">Independent creative studio</div>
+   <h1 data-edit data-label="Hero heading">Ideas made beautifully simple.</h1>
+   <p class="intro" data-edit data-label="Hero description">A hands-on playground for changing colors, typography, rounded corners, buttons, and content.</p>
+   <div class="actions"><a class="button" href="#work">Explore our work</a><button class="btn" type="button">Test button</button></div>
+  </div>
+  <div class="hero-visual"><img data-edit data-label="Hero image" src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1000" alt="Beautiful bright studio"></div>
+ </div>
+</section>
+<section id="about" data-section="about" aria-label="About">
+ <div class="eyebrow">01 / About</div>
+ <h2 data-edit data-label="About heading">A good idea deserves a great home.</h2>
+ <div class="two-cols">
+  <div data-edit data-label="About paragraph"><p>We believe beautiful pages can be simple to maintain.</p><p>Change the text here, then open the Style tab and try a new background and text color. The heading size should stay exactly where it was.</p></div>
+  <div class="photo"><img data-edit data-label="About image" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000" alt="Creative workspace"></div>
+ </div>
+</section>
+<section id="work" data-section="work" aria-label="Our work">
+ <div class="eyebrow">02 / Our work</div>
+ <h2 data-edit data-label="Work heading">Three ways to stand out.</h2>
+ <p data-edit data-label="Work introduction">Try changing the corner roundness while looking at these cards and the buttons above.</p>
+ <div class="cards">
+  <article class="card"><h3 data-edit data-label="First card title">Thoughtful</h3><p data-edit data-label="First card description">A polished experience that puts the important things first.</p></article>
+  <article class="card"><h3 data-edit data-label="Second card title">Flexible</h3><p data-edit data-label="Second card description">Adjust the look and feel without editing CSS by hand.</p></article>
+  <article class="card"><h3 data-edit data-label="Third card title">Yours</h3><p data-edit data-label="Third card description">Keep your HTML portable, independent, and easy to share.</p></article>
+ </div>
+</section>
+<section id="contact" data-section="contact" aria-label="Get in touch">
+ <div class="eyebrow">03 / Contact</div>
+ <h2 data-edit data-label="Contact heading">Let's make something lovely.</h2>
+ <p data-edit data-label="Contact description">Try moving this section to the top using the Sections tab. Copy the HTML when you're done to preserve the new order.</p>
+ <nav class="site-links" data-edit="links"><a data-edit data-label="Contact link" href="https://example.com">Get in touch</a><a data-edit data-label="Portfolio link" href="https://example.org">See portfolio</a></nav>
+</section>
+<footer>Studio North · A test page for the HTML editor. Press E to edit.</footer>
 </main>
 </body>
 </html>
