@@ -13,7 +13,7 @@ editorStyle.textContent+="\n#ue-style-panel .ue-custom-heading{font-weight:700;f
 editorStyle.textContent+="\n#ue-style-panel .ue-button-title{font-size:13px;font-weight:650;color:#555;padding-top:10px}\n";
 editorStyle.textContent+="\n#ue-style-panel .ue-button-block{display:grid;gap:11px;padding:2px 0 20px;border-bottom:1px solid #e9e9e9}\n#ue-style-panel .ue-button-title{padding-top:8px}\n#ue-style-panel .ue-button-preview{display:block;box-sizing:border-box;min-height:48px;padding:13px 16px;border:1px solid #0002;overflow-wrap:anywhere;line-height:1.4;pointer-events:none}\n#ue-style-panel .ue-button-block .ue-setting{padding-bottom:8px}\n#ue-style-panel .ue-button-block .ue-setting:last-child{border-bottom:0}\n";
 editorStyle.textContent+="\n/* Horizontal, full-height dock: both edges resize; header drags sideways. */\n@media(min-width:641px){\n #ue-screen:not(.ue-fullscreen){top:0!important;bottom:0!important;height:100dvh!important;max-height:100dvh!important;border:1px solid #dedede;border-top:0;border-bottom:0;box-shadow:0 0 38px #00000016}\n #ue-head{cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none}\n #ue-head:active{cursor:grabbing}\n #ue-head button{cursor:pointer}\n #ue-resize,#ue-resize-right{position:absolute;z-index:4;top:0;bottom:0;width:15px;padding:0;border:0;background:transparent;cursor:ew-resize;touch-action:none;color:#9da3a0}\n #ue-resize{left:0}\n #ue-resize-right{right:0;left:auto}\n #ue-resize-right:before{content:\"\";position:absolute;right:0;top:calc(30% - 19px);width:15px;height:38px;border:1px solid #e1e3e2;border-right:0;border-radius:8px 0 0 8px;background:#f7f8f7;transition:background .15s,border-color .15s}\n #ue-resize-right svg{position:absolute;top:calc(30% - 10px);right:0;width:15px!important;height:20px!important;pointer-events:none;stroke-width:1.7}\n #ue-resize-right:hover:before,#ue-resize-right:focus-visible:before{background:#e9edeb;border-color:#c1c9c4}\n #ue-resize-right:hover,#ue-resize-right:focus-visible{color:#56635d}\n #ue-screen.ue-fullscreen{left:0!important;right:0!important}\n #ue-screen.ue-fullscreen #ue-resize-right{display:none}\n}\n@media(max-width:640px){#ue-resize-right{display:none!important}}\n";
-editorStyle.textContent+="\n/* Compact contextual design previews: expand only the button being edited. */\n#ue-style-panel details.ue-button-block{display:block;position:relative;padding:1px 0 18px}\n#ue-style-panel .ue-button-summary{display:block;cursor:pointer;list-style:none;padding:0 38px 0 0}\n#ue-style-panel .ue-button-summary::-webkit-details-marker{display:none}\n#ue-style-panel .ue-button-summary:focus-visible{outline:2px solid #777;outline-offset:4px;border-radius:4px}\n#ue-style-panel .ue-button-summary .ue-button-preview{margin-top:9px}\n#ue-style-panel .ue-button-hint{font-size:11px;color:#888;margin-top:8px}\n#ue-style-panel details[open] .ue-button-hint{display:none}\n#ue-style-panel .ue-button-jump{position:absolute;right:2px;top:39px;display:grid;place-items:center;width:31px;height:31px;padding:0;border:0;border-radius:7px;background:#f4f4f4;color:#666}\n#ue-style-panel .ue-button-jump:hover{background:#e9e9e9;color:#111}\n#ue-style-panel .ue-button-jump svg{width:15px;height:15px}\n#ue-style-panel details.ue-button-block .ue-setting:first-of-type{margin-top:13px}\n";
+editorStyle.textContent+="\n/* Compact contextual design previews: expand only the button being edited. */\n#ue-style-panel details.ue-button-block{display:block;position:relative;padding:1px 0 18px}\n#ue-style-panel .ue-button-summary{display:block;cursor:pointer;list-style:none;padding:0 38px 0 0}\n#ue-style-panel .ue-button-summary::-webkit-details-marker{display:none}\n#ue-style-panel .ue-button-summary:focus-visible{outline:2px solid #777;outline-offset:4px;border-radius:4px}\n#ue-style-panel .ue-button-summary .ue-button-preview{margin-top:9px}\n#ue-style-panel .ue-button-hint{font-size:11px;color:#888;margin-top:8px}\n#ue-style-panel details[open] .ue-button-hint{display:none}\n#ue-style-panel .ue-button-jump{position:absolute;right:2px;top:39px;display:grid;place-items:center;width:31px;height:31px;padding:0;border:0;border-radius:7px;background:#f4f4f4;color:#666;cursor:pointer}\n#ue-style-panel .ue-button-jump:hover{background:#e9e9e9;color:#111}\n#ue-style-panel .ue-button-jump svg{width:15px;height:15px}\n#ue-style-panel details.ue-button-block .ue-setting:first-of-type{margin-top:13px}\n";
 document.head.append(editorStyle);
 function init(){
  const selector='[data-edit]';
@@ -95,7 +95,10 @@ function init(){
  const finishMove=()=>{if(!moving)return;moving=null;rememberGeometry()};
  dragHeader.addEventListener('pointerup',finishMove);
  dragHeader.addEventListener('pointercancel',finishMove);
- window.addEventListener('resize',()=>{if(desktop())setGeometry();});
+ window.addEventListener('resize',()=>{
+  if(desktop())setGeometry();
+  else{screen.style.removeProperty('left');screen.style.removeProperty('right')}
+ });
  screen.querySelector('#ue-undo').onclick=undo;
  const scrollBody=screen.querySelector('#ue-body');
  const stylePanel=screen.querySelector('#ue-style-panel'),sectionsPanel=screen.querySelector('#ue-sections'),settingsPanel=screen.querySelector('#ue-settings'),contentPanel=screen.querySelector('#ue-content');
@@ -477,17 +480,20 @@ function init(){
     summary.append(preview);
     const hint=document.createElement('div');hint.className='ue-button-hint';hint.textContent='Click to edit colors';
     summary.append(hint);block.append(summary);
-    const jump=document.createElement('button');jump.type='button';jump.className='ue-button-jump';
+    const jump=document.createElement('span');jump.className='ue-button-jump';jump.setAttribute('role','button');jump.setAttribute('tabindex','0');
     jump.title='Find '+info.label+' on the website';jump.setAttribute('aria-label',jump.title);
     jump.innerHTML='<i data-lucide="arrow-up-right"></i>';
-    jump.onclick=()=>{
+    jump.onclick=event=>{
+     event?.preventDefault();event?.stopPropagation();
      const node=liveSnapshots[Number(index)]?.node;
      if(!node?.isConnected)return;
      if(screen.classList.contains('ue-fullscreen'))hideEditor();
      const top=Math.max(0,window.scrollY+node.getBoundingClientRect().top-32);
      window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
     };
-    block.append(jump);
+    // A secondary action within the always-visible summary.
+    jump.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();jump.click()}});
+    summary.append(jump);
     const updatePreview=()=>{
      const live=liveSnapshots[Number(index)]?.node;
      const visual=live?.isConnected?getComputedStyle(live):null;
