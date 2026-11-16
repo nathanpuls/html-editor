@@ -54,7 +54,7 @@ function init(){
  };
  const hasChanges=()=>draftActive&&JSON.stringify(model)!==initialModel;
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
- window.addEventListener('beforeunload',event=>{if(!hasChanges())return;event.preventDefault();event.returnValue='';});
+
  const setText=(el,value)=>{el.textContent=value};
  const articleText=el=>Array.from(el.children).map(p=>p.textContent.trim()).join('\n\n');
  const isArticle=el=>/^(DIV|SECTION|ARTICLE|MAIN)$/.test(el.tagName)&&el.children.length>0&&Array.from(el.children).every(c=>c.tagName==='P');
