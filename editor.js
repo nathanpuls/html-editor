@@ -29,7 +29,7 @@ function init(){
   fullscreenButton.setAttribute('aria-label',on?'Exit fullscreen':'Expand editor');
   fullscreenButton.title=on?'Exit fullscreen':'Fullscreen';
   fullscreenButton.innerHTML='<i data-lucide="'+(on?'minimize':'maximize')+'"></i>';
-  window.lucide?.createIcons?.();
+  icons();
  }
  fullscreenButton.onclick=()=>{setFullscreen(!screen.classList.contains('ue-fullscreen'));requestAnimationFrame(()=>fields.querySelectorAll('textarea').forEach(fitTextarea))};
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
@@ -73,7 +73,11 @@ function init(){
    }
   });
  }
- const icons=()=>window.lucide?.createIcons?.();
+ const icons=()=>{
+  if(window.lucide?.createIcons){window.lucide.createIcons();return}
+  const symbols={pencil:'✎',maximize:'⛶',minimize:'⛶',plus:'+', 'arrow-up':'↑','arrow-down':'↓','trash-2':'×'};
+  document.querySelectorAll('i[data-lucide]').forEach(el=>{el.textContent=symbols[el.getAttribute('data-lucide')]||'•';el.style.fontStyle='normal'});
+ };
  const normalizeURL=value=>{
   const input=String(value||'').trim();
   if(!input||/\s/.test(input))return '';
