@@ -3,6 +3,7 @@ import {exportEditableJSON,importEditableJSON} from './json-schema.js';
 import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews,googleFontFamilies,validFontStack,syncGoogleFontLink} from './design.js';
 import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
+import {visualTargets,applyVisual,drawVisualControls} from './visual-controls.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
 /* HTML Editor v1 — standalone, dependency-free.
    Source: extracted from Dino → Shared!B22; this copy does not modify live.ends.at.
@@ -242,10 +243,11 @@ function init(){
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
  let draftActive=false,initialModel='',styleSettings={},initialStyle='',variableSettings={},initialVariables='',buttonSettings={},buttonAppearance={},initialButtons='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
  let sectionStates={},undoStack=[],pageMeta={},originalMeta={},revertAvailable=false;
+ let visualValues={},selectedVisual='';
  const sectionDisplays=new Map(),sectionLabels=new Map(),sectionStyleAttrs=new Map();
  const touchedNodes=new Set(),touchedRoots=new Set();
  const expandedButtonControls=new Set();
- const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta});
+ const snapshot=()=>JSON.stringify({model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,visualValues});
  const revertKey=()=>draftKey+':last-revert';
  const readRevert=()=>{const x=readJSON(revertKey());return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null};
  const clearRevert=()=>{revertAvailable=false;removeStorage(revertKey())};
@@ -258,7 +260,7 @@ function init(){
 
  const checkpoint=()=>{if(revertAvailable)clearRevert();pushHistory(undoStack,snapshot());syncUndoButton()};
  const syncUndoButton=()=>{const b=screen.querySelector('#ue-undo');if(b)b.disabled=!undoStack.length};
- function undo(){if(!undoStack.length)return;const old=popHistory(undoStack);if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;variableSettings=old.variableSettings||Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));buttonSettings=old.buttonSettings||{};sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();renderStyle();renderSections();render();syncUndoButton()}
+ function undo(){if(!undoStack.length)return;const old=popHistory(undoStack);if(revertAvailable)clearRevert();model=old.model;styleSettings=old.styleSettings;variableSettings=old.variableSettings||Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));buttonSettings=old.buttonSettings||{};sectionOrder=old.sectionOrder;sectionStates=old.sectionStates||{};pageMeta=old.pageMeta||{...originalMeta};visualValues=old.visualValues||{};applyMeta();restoreLive();reorderSections();syncLive();applyStyle();updateVisual();renderStyle();renderSections();render();syncUndoButton()}
  function syncSections(){
   for(const node of sectionNodes){
    const state=sectionStates[node.getAttribute('data-section')]||{};
@@ -354,7 +356,15 @@ function init(){
  };
  const originalPageStyle=document.getElementById('editor-page-style')?.textContent??null;
  const originalGoogleFontHref=document.getElementById('editor-google-font')?.getAttribute('href')??null;
- function renderStyle(){return drawDesign({screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel})}
+ const getVisualTargets=()=>visualTargets({model,liveSnapshots,sectionNodes,liveRoots});
+ const updateVisual=()=>applyVisual({values:visualValues,targets:getVisualTargets()});
+ function renderStyle(){
+  drawDesign({screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel});
+  drawVisualControls({host:stylePanel,targets:getVisualTargets(),values:visualValues,selected:selectedVisual,
+   onSelect:value=>{selectedVisual=value},onStart:checkpoint,
+   onChange:(id,key,value)=>{visualValues[id]={...visualValues[id],[key]:value};updateVisual();saveDraft()}
+  });
+ }
  function findSections(root=document){
   return Array.from(root.querySelectorAll('[data-section]')).filter(el=>!el.parentElement?.closest('[data-section]')&&!el.closest('#ue-screen'));
  }
@@ -384,7 +394,7 @@ function init(){
  const readDraft=()=>{const x=readJSON(draftKey);return x&&Array.isArray(x.model)?x:null};
  const clearDraft=()=>removeStorage(draftKey);
  const saveDraft=()=>{
-  if(hasChanges())writeJSON(draftKey,{signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,styleSchema:2});
+  if(hasChanges())writeJSON(draftKey,{signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,visualValues,styleSchema:2});
   else clearDraft();
  };
  const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||''});
@@ -396,7 +406,7 @@ function init(){
   if(meta&&meta.getAttribute('content')!==(pageMeta.description||''))meta.setAttribute('content',pageMeta.description||'');
  };
  const restoreMeta=()=>{pageMeta={...originalMeta};applyMeta();if(!originalMeta.hadDescription)document.querySelector('meta[name="description"]')?.remove()};
- const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
+ const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons||Object.keys(visualValues).length>0||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
  function hideEditor(){if(!draftActive||screen.hidden)return;clearDrag();screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  // Change only the necessary text nodes. Never flatten formatted descendants.
@@ -405,7 +415,7 @@ function init(){
   const originals=members.filter(x=>!x.added).slice().sort((a,b)=>a.index-b.index);
   return members.length!==originals.length||members.some((x,i)=>x.added||x.deleted||x.hidden||x.text!==x.originalText||x.url!==x.originalURL||x.index!==originals[i]?.index);
  };
- function syncLive(){return syncEditedDOM({add,model,liveSnapshots,liveRoots,rootSnapshots,touchedNodes,touchedRoots,syncSections,refreshButtonSamples,saveDraft,groupChanged,syncLive,normalizeURL,validImageURL,setText,setArticle})}
+ function syncLive(){syncEditedDOM({add,model,liveSnapshots,liveRoots,rootSnapshots,touchedNodes,touchedRoots,syncSections,refreshButtonSamples,saveDraft,groupChanged,syncLive,normalizeURL,validImageURL,setText,setArticle});updateVisual()}
  const icons=()=>{
   // Official Lucide icon artwork bundled locally for offline rendering.
   const paths={
@@ -463,8 +473,8 @@ function init(){
   .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
  const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
  function render(){return drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render})}
- function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title='Edit'}
- function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText})}
+ function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();visualValues={};document.getElementById('editor-visual-style')?.remove();document.querySelectorAll('[data-ue-visual-id]').forEach(el=>el.removeAttribute('data-ue-visual-id'));if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title='Edit'}
+ function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText,visualValues,visualTargets:getVisualTargets()})}
  pencil.onclick=()=>{
   if(draftActive){screen.hidden=false;pencil.hidden=true;setEditURL(true);return}
   const sourceTag=document.getElementById('ends-nav-data');
@@ -488,7 +498,7 @@ function init(){
   originalMeta={...readMeta(),hadDescription:!!document.querySelector('meta[name="description"]')};pageMeta={title:originalMeta.title,description:originalMeta.description};
   styleSettings=readStyle();initialStyle=JSON.stringify(styleSettings);
   variableSettings=Object.fromEntries(Object.entries(originalVariables).map(([name,config])=>[name,config.value]));initialVariables=JSON.stringify(variableSettings);
-  buttonAppearance=getButtonAppearance();buttonSettings={};initialButtons=JSON.stringify(buttonSettings);
+  buttonAppearance=getButtonAppearance();buttonSettings={};initialButtons=JSON.stringify(buttonSettings);visualValues={};
   sectionNodes=findSections();sectionOrder=sectionNodes.map(n=>n.getAttribute('data-section'));
   sectionStates={};sectionDisplays.clear();sectionLabels.clear();sectionStyleAttrs.clear();
   for(const node of sectionNodes){
@@ -512,6 +522,7 @@ function init(){
     const val=saved.variableSettings[name];if(typeof val==='string'&&(originalVariables[name].kind==='color'?!!hexColor(val):/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(val)))variableSettings[name]=val;
    }
    if(saved.sectionStates&&typeof saved.sectionStates==='object')sectionStates=saved.sectionStates;
+   if(saved.visualValues&&typeof saved.visualValues==='object'&&!Array.isArray(saved.visualValues))visualValues=saved.visualValues;
    if(saved.pageMeta&&typeof saved.pageMeta==='object')pageMeta={title:String(saved.pageMeta.title||''),description:String(saved.pageMeta.description||'')};
    if(Array.isArray(saved.sectionOrder)&&saved.sectionOrder.length===sectionOrder.length&&saved.sectionOrder.every(id=>sectionOrder.includes(id)))sectionOrder=[...saved.sectionOrder];
   }
@@ -519,7 +530,7 @@ function init(){
   if(lastRevert&&!readDraft()){undoStack=[lastRevert];revertAvailable=true;syncUndoButton()}
   if(JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(variableSettings)!==initialVariables||JSON.stringify(buttonSettings)!==initialButtons)applyStyle();
   if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder))reorderSections();
-  syncSections();applyMeta();
+  syncSections();applyMeta();updateVisual();
   renderStyle();
   pencil.hidden=true;screen.hidden=false;setEditURL(true);message.textContent='';
   render();setTab(activeTab);
@@ -537,8 +548,8 @@ function init(){
  copyToggle.onclick=()=>toggleCopyMenu(copyMenu.hidden);
  document.addEventListener('pointerdown',event=>{if(!copyMenu.hidden&&!event.target.closest('#ue-copy-wrap'))toggleCopyMenu(false)});
 
- const contentJSON=()=>exportEditableJSON({model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,sectionStates,pageMeta,styleSettings,variableSettings,buttonSettings,buttonAppearance});
- const validateContentJSON=data=>importEditableJSON(data,{model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,styleSettings,styleDefaults,styleFonts,originalVariables,buttonAppearance,validImageURL,validURL,validLinkTarget,validFontStack,hexColor});
+ const contentJSON=()=>exportEditableJSON({model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,sectionStates,pageMeta,styleSettings,variableSettings,buttonSettings,buttonAppearance,visualValues,visualTargets:getVisualTargets()});
+ const validateContentJSON=data=>importEditableJSON(data,{model,liveSnapshots,liveRoots,sectionOrder,sectionNodes,styleSettings,styleDefaults,styleFonts,originalVariables,buttonAppearance,validImageURL,validURL,validLinkTarget,validFontStack,hexColor,visualTargets:getVisualTargets()});
  const importDialog=screen.querySelector('#ue-json-dialog'),importInput=screen.querySelector('#ue-json-input'),importError=screen.querySelector('#ue-json-error');
  const dismissImport=()=>{importDialog.hidden=true;importError.hidden=true;importError.textContent=''};
  screen.querySelector('#ue-import-json').onclick=()=>{
@@ -551,8 +562,8 @@ function init(){
    const next=validateContentJSON(JSON.parse(importInput.value));
    checkpoint();
    model=next.model;sectionOrder=next.sectionOrder;sectionStates=next.sectionStates;pageMeta=next.pageMeta;
-   styleSettings=next.styleSettings;variableSettings=next.variableSettings;buttonSettings=next.buttonSettings;
-   applyMeta();reorderSections();syncSections();syncLive();applyStyle();renderStyle();renderSections();render();
+   styleSettings=next.styleSettings;variableSettings=next.variableSettings;buttonSettings=next.buttonSettings;visualValues=next.visualValues;
+   applyMeta();reorderSections();syncSections();syncLive();applyStyle();updateVisual();renderStyle();renderSections();render();
    saveDraft();dismissImport();message.textContent='JSON imported. All editable changes applied.';
   }catch(error){importError.textContent=error instanceof SyntaxError?'Invalid JSON: '+error.message:(error.message||'Unable to import JSON');importError.hidden=false}
  };
