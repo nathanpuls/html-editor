@@ -298,7 +298,7 @@ function init(){
     if(!item.link||item.deleted)continue;
     const node=item.added?document.createElement('a'):liveSnapshots[item.index]?.clone.cloneNode(true);
     if(!node)continue;
-    node.setAttribute('data-edit','');
+    node.setAttribute('data-edit',item.label||'Navigation link');
     node.setAttribute('href',normalizeURL(item.url)||'#');
     setText(node,item.text);if(item.hidden)node.style.display='none';else node.style.removeProperty('display');
     if(root.lastChild&&root.lastChild.nodeType!==3)root.append(document.createTextNode(' '));
@@ -346,6 +346,10 @@ function init(){
   input.style.overflowY=input.scrollHeight>limit?'auto':'hidden';
   input.scrollTop=wasScrolled;
  }
+ const internalDestinations=()=>Array.from(document.querySelectorAll('[id]'))
+  .filter(el=>!el.closest('#ue-screen,#ue-pencil')&&!/^ue-/.test(el.id))
+  .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
+ const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
  function render(){
   fields.replaceChildren();
   const metaBox=document.createElement('div');metaBox.className='ue-meta';
@@ -385,7 +389,27 @@ function init(){
     const input=document.createElement(item.article||item.tag==='p'?'textarea':'input');if(input.tagName==='INPUT')input.type='text';if(item.article)input.classList.add('ue-article');input.value=item.text;input.oninput=()=>{checkpoint();item.text=input.value;if(input.tagName==='TEXTAREA')fitTextarea(input);syncLive()};label.dataset.ueField='text';label.append(input);box.append(label);
    }
    if(item.link){
-    const lbl=document.createElement('label');lbl.textContent='URL';const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='example.com';url.value=item.url.replace(/^https:\/\//i,'');url.oninput=()=>{checkpoint();item.url=url.value;syncLive()};lbl.dataset.ueField='url';lbl.append(url);box.append(lbl);
+    const lbl=document.createElement('label');lbl.textContent='Link destination';lbl.dataset.ueField='url';
+    const destinations=internalDestinations();
+    const selection=document.createElement('select');selection.setAttribute('aria-label','Link destination');
+    for(const dest of destinations){
+     const option=document.createElement('option');option.value='#'+dest.id;option.textContent=dest.label+' (#'+dest.id+')';selection.append(option);
+    }
+    const external=document.createElement('option');external.value='__custom__';external.textContent='External URL, email, or other link';selection.append(external);
+    const isInternal=String(item.url||'').startsWith('#');
+    const available=isInternal&&destinations.some(dest=>'#'+dest.id===item.url);
+    if(isInternal&&!available){const option=document.createElement('option');option.value=item.url;option.textContent='Missing section ('+item.url+')';option.disabled=true;selection.prepend(option)}
+    selection.value=isInternal?item.url:'__custom__';
+    const url=document.createElement('input');url.type='text';url.inputMode='url';url.placeholder='https://example.com or mailto:name@example.com';url.value=isInternal?'':item.url.replace(/^https:\/\//i,'');
+    url.hidden=isInternal;
+    selection.onchange=()=>{
+     checkpoint();
+     if(selection.value==='__custom__'){item.url='';url.value='';url.hidden=false}
+     else{item.url=selection.value;url.hidden=true}
+     syncLive();render();
+    };
+    url.oninput=()=>{checkpoint();item.url=url.value;syncLive()};
+    lbl.append(selection,url);box.append(lbl);
    }
    const controls=document.createElement('div');controls.className='ue-controls';
    const addControl=(action,icon,fn)=>{
@@ -406,11 +430,11 @@ function init(){
     const button=document.createElement('button');button.type='button';button.className='ue-field-reset';button.title='Reset '+name;button.setAttribute('aria-label','Reset '+name);
     button.innerHTML='<i data-lucide="rotate-ccw"></i>';button.disabled=String(item[key]??'')===String(original??'');
     button.onclick=event=>{event.preventDefault();event.stopPropagation();checkpoint();item[key]=original;fn?.();syncLive();render()};
-    const target=box.querySelector('[data-ue-field="'+key+'"]');if(target){target.style.position='relative';target.style.paddingRight='35px';target.append(button);const input=target.querySelector('input,textarea');if(input)input.addEventListener('input',()=>{button.disabled=String(item[key]??'')===String(original??'')})}
+    const target=box.querySelector('[data-ue-field="'+key+'"]');if(target){target.style.position='relative';target.style.paddingRight='35px';target.append(button);const input=target.querySelector('input,textarea,select');if(input)input.addEventListener('input',()=>{button.disabled=String(item[key]??'')===String(original??'')})}
    };
    if(item.image){resetField('src','image URL',item.originalSrc);resetField('alt','alt text',item.originalAlt)}
    else if(!item.decorative)resetField('text','text',item.originalText);
-   if(item.link)resetField('url','link URL',item.originalURL);
+   if(item.link)resetField('url','link destination',item.originalURL);
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
@@ -431,7 +455,7 @@ function init(){
    if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}element.setAttribute('alt',item.alt);continue}
    if(item.decorative)continue;
    if(item.article){if(item.text!==item.originalText)setArticle(element,item.text)}else element.textContent=item.text;
-   if(item.link){if(!validURL(item.url.trim()))throw Error('Invalid link URL.');element.setAttribute('href',normalizeURL(item.url))}
+   if(item.link){if(!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');element.setAttribute('href',normalizeURL(item.url))}
   }
   // Link collections are opt-in: <nav data-edit="links"><a data-edit ...>...</a></nav>
   const groups=Array.from(doc.querySelectorAll('[data-edit="links"]'));
@@ -441,9 +465,9 @@ function init(){
    old.forEach(el=>el.remove());
    for(const item of members){
     if(item.deleted)continue;
-    if(!item.link||!validURL(item.url.trim()))throw Error('Enter a valid link URL.');
+    if(!item.link||!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');
     const node=item.added?doc.createElement('a'):source[item.index].cloneNode(true);
-    node.setAttribute('data-edit','');node.setAttribute('href',normalizeURL(item.url));
+    node.setAttribute('data-edit',item.label||'Navigation link');node.setAttribute('href',normalizeURL(item.url));
     node.textContent=item.text;if(item.hidden){node.hidden=true;node.style.display='none'}
     if(g.lastChild&&g.lastChild.nodeType!==3)g.append(doc.createTextNode(' '));
     g.append(node);
@@ -526,7 +550,7 @@ function init(){
  });
  screen.querySelector('#ue-copy').onclick=async()=>{
   try{
-   if(model.some(x=>!x.deleted&&x.link&&(!x.text.trim()||!validURL(x.url.trim()))))throw Error('Every link needs text and a valid URL.');
+   if(model.some(x=>!x.deleted&&x.link&&(!x.text.trim()||!validURL(x.url.trim())||!validLinkTarget(x.url))))throw Error('Every link needs text and a valid destination on this page or a URL.');
    const value=copyHTML();
    if(window.endsSharedCopyText)await window.endsSharedCopyText(value);else await navigator.clipboard.writeText(value);
    const sourceTag=document.getElementById('ends-nav-data');
