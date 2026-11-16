@@ -4,7 +4,7 @@ A tiny, reusable visual editor for AI-generated **single-page HTML websites**. P
 
 ## Try it
 
-Open `demo.html` in a browser. Press **E** or click the pencil to edit. Changes appear immediately. Use **Copy** to copy the updated complete HTML, then paste into an HTML file to save or publish. **Cancel** restores the original text and images; **Esc** hides the panel without losing the draft.
+Open `demo.html` in a browser. Press **E** or click the pencil to edit. Changes appear immediately. Use **Copy** to copy the updated complete HTML, then paste into an HTML file to save or publish. **Revert** restores the original HTML and clears the saved draft; **Esc** hides the panel without losing your edits.
 
 ## Make your own page
 
@@ -33,6 +33,8 @@ Avoid nested editable elements. Article containers with direct paragraph childre
 ## What this version supports
 
 Text and article-body editing; URLs, images and alt text; named fields; link groups; instant preview; compact/fullscreen editing; auto-expanding text areas; **E** shortcut; hide/resume; Cancel/Copy; and a browser navigation warning for uncopied edits.
+
+Edits are automatically saved as a local browser draft and restored after refresh when the underlying page has not changed. A changed original page will not load an older draft. Browser storage may be unavailable for some `file://` pages or private browsing settings, so use **Copy** to keep a permanent version. Editor control icons use bundled Lucide SVGs and work offline.
 
 This standalone version works from a local HTML page or a hosted page. It was extracted from the editor in **Dino → Shared!B22**. It does **not** replace that production editor.
 
