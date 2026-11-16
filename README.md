@@ -1,47 +1,129 @@
 # HTML Editor
 
-A tiny, reusable visual editor for AI-generated **single-page HTML websites**. Plain HTML and CSS stay in the page; the editor is one external script.
+A lightweight visual editor for standalone HTML websites. Edit text, images, links, sections, and design settings directly on the page—without a framework, build step, or CMS.
 
-## Try it
+**One script tag installs the editor.** Behind the scenes, that script loads native JavaScript modules and a separate stylesheet.
 
-Open `demo.html` in a browser. Press **E** or click the pencil to edit. Changes appear immediately. Use **Copy** to copy the updated complete HTML, then paste into an HTML file to save or publish. **Revert** restores the original HTML and clears the saved draft; **Esc** hides the panel without losing your edits.
+## Get started
 
-## Make your own page
+Add this to your page's `<head>`:
 
-Add this just before `</head>` (or before `</body>`):
+```html
+<script src="https://built.at/_editor/editor.js" defer></script>
+```
+
+Then label anything you want to edit:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My website</title>
+  <style>
+    :root { --page-bg: #fff; --main-text: #222; --accent: #b75d35; }
+    body { background: var(--page-bg); color: var(--main-text); font-family: system-ui, sans-serif; }
+    .button { background: var(--accent); color: white; padding: .75rem 1rem; }
+  </style>
+  <script src="https://built.at/_editor/editor.js" defer></script>
+</head>
+<body>
+  <main>
+    <section data-section="welcome" aria-label="Welcome">
+      <h1 data-edit="Hero heading">Hello, world.</h1>
+      <p data-edit="Introduction">This text is editable.</p>
+      <img data-edit="Hero image" src="https://example.com/photo.jpg" alt="Example photo">
+    </section>
+
+    <section data-section="about" aria-label="About">
+      <div data-edit="About copy">
+        <p>This is the first paragraph.</p>
+        <p>This is the second paragraph.</p>
+      </div>
+    </section>
+
+    <nav data-edit="links" aria-label="Useful links">
+      <a data-edit="Contact link" href="mailto:hello@example.com">Contact</a>
+    </nav>
+  </main>
+</body>
+</html>
+```
+
+Open the page and click the **Edit** pencil (or press **E** while not typing in a field). Make your changes, then click **Copy** to copy the updated HTML.
+
+**Important:** Copy exports HTML to your clipboard; it does not edit the original file or publish the page. Paste the result into your file, site editor, or publishing workflow.
+
+[Try the demo](https://github.com/nathanpuls/html-editor/blob/main/demo.html) · [Browse the source](https://github.com/nathanpuls/html-editor)
+
+## Markup conventions
+
+| Markup | What it does |
+| --- | --- |
+| `data-edit="Hero heading"` | Makes one text element editable and names its field |
+| `data-edit="Hero image"` on `<img>` | Exposes image URL and alt text |
+| `<div data-edit="About copy"><p>…</p></div>` | Edits direct child paragraphs as an article-style block |
+| `<nav data-edit="links">…</nav>` | Enables add, remove, and reorder for editable links inside |
+| `data-section="about" aria-label="About"` | Makes a uniquely identified section manageable and reorderable |
+| `:root { --accent: … }` | Exposes supported CSS custom properties to the Design controls |
+
+Use a **descriptive value directly in `data-edit`**, not a separate `data-label` attribute. Avoid nesting editable elements inside other editable fields, except for the reserved `data-edit="links"` collection. Give each manageable section a unique `data-section` value; sibling sections under the same parent can be reordered.
+
+## What you can edit
+
+- **Content:** headings, paragraphs, article copy, image sources and alt text, link labels and destinations, and editable link collections.
+- **Sections:** show, hide, reorder, and manage labeled `data-section` blocks.
+- **Design:** page appearance, supported CSS variables, typography, colors, and button styles.
+- **Page settings:** title and meta description.
+- **Workflow:** search across editor controls, dock or resize the panel, use full screen, undo changes, revert to the original page, and copy the resulting HTML.
+
+Edits preview on the page immediately. Browser drafts are saved locally and can be restored after a refresh when compatible with the original page. Use **Copy** for a durable result: local storage can be cleared, blocked, or scoped to a different origin.
+
+**Revert changes** discards the working edits and restores the original state. Closing the panel is not the same as reverting.
+
+## How the files fit together
+
+| File | Responsibility |
+| --- | --- |
+| `editor.js` | Small classic-script entry point; loads the CSS and imports the editor |
+| `interface.js` | Initialization, panel, tabs, search, docking, resizing, navigation, and coordination |
+| `content.js` | Text, images, links, and section editing |
+| `design.js` | Appearance, CSS variables, typography, and buttons |
+| `storage.js` | Browser draft compatibility, localStorage helpers, and undo history |
+| `export.js` | Generates clean, complete HTML for copying |
+| `editor.css` | Editor interface styles |
+
+The loader resolves modules relative to its own URL, so installations only need to reference `editor.js`. No JavaScript framework, bundler, or runtime package is required.
+
+The hosted installation uses `https://built.at/_editor/`; its Worker serves the editor files from this repository. Changes to `main` are fetched through that route. The stable installation URL does not need to change for each release.
+
+### Running your own copy
+
+Place the seven files together in the same directory and reference the local entry point:
 
 ```html
 <script src="./editor.js" defer></script>
 ```
 
-Mark editable elements with a label:
+Serve the directory over HTTP(S), including when developing locally. Native ES module imports may be blocked on `file://` URLs. For example, if you have Python installed:
 
-```html
-<h1 data-edit data-label="Headline">Hello</h1>
-<div data-edit data-label="Article Body">
-  <p>First paragraph.</p>
-  <p>Second paragraph.</p>
-</div>
-<img data-edit data-label="Hero Image" src="https://example.com/photo.jpg" alt="Description">
-<nav data-edit="links">
-  <a data-edit data-label="Contact Link" href="https://example.com">Contact</a>
-</nav>
+```bash
+python3 -m http.server 8000
 ```
 
-Avoid nested editable elements. Article containers with direct paragraph children become one large text area. Editable links must already exist in a `data-edit="links"` group before the editor offers “Add link.”
+Then open `http://localhost:8000/demo.html`. Keep `editor.js`, its imported modules, and `editor.css` reachable at their relative paths.
 
-## What this version supports
+## Testing
 
-Text and article-body editing; URLs, images and alt text; named fields; link groups; instant preview; compact/fullscreen editing; auto-expanding text areas; **E** shortcut; hide/resume; Cancel/Copy; and a browser navigation warning for uncopied edits.
+The repository includes headless Chrome smoke checks under `tests/` for core editing, design, search, drafts, undo/revert, layout, and HTML export. GitHub Actions runs these checks on pull requests. For a local run with the necessary browser available:
 
-Edits are automatically saved as a local browser draft and restored after refresh when the underlying page has not changed. A changed original page will not load an older draft. Browser storage may be unavailable for some `file://` pages or private browsing settings, so use **Copy** to keep a permanent version. Editor control icons use bundled Lucide SVGs and work offline.
+```bash
+node --experimental-default-type=module tests/smoke.mjs
+```
 
-This standalone version works from a local HTML page or a hosted page. It was extracted from the editor in **Dino → Shared!B22**. It does **not** replace that production editor.
+## Scope and security
 
-## Important notes
+The editor is **client-side only**. It does not provide authentication, server-side saving, or publishing. Anyone who can open a page containing the script can make edits to their **own browser view** and copy the resulting HTML; changing the hosted website still requires access to its publishing process.
 
-- The editor is **client-side**. Copy does not write to the original file or publish a website.
-- The clipboard output intentionally retains `<script src="./editor.js" defer></script>` so the page remains editable after copying. If you publish elsewhere, use an appropriate editor script URL.
-- This repository is **private**, so it is not a public CDN. To load the editor on an unrelated hosted website, deploy the script to a publicly accessible static URL.
-- The editor has no authentication. Anyone with access to an HTML page containing the script can edit their local browser view and copy HTML, **not** change the hosted site without file/deploy access.
-- The demo uses externally hosted images; those require internet access.
+The editor does not require external UI libraries. Images and other resources referenced by your website may still need an internet connection.
