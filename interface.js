@@ -143,7 +143,13 @@ function init(){
  const stylePanel=screen.querySelector('#ue-style-panel'),sectionsPanel=screen.querySelector('#ue-sections'),settingsPanel=screen.querySelector('#ue-settings'),contentPanel=screen.querySelector('#ue-content');
  const searchInput=screen.querySelector('#ue-search'),resultsPanel=screen.querySelector('#ue-results'),clearSearch=screen.querySelector('#ue-search-clear'),sectionsToggle=screen.querySelector('#ue-sections-toggle');
  let activeTab='content',sectionsOpen=false;
- const designLabels=['Page background','Text color','Accent color','Font family','Heading 1 size (px)','Heading 2 size (px)','Heading 3 size (px)','Paragraph size (px)','Corner roundness (px)','Button background','Button text color'];
+ const designLabels=[
+  ['Page background','background','page'],['Default text color','text','page'],['Accent color','accent','page'],
+  ['Default font','font','page'],['Heading 1 size (px)','h1','page'],['Heading 2 size (px)','h2','page'],
+  ['Heading 3 size (px)','h3','page'],['Paragraph size (px)','p','page'],['Corner roundness (px)','radius','page'],
+  ['Primary buttons background','buttonBackground','design'],['Primary buttons text','buttonText','design'],
+  ['Secondary buttons background','secondaryButtonBackground','design'],['Secondary buttons text','secondaryButtonText','design']
+ ];
  function setTab(tab){
   activeTab=tab;searchInput.value='';clearSearch.hidden=true;resultsPanel.hidden=true;
   screen.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
@@ -176,15 +182,19 @@ function init(){
    const node=sectionNodes.find(n=>n.getAttribute('data-section')===id),label=sectionStates[id]?.label||node?.getAttribute('aria-label')||id;
    if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'content',label:label+' section',detail:'Section controls',sectionId:id});
   });
-  const genericLabels=designLabels.filter((_,index)=>!Object.keys(originalVariables).length||![0,1,2,8,9,10].includes(index));
-  genericLabels.forEach((label,index)=>{if((label+' design style').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Design',design:index})});
+  designLabels.forEach(([label,key,tab])=>{
+   const panel=tab==='page'?settingsPanel:stylePanel;
+   if(!panel.querySelector('[data-ue-style-key="'+key+'"]'))return;
+   if((label+' '+tab+' appearance').toLocaleLowerCase().includes(q))
+    matches.push({tab,label,detail:tab==='page'?'Page appearance':'Button colors',styleKey:key});
+  });
   Object.entries(buttonAppearance).forEach(([index,info])=>{
    const item=model.find(x=>!x.added&&x.index===Number(index));
    if(!item||item.deleted)return;
    const visibleText=(item.text||'').replace(/\s+/g,' ').trim();
    if((info.label+' '+visibleText+' button background text color').toLocaleLowerCase().includes(q))matches.push({tab:'design',label:visibleText||info.label,detail:info.label,buttonDesign:index});
   });
-  Object.keys(originalVariables).forEach((name,index)=>{const label=varLabel(name);if((label+' '+name+' design color size').toLocaleLowerCase().includes(q))matches.push({tab:'design',label,detail:'Website color or size',customDesign:name})});
+  Object.keys(originalVariables).forEach((name,index)=>{const label=varLabel(name);if((label+' '+name+' design color size').toLocaleLowerCase().includes(q))matches.push({tab:'page',label,detail:'Website color or size',customDesign:name})});
   [['Page title',0],['Page description',1]].forEach(([label,index])=>{if((label+' '+String(index?pageMeta.description:pageMeta.title)+' SEO settings').toLocaleLowerCase().includes(q))matches.push({tab:'page',label,detail:'Page',setting:index})});
   for(const hit of matches){
    const button=document.createElement('button');button.type='button';
@@ -194,8 +204,8 @@ function init(){
     setTab(hit.tab);
     if(hit.sectionId!==undefined){setSectionsOpen(true);const input=Array.from(sectionsPanel.querySelectorAll('.ue-section-row')).find(row=>row.dataset.sectionId===hit.sectionId)?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
     else if(hit.index!==undefined){const row=fields.querySelector('.ue-item[data-edit-index="'+hit.index+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
-    else if(hit.design!==undefined){const row=stylePanel.children[hit.design];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
-    else if(hit.customDesign!==undefined){const keys=Object.keys(originalVariables);const row=stylePanel.querySelectorAll('.ue-setting')[genericLabels.length+keys.indexOf(hit.customDesign)];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
+    else if(hit.styleKey!==undefined){const panel=hit.tab==='page'?settingsPanel:stylePanel;const row=panel.querySelector('[data-ue-style-key="'+hit.styleKey+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
+    else if(hit.customDesign!==undefined){const row=[...settingsPanel.querySelectorAll('#ue-page-design .ue-setting')].find(x=>x.querySelector('label')?.textContent===varLabel(hit.customDesign));row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
     else if(hit.buttonDesign!==undefined){const block=stylePanel.querySelector('[data-ue-button-block="'+hit.buttonDesign+'"]');if(block){block.open=true;expandedButtonControls.add(String(hit.buttonDesign));block.scrollIntoView({block:'center',behavior:'instant'});block.querySelector('.ue-setting input')?.focus({preventScroll:true})}}
     else if(hit.setting!==undefined){const row=settingsPanel.querySelectorAll('.ue-meta label')[hit.setting];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,textarea')?.focus({preventScroll:true})}
    };
@@ -359,7 +369,7 @@ function init(){
  const getVisualTargets=()=>visualTargets({model,liveSnapshots,sectionNodes,liveRoots});
  const updateVisual=()=>applyVisual({values:visualValues,targets:getVisualTargets()});
  function renderStyle(){
-  drawDesign({screen,add,stylePanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel});
+  drawDesign({screen,add,stylePanel,pagePanel:settingsPanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel});
   drawVisualControls({host:stylePanel,targets:getVisualTargets(),values:visualValues,selected:selectedVisual,
    onSelect:value=>{selectedVisual=value},onStart:checkpoint,
    onChange:(id,key,value)=>{visualValues[id]={...visualValues[id],[key]:value};updateVisual();saveDraft()}
@@ -567,6 +577,7 @@ function init(){
    saveDraft();dismissImport();message.textContent='JSON imported. All editable changes applied.';
   }catch(error){importError.textContent=error instanceof SyntaxError?'Invalid JSON: '+error.message:(error.message||'Unable to import JSON');importError.hidden=false}
  };
+ let copyFeedbackTimer;
  const copyPage=async(format)=>{
   toggleCopyMenu(false);
   try{
@@ -577,8 +588,9 @@ function init(){
     if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=value;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
    }
    saveDraft();
-   if(format==='html')hideEditor();
-   else message.textContent='Editable JSON copied. Paste it into AI, then import the result.';
+   const copyButton=screen.querySelector('#ue-copy');copyButton.textContent='Copied!';
+   clearTimeout(copyFeedbackTimer);copyFeedbackTimer=setTimeout(()=>{copyButton.textContent='Copy'},1800);
+   message.textContent=format==='json'?'Editable data copied. Paste it into AI, then import the result.':'';
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
  screen.querySelector('#ue-copy').onclick=()=>copyPage('html');
