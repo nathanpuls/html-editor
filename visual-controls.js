@@ -20,7 +20,7 @@ export function visualTargets({model,liveSnapshots,sectionNodes,liveRoots,root=d
   const button=node.matches('button,a.button,a.btn,a[role="button"],[data-button-role],.site-links a,.contact-links a');
   const text=textTags.has(item.tag)||item.article;
   const controls=[
-   ...(text?['fontSize']:[]),
+   ...(text?['fontSize','textColor']:[]),
    ...((item.image||button)?['opacity','radius']:[]),
    ...(button?['padding']:[])
   ];
@@ -64,7 +64,12 @@ export function visualStylesheet(values,targets){
   const t=byId.get(id);if(!t)continue;
   const declarations=[];
   for(const [key,value] of Object.entries(settings)){
-   if(!t.controls.includes(key)||!withinRange(key,value))continue;
+   if(!t.controls.includes(key))continue;
+   if(key==='textColor'){
+    if(typeof value==='string'&&/^#[0-9a-f]{6}$/i.test(value))declarations.push('color:'+value+'!important');
+    continue;
+   }
+   if(!withinRange(key,value))continue;
    declarations.push(visualRanges[key].property+':'+valueCSS(key,value)+'!important');
   }
   if(declarations.length)rules.push('[data-ue-visual-id="'+id+'"]{'+declarations.join(';')+'}');
@@ -169,6 +174,25 @@ export function drawInlineVisualControls({host,target,values,onChange,onStart}){
  const heading=document.createElement('div');heading.className='ue-visual-heading';heading.textContent='Appearance';wrap.append(heading);
  const controls=document.createElement('div');controls.className='ue-visual-sliders';wrap.append(controls);
  for(const key of target.controls){
+  if(key==='textColor'){
+   const row=document.createElement('div');row.className='ue-slider-setting ue-element-color';
+   const label=document.createElement('label');label.textContent='Text color';
+   const pair=document.createElement('div');pair.className='ue-color-row';
+   const swatch=document.createElement('input');swatch.type='color';
+   const input=document.createElement('input');input.type='text';input.setAttribute('aria-label','Element text color hex');
+   const original=getComputedStyle(target.node).color;
+   const match=original.match(/\\d+(?:\\.\\d+)?/g)||[];
+   const hex=match.length>=3?'#'+match.slice(0,3).map(n=>Math.max(0,Math.min(255,Number(n))).toString(16).padStart(2,'0')).join(''):'#171717';
+   const value=values[target.id]?.textColor||hex;
+   swatch.value=input.value=value;
+   const change=v=>{
+    if(!/^#[0-9a-f]{6}$/i.test(v)){input.value=swatch.value;return}
+    onStart();onChange(target.id,'textColor',v);swatch.value=input.value=v;
+   };
+   swatch.oninput=()=>change(swatch.value);
+   input.onchange=()=>change(input.value.trim());
+   pair.append(swatch,input);row.append(label,pair);controls.append(row);continue;
+  }
   const spec=visualRanges[key];if(!spec)continue;
   const row=document.createElement('div');row.className='ue-slider-setting';
   const top=document.createElement('div');top.className='ue-slider-top';
