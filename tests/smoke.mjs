@@ -76,6 +76,10 @@ try{
  check('docking controls live only inside ellipsis menu',await js("Boolean(document.querySelector('#ue-more-menu #ue-dock-left')&&document.querySelector('#ue-more-menu #ue-dock-right'))"));
  check('left and right menu icons render as arrows',await js("Boolean(document.querySelector('#ue-dock-left svg path')&&document.querySelector('#ue-dock-right svg path'))"));
  check('copy split button exists',await js("Boolean(document.querySelector('#ue-copy')&&document.querySelector('#ue-copy-toggle')&&document.querySelector('#ue-copy-json'))"));
+ check('Page tab and named JSON actions',await js("Boolean(document.querySelector('[data-tab=page]'))&&!document.querySelector('[data-tab=settings]')&&document.querySelector('#ue-copy-json').textContent==='Copy editable data (JSON)'&&document.querySelector('#ue-import-json').textContent==='Import editable data (JSON)'"));
+ check('New page is first ellipsis action',await js("document.querySelector('#ue-more-menu').firstElementChild?.id==='ue-new-page'"));
+ check('Undo is a text action',await js("document.querySelector('#ue-undo').textContent.trim()==='Undo'"));
+
  await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-left').click()");
  check('menu docking moves editor left',await js("document.querySelector('#ue-screen').classList.contains('ue-dock-left')"));
  await js("document.querySelector('#ue-more').click();document.querySelector('#ue-dock-right').click()");
@@ -93,11 +97,11 @@ try{
  await js("document.querySelector('#ue-search').value='hero';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
  check('search results appear',await js("!document.querySelector('#ue-results').hidden"));
  await js("document.querySelector('#ue-search').value='';document.querySelector('#ue-search').dispatchEvent(new Event('input',{bubbles:true}))");
- await js("document.querySelector('[data-tab=design]').click()");
- check('design controls display',await js("!document.querySelector('#ue-style-panel').hidden && Boolean(document.querySelector('#ue-style-panel input'))"));
- check('design color edits apply',await js("(()=>{const swatch=document.querySelector('#ue-style-panel input[type=color]');if(!swatch)return false;swatch.value='#123456';swatch.dispatchEvent(new Event('input',{bubbles:true}));return document.querySelector('#editor-page-style')?.textContent.includes('#123456')})()"));
+ await js("document.querySelector('[data-tab=page]').click()");
+ check('Page tab contains global appearance and SEO',await js("!document.querySelector('#ue-settings').hidden&&Boolean(document.querySelector('#ue-page-design [data-ue-style-key=background]'))&&Boolean(document.querySelector('#ue-settings .ue-meta'))&&!document.querySelector('#ue-style-panel [data-ue-style-key=background]"));
+ check('page color edits apply',await js("(()=>{const swatch=document.querySelector('#ue-page-design [data-ue-style-key=background] input[type=color]');if(!swatch)return false;swatch.value='#123456';swatch.dispatchEvent(new Event('input',{bubbles:true}));return document.querySelector('#editor-page-style')?.textContent.includes('#123456')})()"));
  await js("document.querySelector('#ue-undo').click()");
- check('undo design edit',await js("!document.querySelector('#editor-page-style')?.textContent.includes('#123456')"));
+ check('undo page color edit',await js("!document.querySelector('#editor-page-style')?.textContent.includes('#123456')"));
 
  await js("document.querySelector('#ue-cancel').click()");
  check('close preserves preview',await js("document.querySelector('h1').textContent==='Changed heading'"));
@@ -132,6 +136,8 @@ try{
  check('Copy JSON exports editable data without HTML',await js("(()=>{const d=JSON.parse(window.__exportedHTML);return d.version===2&&d.fields.some(f=>f.id==='intro.hero-heading'&&f.text==='Changed heading')&&d._schema&&d.design.typography.h1FontSizePx>0&&d.fields.every(f=>typeof f.group==='string'||f.group===null)&&d.fields.every(f=>!('index' in f))&&Boolean(d.sections)&&Boolean(d.design)&&Boolean(d.page)&&!('html' in d)&&!window.__exportedHTML.includes('<!DOCTYPE html>')})()"));
  check('duplicate data-edit labels get distinct stable IDs',await js("(()=>{const ids=JSON.parse(window.__exportedHTML).fields.map(f=>f.id);return ids.includes('intro.intro-paragraph')&&ids.includes('intro.intro-paragraph-2')&&new Set(ids).size===ids.length})()"));
  check('Copy JSON leaves editor open',await js("!document.querySelector('#ue-screen').hidden"));
+ check('Copy feedback shows Copied',await js("document.querySelector('#ue-copy').textContent==='Copied!'"));
+
  await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
  check('Import JSON dialog opens',await js("!document.querySelector('#ue-json-dialog').hidden"));
  await js("document.querySelector('#ue-json-input').value='{broken';document.querySelector('#ue-json-apply').click()");
@@ -145,10 +151,12 @@ try{
 
  check('JSON import applies targeted font slider values',await js("getComputedStyle(document.querySelector('h1')).fontSize==='58px'"));
  check('imported Inter CSS stack loads Google Fonts',await js("document.querySelector('#editor-google-font')?.href.includes('family=Inter')&&document.querySelector('#editor-page-style')?.textContent.includes('BlinkMacSystemFont')"));
- check('custom font stack appears in Design controls',await js("(()=>{document.querySelector('[data-tab=design]').click();return Boolean([...document.querySelectorAll('#ue-style-panel input')].find(el=>el.getAttribute('aria-label')==='Custom font family'&&el.value.includes('Inter')&&!el.hidden))})()"));
+ check('custom font stack appears in Page controls',await js("(()=>{document.querySelector('[data-tab=page]').click();return Boolean([...document.querySelectorAll('#ue-settings input')].find(el=>el.getAttribute('aria-label')==='Custom font family'&&el.value.includes('Inter')&&!el.hidden))})()"));
  await js("window.__exportedJSON=window.__exportedHTML;document.querySelector('#ue-copy').click()");
  await waitJS("window.__exportedHTML!==window.__exportedJSON");
  check('HTML copy preserves imported section labels and image alt',await js("window.__exportedHTML.includes('01 / Programs')&&window.__exportedHTML.includes('Updated alt without changing image')&&window.__exportedHTML.includes('srcset=')"));
+ check('Copy HTML keeps editor open',await js("!document.querySelector('#ue-screen').hidden&&location.search==='?edit'"));
+
  await js("document.querySelector('#ue-pencil').click();window.__exportedHTML=window.__exportedJSON");
 
  await js("document.querySelector('#ue-undo').click()");
@@ -172,6 +180,12 @@ try{
  await send('Emulation.setDeviceMetricsOverride',{width:375,height:700,deviceScaleFactor:1,mobile:true});
  await js("document.querySelector('#ue-pencil').click()");
  check('mobile editor fills viewport',await js("Math.abs(document.querySelector('#ue-screen').getBoundingClientRect().width-375)<2"));
+ check('mobile hides docking and fullscreen menu options',await js("['ue-dock-left','ue-dock-right','ue-fullscreen'].every(id=>getComputedStyle(document.getElementById(id)).display==='none')"));
+ check('mobile input typography prevents iOS zoom',await js("parseFloat(getComputedStyle(document.querySelector('#ue-search')).fontSize)>=16&&parseFloat(getComputedStyle(document.querySelector('#ue-json-input')).fontSize)>=16"));
+ await js("document.querySelector('#ue-copy-toggle').click();document.querySelector('#ue-import-json').click()");
+ check('mobile JSON import dialog scrolls independently',await js("(()=>{const modal=document.querySelector('#ue-json-dialog'),area=document.querySelector('#ue-json-input'),card=document.querySelector('#ue-json-dialog .ue-json-card');return !modal.hidden&&getComputedStyle(area).overflowY==='auto'&&card.getBoundingClientRect().height<=innerHeight&&getComputedStyle(area).touchAction.includes('pan-y')})()"));
+ await js("document.querySelector('#ue-json-cancel').click()");
+
 
  await send('Emulation.setDeviceMetricsOverride',{width:1200,height:800,deviceScaleFactor:1,mobile:false});
  await js("document.querySelector('[data-tab=design]').click()");
