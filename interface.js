@@ -3,7 +3,7 @@ import {exportEditableJSON,importEditableJSON} from './json-schema.js';
 import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews,googleFontFamilies,validFontStack,syncGoogleFontLink} from './design.js';
 import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
-import {visualTargets,applyVisual,drawVisualControls} from './visual-controls.js';
+import {visualTargets,applyVisual,drawInlineVisualControls} from './visual-controls.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
 /* HTML Editor v1 — standalone, dependency-free.
    Source: extracted from Dino → Shared!B22; this copy does not modify live.ends.at.
@@ -18,7 +18,7 @@ function init(){
  if(!editable().length)return;
  const pencil=document.createElement('button');pencil.id='ue-pencil';pencil.type='button';pencil.title='Edit';pencil.setAttribute('aria-label','Edit page');pencil.innerHTML='<i data-lucide="pencil"></i>';
  const screen=document.createElement('section');screen.id='ue-screen';screen.hidden=true;screen.setAttribute('role','dialog');screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Edit page');
- screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, page, and design"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="content" aria-selected="true"><i data-lucide="square-text"></i>Content</button><button type="button" data-tab="page" aria-selected="false"><i data-lucide="file-text"></i>Page</button><button type="button" data-tab="design" aria-selected="false"><i data-lucide="palette"></i>Design</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled>Undo</button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy editable data (JSON)</button><button id="ue-import-json" type="button" role="menuitem">Import editable data (JSON)</button></div></div></div><div id="ue-json-dialog" role="dialog" aria-label="Import editable data (JSON)" hidden><div class="ue-json-card"><h2>Import editable data (JSON)</h2><p>Paste the editable data you copied. The page structure stays unchanged.</p><textarea id="ue-json-input" spellcheck="false" placeholder="Paste editable JSON here" aria-label="Editable page JSON"></textarea><p id="ue-json-error" role="alert" hidden></p><div class="ue-json-buttons"><button id="ue-json-cancel" type="button">Cancel</button><button id="ue-json-apply" type="button">Apply changes</button></div></div></div></div>';
+ screen.innerHTML='<div id="ue-resize" aria-hidden="true"></div><div id="ue-resize-right" aria-hidden="true"></div><div id="ue-wrap"><div id="ue-head"><span id="ue-heading"><strong>Edit page</strong></span><div id="ue-more-wrap"><button id="ue-more" type="button" aria-label="More options" title="More options" aria-haspopup="true" aria-expanded="false"><i data-lucide="ellipsis"></i></button><div id="ue-more-menu" role="menu" hidden><a id="ue-new-page" role="menuitem" href="https://built.at/editor" target="_blank" rel="noopener noreferrer"><i data-lucide="file-plus-2"></i><span>New page</span></a><button id="ue-dock-left" type="button" role="menuitem" title="Dock left (Shift + Left Arrow)"><i data-lucide="arrow-left"></i><span>Move left</span></button><button id="ue-dock-right" type="button" role="menuitem" title="Dock right (Shift + Right Arrow)"><i data-lucide="arrow-right"></i><span>Move right</span></button><button id="ue-fullscreen" type="button" role="menuitem"><i data-lucide="maximize"></i><span>Full screen</span></button><button id="ue-revert" type="button" role="menuitem"><i data-lucide="rotate-ccw"></i><span>Revert changes</span></button></div></div></div><div id="ue-searchbar"><input id="ue-search" type="search" placeholder="Search" aria-label="Search content, page, and design"><button type="button" id="ue-search-clear" aria-label="Clear search" title="Clear search" hidden><i data-lucide="x"></i></button></div><div id="ue-tabs" role="tablist" aria-label="Editor tabs"><button type="button" data-tab="page" aria-selected="false"><i data-lucide="file-text"></i>Page</button><button type="button" data-tab="elements" aria-selected="true"><i data-lucide="square-text"></i>Elements</button></div><div id="ue-body"><div id="ue-results" hidden></div><div id="ue-content"><button id="ue-sections-toggle" type="button" aria-expanded="false">Sections <span><i data-lucide="chevron-down"></i> Show</span></button><div id="ue-sections" hidden></div><div id="ue-fields"></div><button id="ue-add" type="button" hidden><i data-lucide="plus"></i> Add link</button></div><div id="ue-style-panel" hidden></div><div id="ue-settings" hidden></div><p id="ue-message" role="status"></p></div><div id="ue-actions"><button id="ue-cancel" type="button">Close</button><button type="button" id="ue-undo" title="Undo last change" aria-label="Undo last change" disabled>Undo</button><div id="ue-copy-wrap"><button id="ue-copy" type="button">Copy</button><button id="ue-copy-toggle" type="button" aria-label="Copy options" title="Copy options" aria-haspopup="true" aria-expanded="false"><i data-lucide="chevron-down"></i></button><div id="ue-copy-menu" role="menu" hidden><button id="ue-copy-json" type="button" role="menuitem">Copy editable data (JSON)</button><button id="ue-import-json" type="button" role="menuitem">Import editable data (JSON)</button></div></div></div><div id="ue-json-dialog" role="dialog" aria-label="Import editable data (JSON)" hidden><div class="ue-json-card"><h2>Import editable data (JSON)</h2><p>Paste the editable data you copied. The page structure stays unchanged.</p><textarea id="ue-json-input" spellcheck="false" placeholder="Paste editable JSON here" aria-label="Editable page JSON"></textarea><p id="ue-json-error" role="alert" hidden></p><div class="ue-json-buttons"><button id="ue-json-cancel" type="button">Cancel</button><button id="ue-json-apply" type="button">Apply changes</button></div></div></div></div>';
  document.body.append(pencil,screen);
  const dropPreview=document.createElement('div');
  dropPreview.id='ue-drop-preview';
@@ -142,19 +142,19 @@ function init(){
  const scrollBody=screen.querySelector('#ue-body');
  const stylePanel=screen.querySelector('#ue-style-panel'),sectionsPanel=screen.querySelector('#ue-sections'),settingsPanel=screen.querySelector('#ue-settings'),contentPanel=screen.querySelector('#ue-content');
  const searchInput=screen.querySelector('#ue-search'),resultsPanel=screen.querySelector('#ue-results'),clearSearch=screen.querySelector('#ue-search-clear'),sectionsToggle=screen.querySelector('#ue-sections-toggle');
- let activeTab='content',sectionsOpen=false;
+ let activeTab='elements',sectionsOpen=false;
  const designLabels=[
   ['Page background','background','page'],['Default text color','text','page'],['Accent color','accent','page'],
   ['Default font','font','page'],['Heading 1 size (px)','h1','page'],['Heading 2 size (px)','h2','page'],
   ['Heading 3 size (px)','h3','page'],['Paragraph size (px)','p','page'],['Corner roundness (px)','radius','page'],
-  ['Primary buttons background','buttonBackground','design'],['Primary buttons text','buttonText','design'],
-  ['Secondary buttons background','secondaryButtonBackground','design'],['Secondary buttons text','secondaryButtonText','design']
+  ['Primary buttons background','buttonBackground','page'],['Primary buttons text','buttonText','page'],
+  ['Secondary buttons background','secondaryButtonBackground','page'],['Secondary buttons text','secondaryButtonText','page']
  ];
  function setTab(tab){
   activeTab=tab;searchInput.value='';clearSearch.hidden=true;resultsPanel.hidden=true;
   screen.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
-  contentPanel.hidden=tab!=='content';stylePanel.hidden=tab!=='design';settingsPanel.hidden=tab!=='page';
-  add.hidden=tab!=='content'||!model.some(item=>item.link&&item.group!==null);
+  contentPanel.hidden=tab!=='elements';stylePanel.hidden=true;settingsPanel.hidden=tab!=='page';
+  add.hidden=tab!=='elements'||!model.some(item=>item.link&&item.group!==null);
   scrollBody.scrollTop=0;
  }
  function setSectionsOpen(open){
@@ -170,29 +170,29 @@ function init(){
  screen.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  function showSearchResults(){
   const q=searchInput.value.trim().toLocaleLowerCase();clearSearch.hidden=!q;
-  if(!q){resultsPanel.hidden=true;contentPanel.hidden=activeTab!=='content';stylePanel.hidden=activeTab!=='design';settingsPanel.hidden=activeTab!=='page';return}
+  if(!q){resultsPanel.hidden=true;contentPanel.hidden=activeTab!=='elements';stylePanel.hidden=true;settingsPanel.hidden=activeTab!=='page';return}
   resultsPanel.hidden=false;contentPanel.hidden=true;stylePanel.hidden=true;settingsPanel.hidden=true;resultsPanel.replaceChildren();
   const matches=[];
   model.forEach((item,index)=>{
    if(item.deleted)return;
-   if([item.label,item.text,item.url,item.alt,item.src].some(v=>String(v||'').toLocaleLowerCase().includes(q)))matches.push({tab:'content',label:item.label||item.text||'Content field',detail:(item.text||item.url||'').slice(0,120),index});
+   if([item.label,item.text,item.url,item.alt,item.src].some(v=>String(v||'').toLocaleLowerCase().includes(q)))matches.push({tab:'elements',label:item.label||item.text||'Content field',detail:(item.text||item.url||'').slice(0,120),index});
   });
   sectionOrder.forEach((id,index)=>{
    if(sectionStates[id]?.deleted)return;
    const node=sectionNodes.find(n=>n.getAttribute('data-section')===id),label=sectionStates[id]?.label||node?.getAttribute('aria-label')||id;
-   if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'content',label:label+' section',detail:'Section controls',sectionId:id});
+   if((label+' '+id+' section').toLocaleLowerCase().includes(q))matches.push({tab:'elements',label:label+' section',detail:'Section controls',sectionId:id});
   });
   designLabels.forEach(([label,key,tab])=>{
-   const panel=tab==='page'?settingsPanel:stylePanel;
+   const panel=settingsPanel;
    if(!panel.querySelector('[data-ue-style-key="'+key+'"]'))return;
    if((label+' '+tab+' appearance').toLocaleLowerCase().includes(q))
-    matches.push({tab,label,detail:tab==='page'?'Page appearance':'Button colors',styleKey:key});
+    matches.push({tab:'page',label,detail:'Page appearance',styleKey:key});
   });
   Object.entries(buttonAppearance).forEach(([index,info])=>{
    const item=model.find(x=>!x.added&&x.index===Number(index));
    if(!item||item.deleted)return;
    const visibleText=(item.text||'').replace(/\s+/g,' ').trim();
-   if((info.label+' '+visibleText+' button background text color').toLocaleLowerCase().includes(q))matches.push({tab:'design',label:visibleText||info.label,detail:info.label,buttonDesign:index});
+   if((info.label+' '+visibleText+' button background text color').toLocaleLowerCase().includes(q))matches.push({tab:'elements',label:visibleText||info.label,detail:info.label,buttonDesign:index});
   });
   Object.keys(originalVariables).forEach((name,index)=>{const label=varLabel(name);if((label+' '+name+' design color size').toLocaleLowerCase().includes(q))matches.push({tab:'page',label,detail:'Website color or size',customDesign:name})});
   [['Page title',0],['Page description',1]].forEach(([label,index])=>{if((label+' '+String(index?pageMeta.description:pageMeta.title)+' SEO settings').toLocaleLowerCase().includes(q))matches.push({tab:'page',label,detail:'Page',setting:index})});
@@ -204,9 +204,9 @@ function init(){
     setTab(hit.tab);
     if(hit.sectionId!==undefined){setSectionsOpen(true);const input=Array.from(sectionsPanel.querySelectorAll('.ue-section-row')).find(row=>row.dataset.sectionId===hit.sectionId)?.querySelector('input');input?.scrollIntoView({block:'center',behavior:'instant'});input?.focus({preventScroll:true})}
     else if(hit.index!==undefined){const row=fields.querySelector('.ue-item[data-edit-index="'+hit.index+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});const input=row?.querySelector('input,textarea,select');input?.focus({preventScroll:true});input?.dispatchEvent(new Event('focusin',{bubbles:true}))}
-    else if(hit.styleKey!==undefined){const panel=hit.tab==='page'?settingsPanel:stylePanel;const row=panel.querySelector('[data-ue-style-key="'+hit.styleKey+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
+    else if(hit.styleKey!==undefined){const panel=settingsPanel;const row=panel.querySelector('[data-ue-style-key="'+hit.styleKey+'"]');row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,select')?.focus({preventScroll:true})}
     else if(hit.customDesign!==undefined){const row=[...settingsPanel.querySelectorAll('#ue-page-design .ue-setting')].find(x=>x.querySelector('label')?.textContent===varLabel(hit.customDesign));row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input')?.focus({preventScroll:true})}
-    else if(hit.buttonDesign!==undefined){const block=stylePanel.querySelector('[data-ue-button-block="'+hit.buttonDesign+'"]');if(block){block.open=true;expandedButtonControls.add(String(hit.buttonDesign));block.scrollIntoView({block:'center',behavior:'instant'});block.querySelector('.ue-setting input')?.focus({preventScroll:true})}}
+    else if(hit.buttonDesign!==undefined){const block=fields.querySelector('[data-ue-button-block="'+hit.buttonDesign+'"]');if(block){block.open=true;expandedButtonControls.add(String(hit.buttonDesign));block.scrollIntoView({block:'center',behavior:'instant'});block.querySelector('.ue-setting input')?.focus({preventScroll:true})}}
     else if(hit.setting!==undefined){const row=settingsPanel.querySelectorAll('.ue-meta label')[hit.setting];row?.scrollIntoView({block:'center',behavior:'instant'});row?.querySelector('input,textarea')?.focus({preventScroll:true})}
    };
    resultsPanel.append(button);
@@ -370,10 +370,7 @@ function init(){
  const updateVisual=()=>applyVisual({values:visualValues,targets:getVisualTargets()});
  function renderStyle(){
   drawDesign({screen,add,stylePanel,pagePanel:settingsPanel,model,liveSnapshots,styleSettings,variableSettings,buttonSettings,buttonAppearance,expandedButtonControls,checkpoint,styleFonts,originalVariables,originalAppearance,refreshButtonSample,applyStyle,renderStyle,saveDraft,hideEditor,icons,clamp,hexColor,varLabel});
-  drawVisualControls({host:stylePanel,targets:getVisualTargets(),values:visualValues,selected:selectedVisual,
-   onSelect:value=>{selectedVisual=value},onStart:checkpoint,
-   onChange:(id,key,value)=>{visualValues[id]={...visualValues[id],[key]:value};updateVisual();saveDraft()}
-  });
+  mountElementAppearance();
  }
  function findSections(root=document){
   return Array.from(root.querySelectorAll('[data-section]')).filter(el=>!el.parentElement?.closest('[data-section]')&&!el.closest('#ue-screen'));
@@ -391,7 +388,36 @@ function init(){
    for(const node of desired)parent.insertBefore(node,after);
   }
  }
- function renderSections(){return drawSections({screen,sectionsPanel,sectionOrder,sectionNodes,sectionStates,checkpoint,syncSections,reorderSections,renderSections,saveDraft,hideEditor,icons})}
+ function mountElementAppearance(){
+  if(!draftActive)return;
+  const targets=getVisualTargets();
+  const byId=new Map(targets.map(t=>[t.id,t]));
+  const handleChange=(id,key,value)=>{visualValues[id]={...visualValues[id],[key]:value};updateVisual();saveDraft()};
+  for(const item of model){
+   if(item.deleted)continue;
+   const card=fields.querySelector('.ue-item[data-edit-index="'+model.indexOf(item)+'"]');
+   if(!card)continue;
+   const target=targets.find(t=>t.kind==='field'&&t.node===liveSnapshots[item.index]?.node);
+   if(target)drawInlineVisualControls({host:card,target,values:visualValues,onStart:checkpoint,onChange:handleChange});
+   if(item.index>=0){
+    const buttons=stylePanel.querySelector('[data-ue-button-block="'+item.index+'"]');
+    if(buttons){buttons.classList.add('ue-inline-button');card.append(buttons)}
+   }
+  }
+  const extra=targets.filter(t=>t.kind!=='field');
+  const sectionHost=sectionsPanel.querySelector('.ue-section-visuals')||document.createElement('div');
+  sectionHost.className='ue-section-visuals';sectionHost.replaceChildren();
+  for(const target of extra){
+   const card=document.createElement('details');card.className='ue-element-card ue-layout-card';
+   const summary=document.createElement('summary');summary.textContent=target.label;card.append(summary);
+   const body=document.createElement('div');body.className='ue-element-body';
+   drawInlineVisualControls({host:body,target,values:visualValues,onStart:checkpoint,onChange:handleChange});
+   card.append(body);sectionHost.append(card);
+  }
+  sectionsPanel.append(sectionHost);
+ }
+ function renderSections(){drawSections({screen,sectionsPanel,sectionOrder,sectionNodes,sectionStates,checkpoint,syncSections,reorderSections,renderSections,saveDraft,hideEditor,icons});mountElementAppearance()}
+
  // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
  // The UI-only ?edit flag is not part of a page's draft identity.
  const draftURL=new URL(location.href);
@@ -482,7 +508,7 @@ function init(){
   .filter(el=>!el.closest('#ue-screen,#ue-pencil')&&!/^ue-/.test(el.id))
   .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
  const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
- function render(){return drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render})}
+ function render(){drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render});renderStyle();mountElementAppearance()}
  function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();visualValues={};document.getElementById('editor-visual-style')?.remove();document.querySelectorAll('[data-ue-visual-id]').forEach(el=>el.removeAttribute('data-ue-visual-id'));if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title='Edit'}
  function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText,visualValues,visualTargets:getVisualTargets()})}
  pencil.onclick=()=>{
