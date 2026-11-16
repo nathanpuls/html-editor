@@ -12,7 +12,7 @@ const root=resolve(import.meta.dirname,'..');
 const mime={'.js':'application/javascript','.css':'text/css','.html':'text/html'};
 const server=createServer(async(req,res)=>{
  const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
- if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|json-schema\.js|visual-controls\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
+ if(!/^\/(editor\.js|interface\.js|content\.js|design\.js|storage\.js|export\.js|json-schema\.js|visual-controls\.js|branding\.js|editor\.css|tests\/fixture\.html)$/.test(path)){res.writeHead(404).end();return}
  try{const data=await readFile(resolve(root,path.slice(1)));res.writeHead(200,{'content-type':mime[extname(path)]||'text/plain','cache-control':'no-store'});res.end(data)}
  catch{res.writeHead(404).end()}
 });
