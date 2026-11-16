@@ -306,7 +306,32 @@ function init(){
  const hasChanges=()=>draftActive&&(JSON.stringify(model)!==initialModel||JSON.stringify(styleSettings)!==initialStyle||JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)||Object.values(sectionStates).some(x=>x.hidden||x.deleted)||(pageMeta.title!==originalMeta.title||pageMeta.description!==originalMeta.description));
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
- const setText=(el,value)=>{el.textContent=value};
+ // Change only the necessary text nodes. Never flatten formatted descendants.
+ const setText=(el,value)=>{
+  const old=el.textContent;
+  if(old===value)return;
+  const nodes=[],walker=el.ownerDocument.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  while(walker.nextNode())nodes.push(walker.currentNode);
+  if(!nodes.length){el.append(el.ownerDocument.createTextNode(value));return}
+  let prefix=0;while(prefix<old.length&&prefix<value.length&&old[prefix]===value[prefix])prefix++;
+  let suffix=0;while(suffix<old.length-prefix&&suffix<value.length-prefix&&old[old.length-1-suffix]===value[value.length-1-suffix])suffix++;
+  const start=prefix,end=old.length-suffix;
+  let offset=0,startNode=null,endNode=null,startOffset=0,endOffset=0;
+  for(const node of nodes){
+   const next=offset+node.data.length;
+   if(!startNode&&start<=next){startNode=node;startOffset=start-offset}
+   if(!endNode&&end<=next){endNode=node;endOffset=end-offset}
+   offset=next;
+  }
+  if(!startNode)startNode=nodes[nodes.length-1],startOffset=startNode.data.length;
+  if(!endNode)endNode=nodes[nodes.length-1],endOffset=endNode.data.length;
+  const replacement=value.slice(prefix,value.length-suffix);
+  if(startNode===endNode){startNode.replaceData(startOffset,endOffset-startOffset,replacement);return}
+  startNode.data=startNode.data.slice(0,startOffset)+replacement;
+  endNode.data=endNode.data.slice(endOffset);
+  let between=false;
+  for(const node of nodes){if(node===startNode){between=true;continue}if(node===endNode)break;if(between)node.data=''}
+ };
  const articleText=el=>Array.from(el.children).map(p=>p.textContent.trim()).join('\n\n');
  const isArticle=el=>/^(DIV|SECTION|ARTICLE|MAIN)$/.test(el.tagName)&&el.children.length>0&&Array.from(el.children).every(c=>c.tagName==='P');
  const setArticle=(el,value)=>{
@@ -315,31 +340,68 @@ function init(){
   el.replaceChildren(...paragraphs.map(text=>{const p=doc.createElement('p');p.textContent=text.trim().replace(/\n/g,' ');return p}));
  };
  function restoreLive(){
-  liveRoots.forEach((root,i)=>{root.innerHTML=rootSnapshots[i]});
-  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display})=>{if(!node.isConnected)return;node.style.display=display||'';if(node.tagName==='IMG'){for(const [k,v] of [['src',src],['alt',alt],['srcset',srcset],['sizes',sizes]]){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}else{node.innerHTML=html;if(href===null)node.removeAttribute('href');else node.setAttribute('href',href)}});
+  liveRoots.forEach((root,i)=>{if(root.innerHTML!==rootSnapshots[i])root.innerHTML=rootSnapshots[i]});
+  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display,hadStyle})=>{
+   if(!node.isConnected)return;
+   if(node.style.display!==display){
+    if(hadStyle){node.style.display=display}
+    else{node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style')}
+   }
+   if(node.tagName==='IMG'){
+    for(const [k,v] of [['src',src],['alt',alt],['srcset',srcset],['sizes',sizes]])if(node.getAttribute(k)!==v){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}
+   }else{
+    if(node.innerHTML!==html)node.innerHTML=html;
+    if(node.getAttribute('href')!==href){if(href===null)node.removeAttribute('href');else node.setAttribute('href',href)}
+   }
+  });
  }
  function syncLive(){
   for(const item of model){
    if(item.group!==null||item.added)continue;
-   const node=liveSnapshots[item.index]?.node;
+   const original=liveSnapshots[item.index],node=original?.node;
    if(!node?.isConnected)continue;
-   node.style.display=(item.hidden||item.deleted)?'none':(liveSnapshots[item.index].display||'');
+   const shouldHide=!!(item.hidden||item.deleted);
+   if(shouldHide){if(node.style.display!=='none')node.style.display='none'}
+   else if(node.style.display!==original.display){
+    if(original.hadStyle)node.style.display=original.display;
+    else{node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style')}
+   }
    if(item.deleted)continue;
-   if(item.image){if(item.src===item.originalSrc){for(const k of ['src','srcset','sizes']){const v=liveSnapshots[item.index][k];if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}else if(validImageURL(item.src)){node.setAttribute('src',normalizeURL(item.src));node.removeAttribute('srcset');node.removeAttribute('sizes')}node.setAttribute('alt',item.alt);continue}
+   if(item.image){
+    if(item.src!==item.originalSrc&&validImageURL(item.src)){const url=normalizeURL(item.src);if(node.getAttribute('src')!==url)node.setAttribute('src',url);node.removeAttribute('srcset');node.removeAttribute('sizes')}
+    else if(item.src===item.originalSrc){for(const k of ['src','srcset','sizes']){const v=original[k];if(node.getAttribute(k)!==v){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}}
+    if(node.getAttribute('alt')!==item.alt)node.setAttribute('alt',item.alt);
+    continue;
+   }
    if(item.decorative)continue;
-   if(item.article){if(item.text!==item.originalText)setArticle(node,item.text);else node.innerHTML=liveSnapshots[item.index].html}else setText(node,item.text);
-   if(item.link&&validURL(item.url))node.setAttribute('href',normalizeURL(item.url));
+   if(item.text!==item.originalText){
+    if(item.article)setArticle(node,item.text);
+    else setText(node,item.text);
+   }else if(node.innerHTML!==original.html){
+    node.innerHTML=original.html;
+   }
+   if(item.link&&validURL(item.url)){
+    const href=normalizeURL(item.url);
+    if(node.getAttribute('href')!==href)node.setAttribute('href',href);
+   }
   }
   liveRoots.forEach((root,gi)=>{
+   const members=model.filter(x=>x.group===gi);
+   const baselineMembers=members.filter(x=>!x.added).sort((a,b)=>a.index-b.index);
+   const dirty=members.length!==baselineMembers.length||members.some((x,i)=>x.added||x.deleted||x.hidden||x.text!==x.originalText||x.url!==x.originalURL||x.index!==baselineMembers[i]?.index);
+   if(!dirty){if(root.innerHTML!==rootSnapshots[gi])root.innerHTML=rootSnapshots[gi];return}
+   // Only rebuild this collection when it was actually edited.
    root.innerHTML=rootSnapshots[gi];
    [...root.children].filter(el=>el.matches('a[data-edit]')).forEach(el=>el.remove());
-   for(const item of model.filter(x=>x.group===gi)){
+   for(const item of members){
     if(!item.link||item.deleted)continue;
     const node=item.added?document.createElement('a'):liveSnapshots[item.index]?.clone.cloneNode(true);
     if(!node)continue;
-    node.setAttribute('data-edit',item.label||'Navigation link');
-    node.setAttribute('href',normalizeURL(item.url)||'#');
-    setText(node,item.text);if(item.hidden)node.style.display='none';else node.style.removeProperty('display');
+    if(item.added)node.setAttribute('data-edit',item.label||'Navigation link');
+    if(node.getAttribute('href')!==normalizeURL(item.url))node.setAttribute('href',normalizeURL(item.url)||'#');
+    if(item.added||item.text!==item.originalText)setText(node,item.text);
+    if(item.hidden)node.style.display='none';
+    else if(item.added)node.style.removeProperty('display');
     if(root.lastChild&&root.lastChild.nodeType!==3)root.append(document.createTextNode(' '));
     root.append(node);
    }
@@ -494,8 +556,8 @@ function init(){
    if(item.hidden){element.hidden=true;element.style.display='none'}
    if(item.image){if(!validImageURL(item.src))throw Error('Enter a valid image URL.');if(item.src!==item.originalSrc){element.setAttribute('src',normalizeURL(item.src));element.removeAttribute('srcset');element.removeAttribute('sizes')}element.setAttribute('alt',item.alt);continue}
    if(item.decorative)continue;
-   if(item.article){if(item.text!==item.originalText)setArticle(element,item.text)}else element.textContent=item.text;
-   if(item.link){if(!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');element.setAttribute('href',normalizeURL(item.url))}
+   if(item.text!==item.originalText){if(item.article)setArticle(element,item.text);else setText(element,item.text)}
+   if(item.link){if(!validURL(item.url.trim())||!validLinkTarget(item.url))throw Error('Select an existing page section or enter a valid URL.');if(item.url!==item.originalURL)element.setAttribute('href',normalizeURL(item.url))}
   }
   // Link collections are opt-in: <nav data-edit="links"><a data-edit ...>...</a></nav>
   const groups=Array.from(doc.querySelectorAll('[data-edit="links"]'));
@@ -552,7 +614,7 @@ function init(){
   const roots=Array.from(document.querySelectorAll('[data-edit="links"]')).filter(root=>root.querySelector('a[data-edit]'));
   liveRoots=roots;rootSnapshots=roots.map(root=>root.innerHTML);
   liveNodes=editable().filter(el=>el.getAttribute('data-edit')!=='links');
-  liveSnapshots=liveNodes.map(node=>({node,html:node.innerHTML,href:node.getAttribute('href'),src:node.getAttribute('src'),alt:node.getAttribute('alt'),srcset:node.getAttribute('srcset'),sizes:node.getAttribute('sizes'),clone:node.cloneNode(true),display:node.style.display}));
+  liveSnapshots=liveNodes.map(node=>({node,html:node.innerHTML,href:node.getAttribute('href'),src:node.getAttribute('src'),alt:node.getAttribute('alt'),srcset:node.getAttribute('srcset'),sizes:node.getAttribute('sizes'),clone:node.cloneNode(true),display:node.style.display,hadStyle:node.hasAttribute('style')}));
   model=liveNodes.map((el,i)=>{
    const group=el.closest('[data-edit="links"]');
    const article=isArticle(el),image=el.tagName==='IMG',text=article?articleText(el):el.textContent.trim();
