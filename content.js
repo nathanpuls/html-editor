@@ -84,7 +84,7 @@ export function drawSections(ctx){
  }
 
 export function drawContent(ctx){
- const {fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render}=ctx;
+ const {fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render,expandedElements}=ctx;
   fields.replaceChildren();
   const metaBox=document.createElement('div');metaBox.className='ue-meta';
   const heading=document.createElement('strong');heading.textContent='Page details';metaBox.append(heading);
@@ -172,6 +172,16 @@ export function drawContent(ctx){
    if(item.image){resetField('src','image URL',item.originalSrc);resetField('alt','alt text',item.originalAlt)}
    else if(!item.decorative)resetField('text','text',item.originalText);
    if(item.link)resetField('url','link destination',item.originalURL);
+   // Content and appearance belong to the same expandable element.
+   const index=model.indexOf(item);
+   const card=document.createElement('details');card.className='ue-element-card';card.dataset.editIndex=String(index);
+   const expand=expandedElements.has(index)||(!expandedElements.size&&index===0);
+   card.open=expand;
+   card.addEventListener('toggle',()=>{if(card.open)expandedElements.add(index);else expandedElements.delete(index)});
+   const summary=document.createElement('summary');summary.textContent=item.label||(item.image?'Image':item.link?'Link':item.tag==='p'?'Paragraph':'Text');
+   const body=document.createElement('div');body.className='ue-element-body';
+   body.append(...Array.from(box.childNodes));
+   card.append(summary,body);box.append(card);
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
