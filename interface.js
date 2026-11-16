@@ -1,7 +1,7 @@
 import {setText,articleText,isArticle,setArticle,drawSections,drawContent,restoreEditedDOM,syncEditedDOM} from './content.js';
 import {exportEditableJSON,importEditableJSON} from './json-schema.js';
 import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews,googleFontFamilies,validFontStack,syncGoogleFontLink} from './design.js';
-import {pageSignature,draftCompatible,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
+import {pageSignature,draftStorageKey,recoverDraftModel,readJSON,writeJSON,removeStorage,pushHistory,popHistory} from './storage.js';
 import {generateHTML} from './export.js';
 import {applyBranding,readBranding,validBrandURL} from './branding.js';
 import {visualTargets,applyVisual,drawInlineVisualControls} from './visual-controls.js';
@@ -422,20 +422,21 @@ function init(){
  }
  function renderSections(){drawSections({screen,sectionsPanel,sectionOrder,sectionNodes,sectionStates,checkpoint,syncSections,reorderSections,renderSections,saveDraft,hideEditor,icons});mountElementAppearance()}
 
- // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
- // The UI-only ?edit flag is not part of a page's draft identity.
- const draftURL=new URL(location.href);
- draftURL.searchParams.delete('edit');
- draftURL.hash='';
- const draftKey='html-editor:draft:v1:'+draftURL.href;
+ // The same page has one draft even if preview query parameters change.
+ const draftKey=draftStorageKey(location.href);
+ const priorDraftURL=new URL(location.href);
+ priorDraftURL.searchParams.delete('edit');priorDraftURL.hash='';
+ const priorDraftKey='html-editor:draft:v1:'+priorDraftURL.href;
  const originalSignature=pageSignature();
  // Match drafts by editable element identity, not volatile rendered CSS or document title.
  // Preserve older drafts whose original signature changed but whose fields still match.
- const readDraft=()=>{const x=readJSON(draftKey);return x&&Array.isArray(x.model)?x:null};
- const clearDraft=()=>removeStorage(draftKey);
+ const readDraft=()=>{const x=readJSON(draftKey)||readJSON(priorDraftKey);return x&&Array.isArray(x.model)?x:null};
+ const clearDraft=()=>{removeStorage(draftKey);removeStorage(priorDraftKey)};
  const saveDraft=()=>{
-  if(hasChanges())writeJSON(draftKey,{signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,visualValues,styleSchema:2});
-  else clearDraft();
+  if(!hasChanges()){clearDraft();return}
+  const saved=writeJSON(draftKey,{signature:originalSignature,model,styleSettings,variableSettings,buttonSettings,sectionOrder,sectionStates,pageMeta,visualValues,styleSchema:2});
+  if(saved){removeStorage(priorDraftKey);return}
+  message.textContent='This browser is blocking local draft storage. Copy HTML to keep your changes.';
  };
  const readMeta=()=>({title:document.title,description:document.querySelector('meta[name="description"]')?.getAttribute('content')||'',...readBranding(document)});
  const applyMeta=()=>{
@@ -550,8 +551,9 @@ function init(){
   undoStack=[];revertAvailable=false;syncUndoButton();
   initialSectionOrder=[...sectionOrder];
   const saved=readDraft();
-  if(draftCompatible(saved,model)){
-   model=saved.model;
+  const recoveredModel=recoverDraftModel(saved,model);
+  if(recoveredModel){
+   model=recoveredModel;
    if(saved.styleSettings&&saved.styleSchema===2)styleSettings={...originalAppearance,...saved.styleSettings};
    if(saved.buttonSettings&&typeof saved.buttonSettings==='object')for(const [index,settings] of Object.entries(saved.buttonSettings)){
     if(!Object.hasOwn(buttonAppearance,index)||!settings||typeof settings!=='object')continue;
@@ -620,13 +622,16 @@ function init(){
     if(sourceTag){try{const data=JSON.parse(sourceTag.textContent||'{}');data.source=value;sourceTag.textContent=JSON.stringify(data).replace(/</g,'\\u003c')}catch{}}
    }
    saveDraft();
-   const copyButton=screen.querySelector('#ue-copy');copyButton.textContent='Copied!';
+   const copyButton=screen.querySelector('#ue-copy');copyButton.textContent='Copied';
    clearTimeout(copyFeedbackTimer);copyFeedbackTimer=setTimeout(()=>{copyButton.textContent='Copy HTML'},1800);
-   message.textContent=format==='json'?'Editable data copied. Paste it into AI, then import the result.':'';
+   message.textContent=format==='json'?'Editable data copied. Paste it into AI, then paste the result here.':'';
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
  screen.querySelector('#ue-copy').onclick=()=>copyPage('html');
  screen.querySelector('#ue-copy-json').onclick=()=>copyPage('json');
+ // Flush edited state before any preview refresh or navigation.
+ window.addEventListener('pagehide',()=>{if(draftActive)saveDraft()});
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&draftActive)saveDraft()});
  // Recover a compatible local draft immediately, including its live preview.
  const resumeEditorOnLoad=editRequested();
  if(readDraft()){
