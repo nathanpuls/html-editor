@@ -1,9 +1,11 @@
 /* Optional page branding. No image is fetched until a valid URL is supplied. */
 export const validBrandURL=value=>{
  if(value==='')return true;
- if(typeof value!=='string')return false;
+ if(typeof value!=='string'||!value.trim())return false;
+ // Favicons already on a page may use data URIs or site-relative paths.
+ if(/^data:image\\/(?:png|jpeg|gif|webp|svg\\+xml|x-icon);/i.test(value))return true;
  try{
-  const url=new URL(value);
+  const url=new URL(value,'https://site.example/');
   return ['https:','http:'].includes(url.protocol)&&!!url.hostname;
  }catch{return false}
 };
