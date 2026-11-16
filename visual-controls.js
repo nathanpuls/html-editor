@@ -162,3 +162,36 @@ export function drawVisualControls({host,targets,values,selected,onSelect,onChan
  select.onchange=()=>{onSelect(select.value);render()};
  render();host.prepend(section);
 }
+
+export function drawInlineVisualControls({host,target,values,onChange,onStart}){
+ if(!target?.controls?.length)return;
+ const wrap=document.createElement('div');wrap.className='ue-visual-controls ue-inline-visual';
+ const heading=document.createElement('div');heading.className='ue-visual-heading';heading.textContent='Appearance';wrap.append(heading);
+ const controls=document.createElement('div');controls.className='ue-visual-sliders';wrap.append(controls);
+ for(const key of target.controls){
+  const spec=visualRanges[key];if(!spec)continue;
+  const row=document.createElement('div');row.className='ue-slider-setting';
+  const top=document.createElement('div');top.className='ue-slider-top';
+  const label=document.createElement('label');label.textContent=spec.label;
+  const right=document.createElement('div');right.className='ue-slider-value';
+  const number=document.createElement('input');number.type='number';number.min=spec.min;number.max=spec.max;number.step=1;number.setAttribute('aria-label',spec.label+' exact value');
+  const unit=document.createElement('span');unit.textContent=spec.unit;right.append(number,unit);top.append(label,right);
+  const range=document.createElement('input');range.type='range';range.min=spec.min;range.max=spec.max;range.step=1;range.setAttribute('aria-label',spec.label);
+  const initial=values[target.id]?.[key]??initialVisualValue(target.node,key);
+  number.value=range.value=String(initial);
+  let dragging=false;
+  const update=raw=>{
+   if(raw===''||!Number.isFinite(Number(raw)))return;
+   const value=Math.round(Math.max(spec.min,Math.min(spec.max,Number(raw))));
+   if(!dragging){onStart();dragging=true}
+   number.value=range.value=String(value);
+   onChange(target.id,key,value);
+  };
+  range.onpointerdown=()=>{dragging=false};
+  range.oninput=()=>update(range.value);
+  range.onchange=()=>{dragging=false};
+  number.onchange=()=>{dragging=false;update(number.value);dragging=false};
+  row.append(top,range);controls.append(row);
+ }
+ host.append(wrap);
+}
