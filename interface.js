@@ -392,7 +392,7 @@ function init(){
  function mountElementAppearance(){
   if(!draftActive)return;
   const targets=getVisualTargets();
-  fields.querySelectorAll('.ue-inline-visual,.ue-inline-button').forEach(node=>node.remove());
+  fields.querySelectorAll('.ue-inline-visual').forEach(node=>node.remove());
   const byId=new Map(targets.map(t=>[t.id,t]));
   const handleChange=(id,key,value)=>{visualValues[id]={...visualValues[id],[key]:value};updateVisual();saveDraft()};
   for(const item of model){
@@ -404,7 +404,7 @@ function init(){
    if(target&&body)drawInlineVisualControls({host:body,target,values:visualValues,onStart:checkpoint,onChange:handleChange});
    if(item.index>=0){
     const buttons=stylePanel.querySelector('[data-ue-button-block="'+item.index+'"]');
-    if(buttons&&body){buttons.classList.add('ue-inline-button');body.append(buttons)}
+    if(buttons&&body){card.querySelector('.ue-inline-button')?.remove();buttons.classList.add('ue-inline-button');body.append(buttons)}
    }
   }
   const extra=targets.filter(t=>t.kind!=='field');
@@ -511,7 +511,7 @@ function init(){
   .filter(el=>!el.closest('#ue-screen,#ue-pencil')&&!/^ue-/.test(el.id))
   .map(el=>({id:el.id,label:(el.getAttribute('aria-label')||el.querySelector('h1,h2,h3,h4,h5,h6')?.textContent||el.getAttribute('data-edit')||el.id).trim()}));
  const validLinkTarget=url=>!String(url).trim().startsWith('#')||internalDestinations().some(x=>'#'+x.id===String(url).trim());
- function render(){drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render,expandedElements});renderStyle();mountElementAppearance()}
+ function render(){drawContent({fields,add,settingsPanel,model,pageMeta,originalMeta,checkpoint,saveDraft,applyMeta,syncLive,icons,normalizeURL,validImageURL,displayURL,fitTextarea,internalDestinations,render,expandedElements});renderStyle()}
  function close(restore=true){if(restore){if(hasChanges()){restoreLive();restoreStyle();restoreMeta();visualValues={};document.getElementById('editor-visual-style')?.remove();document.querySelectorAll('[data-ue-visual-id]').forEach(el=>el.removeAttribute('data-ue-visual-id'));if(JSON.stringify(sectionOrder)!==JSON.stringify(initialSectionOrder)){sectionOrder=[...initialSectionOrder];reorderSections()}sectionStates={};syncSections()}}clearDraft();undoStack=[];syncUndoButton();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;setEditURL(false);pencil.title='Edit'}
  function copyHTML(){return generateHTML({baseline,pageMeta,liveSnapshots,model,validImageURL,normalizeURL,setArticle,setText,validURL,validLinkTarget,groupChanged,sectionOrder,initialSectionOrder,sectionStates,styleSettings,initialStyle,variableSettings,initialVariables,buttonSettings,initialButtons,styleSheetText,visualValues,visualTargets:getVisualTargets()})}
  pencil.onclick=()=>{
