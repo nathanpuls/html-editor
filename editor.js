@@ -34,6 +34,24 @@ function init(){
  fullscreenButton.onclick=()=>{setFullscreen(!screen.classList.contains('ue-fullscreen'));requestAnimationFrame(()=>fields.querySelectorAll('textarea').forEach(fitTextarea))};
  let model=[],baseline='',liveNodes=[],liveSnapshots=[],liveRoots=[],rootSnapshots=[];
  let draftActive=false,initialModel='';
+ // Drafts are scoped to each URL and to the exact underlying HTML/CSS version.
+ const draftKey='html-editor:draft:v1:'+location.href.split('#')[0];
+ const pageSignature=()=>{
+  const content=document.querySelectorAll('[data-edit]');
+  const page=[document.title,...Array.from(document.querySelectorAll('style:not(#ue-style)')).map(el=>el.textContent),...Array.from(content).map(el=>el.outerHTML)].join('\u001f');
+  let hash=2166136261;
+  for(let i=0;i<page.length;i++)hash=Math.imul(hash^page.charCodeAt(i),16777619);
+  return (hash>>>0).toString(36);
+ };
+ const originalSignature=pageSignature();
+ const readDraft=()=>{try{const x=JSON.parse(localStorage.getItem(draftKey)||'null');return x?.signature===originalSignature&&Array.isArray(x.model)?x.model:null}catch{return null}};
+ const clearDraft=()=>{try{localStorage.removeItem(draftKey)}catch{}};
+ const saveDraft=()=>{
+  try{
+   if(hasChanges())localStorage.setItem(draftKey,JSON.stringify({signature:originalSignature,model}));
+   else clearDraft();
+  }catch{} // file:// and privacy settings may block storage
+ };
  const hasChanges=()=>draftActive&&JSON.stringify(model)!==initialModel;
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
  window.addEventListener('beforeunload',event=>{if(!hasChanges())return;event.preventDefault();event.returnValue='';});
@@ -72,11 +90,23 @@ function init(){
     root.append(node);
    }
   });
+  saveDraft();
  }
  const icons=()=>{
-  if(window.lucide?.createIcons){window.lucide.createIcons();return}
-  const symbols={pencil:'✎',maximize:'⛶',minimize:'⛶',plus:'+', 'arrow-up':'↑','arrow-down':'↓','trash-2':'×'};
-  document.querySelectorAll('i[data-lucide]').forEach(el=>{el.textContent=symbols[el.getAttribute('data-lucide')]||'•';el.style.fontStyle='normal'});
+  // Bundled Lucide-style SVGs: no CDN or internet connection required.
+  const paths={
+   pencil:'<path d="M15 5 19 9"/><path d="M4 20h4l10.5-10.5a2.121 2.121 0 0 0-3-3L5 17v3Z"/>',
+   maximize:'<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+   minimize:'<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>',
+   plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
+   'arrow-up':'<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+   'arrow-down':'<path d="m5 12 7 7 7-7"/><path d="M12 5v14"/>',
+   'trash-2':'<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/>'
+  };
+  document.querySelectorAll('i[data-lucide]').forEach(el=>{
+   const path=paths[el.getAttribute('data-lucide')];if(!path)return;
+   el.outerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
+  });
  };
  const normalizeURL=value=>{
   const input=String(value||'').trim();
@@ -129,7 +159,7 @@ function init(){
    fields.append(box);
   }fields.querySelectorAll('textarea').forEach(fitTextarea);icons();syncLive();
  }
- function close(restore=true){if(restore)restoreLive();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
+ function close(restore=true){if(restore)restoreLive();clearDraft();draftActive=false;initialModel='';screen.hidden=true;pencil.hidden=false;pencil.title='Edit'}
  function copyHTML(){
   const parser=new DOMParser(),doc=parser.parseFromString(baseline,'text/html');
   const source=Array.from(doc.querySelectorAll('[data-edit]')).filter(el=>!el.querySelector('[data-edit]'));
@@ -178,10 +208,15 @@ function init(){
    return {index:i,tag:el.tagName.toLowerCase(),article,image,src:el.getAttribute('src')||'',originalSrc:el.getAttribute('src')||'',alt:el.getAttribute('alt')||'',originalText:text,link:el.tagName==='A',label:(el.getAttribute('data-label')||el.getAttribute('aria-label')||'').trim(),text,url:el.getAttribute('href')||'',group:group?roots.indexOf(group):null};
   });
   draftActive=true;initialModel=JSON.stringify(model);
+  const saved=readDraft();
+  if(saved&&saved.length>=model.length&&saved.every((item,i)=>item.added||(model[i]&&item.index===model[i].index&&item.tag===model[i].tag))){
+   model=saved;
+  }
   pencil.hidden=true;screen.hidden=false;message.textContent='';
   add.hidden=!model.some(item=>item.link&&item.group!==null);render();
  };
  add.onclick=()=>{const group=model.find(x=>x.link&&x.group!==null)?.group;if(group===undefined)return;model.push({added:true,index:-1,tag:'a',link:true,text:'',url:'',group});render();fields.lastElementChild?.querySelector('input')?.focus()};
+ screen.querySelector('#ue-cancel').textContent='Revert';
  screen.querySelector('#ue-cancel').onclick=()=>close(true);
  document.addEventListener('pointerdown',event=>{
   if(!draftActive||screen.hidden)return;
@@ -198,6 +233,8 @@ function init(){
    close(false);
   }catch(e){message.textContent=e.message||'Copy failed';}
  };
+ // Recover a compatible local draft immediately, including its live preview.
+ if(readDraft()){pencil.click();hideEditor()}
  document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!screen.hidden){hideEditor();return}
   if(e.key.toLowerCase()!=='e'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey||e.repeat||!screen.hidden)return;
