@@ -1,5 +1,5 @@
-import {setText,articleText,isArticle,setArticle,drawSections,drawContent} from './content.js';
-import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet} from './design.js';
+import {setText,articleText,isArticle,setArticle,drawSections,drawContent,restoreEditedDOM,syncEditedDOM} from './content.js';
+import {clamp,safeColor,rgbToHex,hexColor,varLabel,drawDesign,buildStyleSheet,inspectStyle,findStyleVariables,inspectButtons,drawButtonPreview,drawButtonPreviews} from './design.js';
 import {pageSignature,draftCompatible} from './storage.js';
 import {generateHTML} from './export.js';
 /* Main editor orchestration. Feature modules are extracted incrementally below. */
@@ -230,54 +230,9 @@ function init(){
  const styleFonts={'system-ui':'system-ui, sans-serif','Arial':'Arial, sans-serif','Georgia':'Georgia, serif','Times New Roman':'"Times New Roman", serif','Verdana':'Verdana, sans-serif','Trebuchet MS':'"Trebuchet MS", sans-serif','Courier New':'"Courier New", monospace','Manrope':'Manrope, system-ui, sans-serif','Inter':'Inter, system-ui, sans-serif'};
  const pageColor=(el,prop,fallback)=>rgbToHex(el?getComputedStyle(el)[prop]:'')||fallback;
  const pageButton=()=>document.querySelector('main .button,main .btn,main button,main [role="button"],main nav[data-edit="links"] a')||document.querySelector('body .button,body .btn');
- function readStyle(){
-  const raw=document.getElementById('editor-page-style')?.textContent||'';
-  const match=raw.match(/\/\* editor-style:(.*?) \*\//);
-  if(match){try{return {...styleDefaults,...JSON.parse(decodeURIComponent(match[1]))}}catch{}}
-  const body=getComputedStyle(document.body),button=pageButton();
-  const heading=tag=>document.querySelector('main '+tag+',body '+tag);
-  const size=tag=>{const el=heading(tag);return el?Math.round(parseFloat(getComputedStyle(el).fontSize))||styleDefaults[tag]:styleDefaults[tag]};
-  const cards=document.querySelector('.card,.hero-visual,.photo');
-  const initialFont=body.fontFamily.toLowerCase();
-  const font=Object.keys(styleFonts).find(k=>initialFont.includes(k.toLowerCase()))||'system-ui';
-  return {...styleDefaults,
-   background:pageColor(document.body,'backgroundColor',styleDefaults.background),
-   text:pageColor(document.body,'color',styleDefaults.text),
-   accent:pageColor(document.querySelector('.site-nav a,a:not(.button):not(.btn)'), 'color',styleDefaults.accent),
-   buttonBackground:pageColor(button,'backgroundColor',styleDefaults.buttonBackground),
-   buttonText:pageColor(button,'color',styleDefaults.buttonText),
-   font,h1:size('h1'),h2:size('h2'),h3:size('h3'),p:size('p'),
-   radius:Math.round(parseFloat(cards?getComputedStyle(cards).borderTopLeftRadius:(button?getComputedStyle(button).borderTopLeftRadius:'8px')))||0
-  };
- }
+ function readStyle(){return inspectStyle({styleDefaults,styleFonts,pageColor,pageButton,readStyle})}
  // Discover author-defined :root variables without touching the website stylesheet.
- const discoverVariables=()=>{
-  const found=new Map();
-  const scan=rules=>{
-   for(const rule of rules){
-    if(rule.type===1&&rule.selectorText?.split(',').some(t=>t.trim()===':root')){
-     for(const name of rule.style){
-      if(!/^--(?!ue-)[a-z0-9_-]+$/i.test(name))continue;
-      const value=rule.style.getPropertyValue(name).trim();
-      if(value&&!found.has(name))found.set(name,value);
-     }
-    }else if(rule.cssRules){try{scan(rule.cssRules)}catch{}}
-   }
-  };
-  for(const sheet of document.styleSheets){
-   const node=sheet.ownerNode;
-   if(!node||node.id==='ue-style'||node.id==='editor-page-style'||node.tagName!=='STYLE')continue;
-   try{scan(sheet.cssRules)}catch{}
-  }
-  const computed=getComputedStyle(document.documentElement);
-  const result={};
-  for(const [name,fallback] of found){
-   const value=computed.getPropertyValue(name).trim()||fallback;
-   if(hexColor(value))result[name]={kind:'color',value};
-   else if(/^-?(?:\\d+\\.?\\d*|\\.\\d+)(?:px|rem|em|%|vw|vh|vmin|vmax)$/.test(value))result[name]={kind:'size',value};
-  }
-  return result;
- };
+ const discoverVariables=()=>findStyleVariables({discoverVariables,hexColor});
  const originalVariables=discoverVariables();
  const originalVariableOverrides=new Set();
  try{
@@ -312,52 +267,9 @@ function init(){
   }
   return '';
  };
- const getButtonAppearance=()=>{
-  const result={};
-  liveSnapshots.forEach((item,index)=>{
-   const node=item.node;
-   if(!node?.matches?.('a[data-edit],button[data-edit],input[type="button"][data-edit]'))return;
-   const css=getComputedStyle(node);
-   const isButton=node.matches('button,input[type="button"],a.button,a.btn,a[role="button"]');
-   // Discover button-like links with custom class names, without including plain links.
-   const padding=Math.max(parseFloat(css.paddingTop)||0,parseFloat(css.paddingLeft)||0);
-   const painted=css.backgroundColor.startsWith('rgb')&&!css.backgroundColor.endsWith(', 0)')&&!css.backgroundColor.endsWith(' 0)');
-   if(!isButton&&!(painted&&padding>=6))return;
-   const selector=editableButtonSelector(node);
-   if(!selector)return;
-   const background=rgbToHex(css.backgroundColor),color=rgbToHex(css.color);
-   if(!background||!color)return;
-   result[index]={selector,background,color,label:node.getAttribute('data-edit')||'Button '+(index+1)};
-  });
-  return result;
- };
- const refreshButtonSample=(sample,index)=>{
-  if(!sample)return;
-  const node=liveSnapshots[Number(index)]?.node;
-  const item=model.find(x=>!x.added&&x.index===Number(index));
-  if(!node?.isConnected||!item||item.deleted)return;
-  const css=getComputedStyle(node);
-  sample.textContent=item.text||buttonAppearance[index]?.label||'';
-  sample.style.backgroundColor=css.backgroundColor;
-  sample.style.backgroundImage=css.backgroundImage;
-  sample.style.color=css.color;
-  sample.style.border=css.border;
-  sample.style.borderRadius=css.borderRadius;
-  sample.style.boxShadow=css.boxShadow;
-  sample.style.fontFamily=css.fontFamily;
-  sample.style.fontWeight=css.fontWeight;
-  sample.style.fontSize=css.fontSize;
-  sample.style.letterSpacing=css.letterSpacing;
-  sample.style.textAlign=css.textAlign==='left'?'left':'center';
- };
- const refreshButtonSamples=()=>{
-  for(const sample of stylePanel.querySelectorAll('[data-ue-button-preview]')){
-   const index=sample.dataset.ueButtonPreview;
-   const item=model.find(x=>!x.added&&x.index===Number(index));
-   if(!item||item.deleted){sample.closest('.ue-button-block')?.remove();continue}
-   refreshButtonSample(sample,index);
-  }
- };
+ const getButtonAppearance=()=>inspectButtons({selector,liveSnapshots,editableButtonSelector,getButtonAppearance,rgbToHex});
+ const refreshButtonSample=(sample,index)=>drawButtonPreview({model,liveSnapshots,buttonAppearance,refreshButtonSample,sample,index});
+ const refreshButtonSamples=()=>drawButtonPreviews({stylePanel,model,refreshButtonSample,refreshButtonSamples});
  const styleSheetText=a=>buildStyleSheet({selector,pencil,screen,variableSettings,buttonSettings,buttonAppearance,styleDefaults,styleFonts,originalVariables,originalVariableOverrides,originalAppearance,originalOverrides,styleSheetText,clamp,safeColor,hexColor,a});
  const applyStyle=()=>{
   let el=document.getElementById('editor-page-style');
@@ -419,94 +331,12 @@ function init(){
  function hideEditor(){if(!draftActive||screen.hidden)return;screen.hidden=true;pencil.hidden=false;pencil.title=hasChanges()?'Resume editing (unsaved changes)':'Resume editing'}
 
  // Change only the necessary text nodes. Never flatten formatted descendants.
- function restoreLive(){
-  liveRoots.forEach((root,i)=>{if(touchedRoots.has(i)&&root.innerHTML!==rootSnapshots[i])root.innerHTML=rootSnapshots[i]});
-  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display,hadStyle},i)=>{
-   if(!touchedNodes.has(i)||!node.isConnected)return;
-   if(node.style.display!==display){
-    if(hadStyle){node.style.display=display}
-    else{node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style')}
-   }
-   if(node.tagName==='IMG'){
-    for(const [k,v] of [['src',src],['alt',alt],['srcset',srcset],['sizes',sizes]])if(node.getAttribute(k)!==v){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}
-   }else{
-    if(node.innerHTML!==html)node.innerHTML=html;
-    if(node.getAttribute('href')!==href){if(href===null)node.removeAttribute('href');else node.setAttribute('href',href)}
-   }
-  });
-  touchedNodes.clear();touchedRoots.clear();
- }
+ function restoreLive(){return restoreEditedDOM({liveSnapshots,liveRoots,rootSnapshots,touchedNodes,touchedRoots,restoreLive})}
  const groupChanged=members=>{
   const originals=members.filter(x=>!x.added).slice().sort((a,b)=>a.index-b.index);
   return members.length!==originals.length||members.some((x,i)=>x.added||x.deleted||x.hidden||x.text!==x.originalText||x.url!==x.originalURL||x.index!==originals[i]?.index);
  };
- function syncLive(){
-  for(const item of model){
-   if(item.group!==null||item.added)continue;
-   const original=liveSnapshots[item.index],node=original?.node;
-   if(!node?.isConnected)continue;
-   const shouldHide=!!(item.hidden||item.deleted);
-   if(shouldHide){if(node.style.display!=='none'){touchedNodes.add(item.index);node.style.display='none'}}
-   else if(touchedNodes.has(item.index)&&node.style.display!==original.display){
-    if(original.hadStyle)node.style.display=original.display;
-    else{node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style')}
-   }
-   if(item.deleted)continue;
-   if(item.image){
-    if(item.src!==item.originalSrc&&validImageURL(item.src)){
-     touchedNodes.add(item.index);
-     const url=normalizeURL(item.src);if(node.getAttribute('src')!==url)node.setAttribute('src',url);
-     node.removeAttribute('srcset');node.removeAttribute('sizes');
-    }else if(item.src===item.originalSrc&&touchedNodes.has(item.index)){
-     for(const k of ['src','srcset','sizes']){const v=original[k];if(node.getAttribute(k)!==v){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}
-    }
-    if(item.alt!==item.originalAlt)touchedNodes.add(item.index);
-    if(touchedNodes.has(item.index)&&node.getAttribute('alt')!==item.alt)node.setAttribute('alt',item.alt);
-    continue;
-   }
-   if(item.decorative)continue;
-   if(item.text!==item.originalText){
-    touchedNodes.add(item.index);
-    if(item.article)setArticle(node,item.text);
-    else setText(node,item.text);
-   }else if(touchedNodes.has(item.index)&&node.innerHTML!==original.html){
-    node.innerHTML=original.html;
-   }
-   if(item.link){
-    const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
-    if(item.url!==item.originalURL)touchedNodes.add(item.index);
-    if(touchedNodes.has(item.index)&&href&&node.getAttribute('href')!==href)node.setAttribute('href',href);
-   }
-  }
-  liveRoots.forEach((root,gi)=>{
-   const members=model.filter(x=>x.group===gi);
-   const dirty=groupChanged(members);
-   if(!dirty){
-    if(touchedRoots.has(gi)){if(root.innerHTML!==rootSnapshots[gi])root.innerHTML=rootSnapshots[gi];touchedRoots.delete(gi)}
-    return;
-   }
-   // Only rebuild this collection when it was actually edited.
-   touchedRoots.add(gi);
-   root.innerHTML=rootSnapshots[gi];
-   [...root.children].filter(el=>el.matches('a[data-edit]')).forEach(el=>el.remove());
-   for(const item of members){
-    if(!item.link||item.deleted)continue;
-    const node=item.added?document.createElement('a'):liveSnapshots[item.index]?.clone.cloneNode(true);
-    if(!node)continue;
-    if(item.added)node.setAttribute('data-edit',item.label||'Navigation link');
-    const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
-    if(node.getAttribute('href')!==href)node.setAttribute('href',href||'#');
-    if(item.added||item.text!==item.originalText)setText(node,item.text);
-    if(item.hidden)node.style.display='none';
-    else if(item.added)node.style.removeProperty('display');
-    if(root.lastChild&&root.lastChild.nodeType!==3)root.append(document.createTextNode(' '));
-    root.append(node);
-   }
-  });
-  syncSections();
-  refreshButtonSamples();
-  saveDraft();
- }
+ function syncLive(){return syncEditedDOM({add,model,liveSnapshots,liveRoots,rootSnapshots,touchedNodes,touchedRoots,syncSections,refreshButtonSamples,saveDraft,groupChanged,syncLive,normalizeURL,validImageURL,setText,setArticle})}
  const icons=()=>{
   // Official Lucide icon artwork bundled locally for offline rendering.
   const paths={
