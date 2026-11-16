@@ -108,6 +108,7 @@ function init(){
  let draftActive=false,initialModel='',styleSettings={},initialStyle='',sectionOrder=[],initialSectionOrder=[],sectionNodes=[];
  let sectionStates={},undoStack=[],pageMeta={},originalMeta={},revertAvailable=false;
  const sectionDisplays=new Map(),sectionLabels=new Map(),sectionStyleAttrs=new Map();
+ const touchedNodes=new Set(),touchedRoots=new Set();
  const snapshot=()=>JSON.stringify({model,styleSettings,sectionOrder,sectionStates,pageMeta});
  const revertKey=()=>draftKey+':last-revert';
  const readRevert=()=>{try{const x=JSON.parse(localStorage.getItem(revertKey())||'null');return x?.signature===originalSignature&&typeof x.snapshot==='string'?x.snapshot:null}catch{return null}};
@@ -370,9 +371,9 @@ function init(){
   for(let i=paragraphs.length;i<existing.length;i++)existing[i].remove();
  };
  function restoreLive(){
-  liveRoots.forEach((root,i)=>{if(root.innerHTML!==rootSnapshots[i])root.innerHTML=rootSnapshots[i]});
-  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display,hadStyle})=>{
-   if(!node.isConnected)return;
+  liveRoots.forEach((root,i)=>{if(touchedRoots.has(i)&&root.innerHTML!==rootSnapshots[i])root.innerHTML=rootSnapshots[i]});
+  liveSnapshots.forEach(({node,html,href,src,alt,srcset,sizes,display,hadStyle},i)=>{
+   if(!touchedNodes.has(i)||!node.isConnected)return;
    if(node.style.display!==display){
     if(hadStyle){node.style.display=display}
     else{node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style')}
@@ -384,6 +385,7 @@ function init(){
     if(node.getAttribute('href')!==href){if(href===null)node.removeAttribute('href');else node.setAttribute('href',href)}
    }
   });
+  touchedNodes.clear();touchedRoots.clear();
  }
  const groupChanged=members=>{
   const originals=members.filter(x=>!x.added).slice().sort((a,b)=>a.index-b.index);
@@ -395,35 +397,47 @@ function init(){
    const original=liveSnapshots[item.index],node=original?.node;
    if(!node?.isConnected)continue;
    const shouldHide=!!(item.hidden||item.deleted);
-   if(shouldHide){if(node.style.display!=='none')node.style.display='none'}
-   else if(node.style.display!==original.display){
+   if(shouldHide){if(node.style.display!=='none'){touchedNodes.add(item.index);node.style.display='none'}}
+   else if(touchedNodes.has(item.index)&&node.style.display!==original.display){
     if(original.hadStyle)node.style.display=original.display;
     else{node.style.removeProperty('display');if(!node.getAttribute('style'))node.removeAttribute('style')}
    }
    if(item.deleted)continue;
    if(item.image){
-    if(item.src!==item.originalSrc&&validImageURL(item.src)){const url=normalizeURL(item.src);if(node.getAttribute('src')!==url)node.setAttribute('src',url);node.removeAttribute('srcset');node.removeAttribute('sizes')}
-    else if(item.src===item.originalSrc){for(const k of ['src','srcset','sizes']){const v=original[k];if(node.getAttribute(k)!==v){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}}
-    if(node.getAttribute('alt')!==item.alt)node.setAttribute('alt',item.alt);
+    if(item.src!==item.originalSrc&&validImageURL(item.src)){
+     touchedNodes.add(item.index);
+     const url=normalizeURL(item.src);if(node.getAttribute('src')!==url)node.setAttribute('src',url);
+     node.removeAttribute('srcset');node.removeAttribute('sizes');
+    }else if(item.src===item.originalSrc&&touchedNodes.has(item.index)){
+     for(const k of ['src','srcset','sizes']){const v=original[k];if(node.getAttribute(k)!==v){if(v===null)node.removeAttribute(k);else node.setAttribute(k,v)}}
+    }
+    if(item.alt!==item.originalAlt)touchedNodes.add(item.index);
+    if(touchedNodes.has(item.index)&&node.getAttribute('alt')!==item.alt)node.setAttribute('alt',item.alt);
     continue;
    }
    if(item.decorative)continue;
    if(item.text!==item.originalText){
+    touchedNodes.add(item.index);
     if(item.article)setArticle(node,item.text);
     else setText(node,item.text);
-   }else if(node.innerHTML!==original.html){
+   }else if(touchedNodes.has(item.index)&&node.innerHTML!==original.html){
     node.innerHTML=original.html;
    }
    if(item.link){
     const href=item.url===item.originalURL?item.originalURL:normalizeURL(item.url);
-    if(href&&node.getAttribute('href')!==href)node.setAttribute('href',href);
+    if(item.url!==item.originalURL)touchedNodes.add(item.index);
+    if(touchedNodes.has(item.index)&&href&&node.getAttribute('href')!==href)node.setAttribute('href',href);
    }
   }
   liveRoots.forEach((root,gi)=>{
    const members=model.filter(x=>x.group===gi);
    const dirty=groupChanged(members);
-   if(!dirty){if(root.innerHTML!==rootSnapshots[gi])root.innerHTML=rootSnapshots[gi];return}
+   if(!dirty){
+    if(touchedRoots.has(gi)){if(root.innerHTML!==rootSnapshots[gi])root.innerHTML=rootSnapshots[gi];touchedRoots.delete(gi)}
+    return;
+   }
    // Only rebuild this collection when it was actually edited.
+   touchedRoots.add(gi);
    root.innerHTML=rootSnapshots[gi];
    [...root.children].filter(el=>el.matches('a[data-edit]')).forEach(el=>el.remove());
    for(const item of members){
