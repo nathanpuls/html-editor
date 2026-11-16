@@ -72,7 +72,7 @@ export function exportEditableJSON(ctx){
     return [id,role];
    }).filter(([id])=>Boolean(id))),
    sections:'order contains existing section ids; changing section labels updates visible numbered eyebrow labels where present.',
-   elements:'design.elements contains optional per-element fontSize (px), opacity (0-100%), radius (px), padding (px), and gap (px). Only use controls appropriate to the target.'
+   elements:'design.elements contains optional per-element fontSize (px), textColor (#RRGGBB), opacity (0-100%), radius (px), padding (px), and gap (px). Only use controls appropriate to the target.'
   },
   page:{title:pageMeta.title,description:pageMeta.description},
   fields,
@@ -177,7 +177,7 @@ export function importEditableJSON(data,ctx){
   const values={};
   for(const [key,value] of Object.entries(settings)){
    const range=ranges[key];
-   if(!range||!target.controls.includes(key)||typeof value!=='number'||!Number.isFinite(value)||!Number.isInteger(value)||value<range[0]||value>range[1])
+   if(!target.controls.includes(key)||(key==='textColor'?(typeof value!=='string'||!/^#[0-9a-f]{6}$/i.test(value)):(!range||typeof value!=='number'||!Number.isFinite(value)||!Number.isInteger(value)||value<range[0]||value>range[1])))
     throw Error('Invalid '+key+' slider value on '+id);
    values[key]=value;
   }
