@@ -45,11 +45,13 @@ export function exportEditableJSON(ctx){
   return field;
  });
  const buttons={};
- for(const [index,info] of Object.entries(buttonAppearance)){
+ for(const [index,settings] of Object.entries(buttonSettings)){
   const id=ids.get(Number(index));
-  if(!id)continue;
-  const override=buttonSettings[index]||{};
-  buttons[id]={background:override.background||info.background,text:override.color||info.color};
+  if(!id||!Object.hasOwn(buttonAppearance,index))continue;
+  buttons[id]={
+   background:settings.background||buttonAppearance[index].background,
+   text:settings.color||buttonAppearance[index].color
+  };
  }
  return {
   version:2,
@@ -59,7 +61,8 @@ export function exportEditableJSON(ctx){
    groups:groups,
    fonts:'Google Font names or safe CSS font-family stacks. Unknown installed font names use browser fallback.',
    colors:'Hex colors (#RRGGBB). Font sizes and border radius are in pixels.',
-   buttons:'primary and secondary are independent roles. design.elementButtons targets one specific editable button by field id.',
+   buttons:'primary and secondary are independent roles. Optional design.elementButtons overrides target one editable button by field id.',
+   editableButtonIds:Object.keys(buttonAppearance).map(index=>ids.get(Number(index))).filter(Boolean),
    sections:'order contains existing section ids; changing section labels updates visible numbered eyebrow labels where present.'
   },
   page:{title:pageMeta.title,description:pageMeta.description},
@@ -155,6 +158,6 @@ export function importEditableJSON(data,ctx){
   if(!buttonById.has(id)||!isRecord(colors))throw Error('Unknown button: '+id);
   buttons[buttonById.get(id)]={background:color(colors.background,'Button background'),color:color(colors.text,'Button text')};
  }
- for(const id of buttonById.keys())if(!Object.hasOwn(design.elementButtons,id))throw Error('Missing button: '+id);
+
  return {model:next,pageMeta:{title:string(data.page.title,'Page title'),description:string(data.page.description,'Description')},sectionOrder:[...order],sectionStates:states,styleSettings:style,variableSettings:variables,buttonSettings:buttons};
 }
