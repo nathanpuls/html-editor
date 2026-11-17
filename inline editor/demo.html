@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full Psych — Website Editor Demo</title>
+<meta name="description" content="A sample mental health practice website demonstrating editable content, styling, sections, and SEO details.">
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#faf8f4;color:#25302d;font-family:system-ui,-apple-system,sans-serif}
+main{max-width:990px;margin:0 auto;padding:28px 24px 90px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:10px 0 36px}
+.brand{font-size:15px;font-weight:800;letter-spacing:.08em}
+.brand-wrap{display:flex;align-items:center;gap:12px}.site-logo{height:44px;width:auto;max-width:160px;object-fit:contain}.site-logo[hidden]{display:none}
+.site-nav{display:flex;gap:18px}
+.site-nav a{font-size:14px;color:#394c45;text-decoration:none}
+.section-divider{display:block;border:0;border-top:1px solid #deded8;width:100%;height:0;margin:48px 0 0}
+
+section{padding:48px 0 0}
+
+.eyebrow{color:#ac6845;text-transform:uppercase;letter-spacing:.16em;font-weight:700;font-size:12px}
+h1{font-size:clamp(42px,7vw,76px);letter-spacing:-.055em;line-height:1.08;margin:12px 0 18px}
+h2{font-size:clamp(30px,5vw,46px);line-height:1.14;letter-spacing:-.035em;margin:10px 0 18px}
+h3{font-size:22px;letter-spacing:-.02em;margin:10px 0}
+p{font-size:17px;line-height:1.72;color:#5a625d;max-width:65ch}
+.intro{font-size:21px}
+.hero-grid,.two-cols{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
+.hero-visual{background:#ebe8df;min-height:335px;border-radius:24px;overflow:hidden}
+.hero-visual img,.photo img{display:block;width:100%;height:100%;object-fit:cover}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+.button,.btn{display:inline-flex;padding:13px 20px;background:#273d35;color:white;text-decoration:none;border:0;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+.button.secondary,.btn.secondary{background:#e8e7e0;color:#25302d}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:30px 0}
+.card{border:1px solid #d9ddd6;border-radius:22px;padding:24px;background:white}
+.card p{font-size:15px;margin-bottom:0}
+.photo{height:285px;overflow:hidden;border-radius:24px;background:#e4e2dc}
+.swatches{display:flex;gap:10px;margin-top:20px}
+.swatches i{display:block;width:44px;height:44px;border-radius:12px;background:#273d35}
+.swatches i:nth-child(2){background:#ba8364}
+.swatches i:nth-child(3){background:#d2d9c9}
+.site-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.site-links a{display:inline-flex;background:#273d35;color:#fff;text-decoration:none;border-radius:12px;padding:12px 18px}
+footer{padding:40px 0;color:#6d746d;font-size:13px}
+@media(max-width:680px){.hero-grid,.two-cols,.cards{grid-template-columns:1fr}.topbar{align-items:flex-start}.site-nav{flex-wrap:wrap}.hero-visual{min-height:250px}section{padding:34px 0 0}.section-divider{margin-top:34px}}
+</style>
+<script src="./editor.js" defer></script>
+</head>
+<body>
+<main>
+<header class="topbar"><div class="brand-wrap"><img data-site-logo class="site-logo" alt="Full Psych logo" hidden><div class="brand" data-edit="Site name">FULL PSYCH</div></div><nav class="site-nav" data-edit="links"><a data-edit="Approach navigation" href="#about">Approach</a><a data-edit="Services navigation" href="#work">Services</a><a data-edit="Contact navigation" href="#contact">Next steps</a></nav></header>
+<section id="welcome" data-section="welcome" aria-label="Welcome">
+ <div class="hero-grid">
+  <div>
+   <div class="eyebrow">Thoughtful psychiatric care</div>
+   <h1 data-edit="Hero heading">Care that starts with listening.</h1>
+   <p class="intro" data-edit="Hero description">Medication management and collaborative care for adults seeking a thoughtful, practical approach to mental health.</p>
+   <div class="actions"><a class="button" data-edit="Explore services button" href="#work">Explore services</a><button class="btn secondary" data-button-role="secondary" data-edit="Consultation button" type="button">Schedule a consultation</button></div>
+  </div>
+  <div class="hero-visual"><img data-edit="Hero image" src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1000" alt="Warm, welcoming office space"></div>
+ </div>
+ <hr class="section-divider" data-edit="Welcome section divider">
+</section>
+<section id="about" data-section="about" aria-label="Approach">
+ <div class="eyebrow">01 / Approach</div>
+ <h2 data-edit="About heading">Mental health care should feel personal.</h2>
+ <div class="two-cols">
+  <div data-edit="About paragraph"><p>Good care begins with understanding your goals, history, and preferences.</p><p>Treatment plans can include medication management, education, and coordination with your therapist or other clinicians.</p></div>
+  <div class="photo"><img data-edit="About image" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000" alt="Comfortable bright consultation room"></div>
+ </div>
+ <hr class="section-divider" data-edit="Approach section divider">
+</section>
+<section id="work" data-section="work" aria-label="Services">
+ <div class="eyebrow">02 / Services</div>
+ <h2 data-edit="Work heading">Support for the things that matter.</h2>
+ <p data-edit="Work introduction">A few common areas of care, with clear next steps and room for your questions.</p>
+ <div class="cards">
+  <article class="card"><h3 data-edit="First card title">Anxiety</h3><p data-edit="First card description">Help navigating persistent worry, stress, and their effect on everyday life.</p></article>
+  <article class="card"><h3 data-edit="Second card title">Depression</h3><p data-edit="Second card description">Thoughtful assessment and ongoing treatment of mood symptoms.</p></article>
+  <article class="card"><h3 data-edit="Third card title">ADHD</h3><p data-edit="Third card description">Evaluation and medication management tailored to individual needs.</p></article>
+ </div>
+ <hr class="section-divider" data-edit="Services section divider">
+</section>
+<section id="contact" data-section="contact" aria-label="Next steps">
+ <div class="eyebrow">03 / Next steps</div>
+ <h2 data-edit="Contact heading">Ready for a conversation?</h2>
+ <p data-edit="Contact description">Reach out to ask about availability, treatment fit, and what to expect at an initial appointment.</p>
+ <nav class="site-links" data-edit="links"><a data-edit="Contact link" href="mailto:hello@example.com">Contact the practice</a><a data-edit="Information link" href="https://example.org">What to expect</a></nav>
+</section>
+<footer data-edit="Footer note">Full Psych · Sample practice website for testing the HTML editor. Press E to edit.</footer>
+</main>
+</body>
+</html>
