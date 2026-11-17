@@ -1,6 +1,6 @@
 /* Clone the whole current page, retaining all author head/body content. */
 export const captureAuthorAttributes=()=>new WeakMap([...document.querySelectorAll('*')].map(el=>[el,{contenteditable:el.getAttribute('contenteditable'),spellcheck:el.getAttribute('spellcheck')}]));
-const runtimeSelector='#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-built-at-editor-runtime]';
+const runtimeSelector='#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-built-at-editor-runtime],[data-codex-agent-overlay-root]';
 export function exportHTML(originals){
  const page=document.documentElement.cloneNode(true);
  const live=[document.documentElement,...document.documentElement.querySelectorAll('*')];
@@ -15,7 +15,7 @@ export function exportHTML(originals){
   if(el===page.querySelector('body'))el.classList.remove('ie-enabled','ie-preview','ie-dragging');
   const original=originals.get(live[i]);
   if(original)for(const name of ['contenteditable','spellcheck']){if(original[name]===null)el.removeAttribute(name);else el.setAttribute(name,original[name])}
-  if(el.hasAttribute('style')){el.style.removeProperty('--ie-selection-outline');el.style.removeProperty('--ie-toolbar-height');if(!el.getAttribute('style').trim())el.removeAttribute('style')}
+  if(el.hasAttribute('style')){el.style.removeProperty('--ie-selection-outline');el.style.removeProperty('--ie-toolbar-height');el.style.removeProperty('--ie-original-padding-top');if(!el.getAttribute('style').trim())el.removeAttribute('style')}
  });
  const doctype=document.doctype;
  const declaration=doctype?'<!DOCTYPE '+doctype.name+(doctype.publicId?' PUBLIC "'+doctype.publicId+'"':'')+(doctype.systemId?(doctype.publicId?' "':' SYSTEM "')+doctype.systemId+'"':'')+'>':'<!DOCTYPE html>';

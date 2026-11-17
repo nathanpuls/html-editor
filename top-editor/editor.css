@@ -68,4 +68,5 @@ body.ie-enabled:not(.ie-preview){padding-top:var(--ie-toolbar-height,60px)!impor
 #ie-toolbar *,#ie-image-popup *{box-sizing:border-box}
 #ie-resume{display:none;position:fixed;bottom:16px;right:16px;z-index:2147483600;border:1px solid #ddd;border-radius:999px;padding:10px 18px;background:#fff;color:#171717;font:14px system-ui;cursor:pointer}
 body.ie-preview #ie-resume{display:block}
-body.ie-preview{padding-top:revert!important}
+body.ie-enabled:not(.ie-preview){padding-top:calc(var(--ie-original-padding-top,0px) + var(--ie-toolbar-height,60px))!important}
+body.ie-preview{padding-top:var(--ie-original-padding-top,0px)!important}

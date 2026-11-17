@@ -1,3 +1,23 @@
+# Built.at editors
+
+The top-toolbar editor is now the default at `https://edit.built.at`. It was extracted from the actual experimental `Pages!B4` source. [Toolbar source and deployment notes](top-editor/README.md).
+
+```html
+<script src="https://edit.built.at" defer></script>
+```
+
+The independent side-panel editor is preserved at `https://side-edit.built.at`:
+
+```html
+<script src="https://side-edit.built.at" defer></script>
+```
+
+[Top-toolbar demo](https://edit.built.at/demo.html) · [Generic page test](https://edit.built.at/sample.html) · [Side-panel demo](https://side-edit.built.at/demo.html)
+
+The two hosts are served by Cloudflare Worker `built-at-editors`, with source in `cloudflare/`. The side panel uses its own pinned release, verified before changing the default hostname. Google Sheets and ends.at publishing remain unchanged. The remaining documentation below describes the side panel; install that editor using the side-edit URL above.
+
+---
+
 # HTML Editor
 
 A lightweight visual editor for standalone HTML websites. Edit text, images, links, sections, and design settings directly on the page—without a framework, build step, or CMS.

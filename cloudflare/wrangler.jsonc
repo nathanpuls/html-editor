@@ -1,0 +1,12 @@
+{
+  "name": "built-at-editors",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-17",
+  "account_id": "ed3b0af15e1c2b8a6a351cc929b0a312",
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "side-edit.built.at", "custom_domain": true },
+    { "pattern": "side-edit.built.at/*", "zone_name": "built.at" },
+    { "pattern": "edit.built.at/*", "zone_name": "built.at" }
+  ]
+}

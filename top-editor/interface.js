@@ -6,6 +6,7 @@ import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 /* Selection and interaction logic extracted from Pages!B4. */
 export function startEditor(){
  const authorAttributes=captureAuthorAttributes();
+ document.body.style.setProperty('--ie-original-padding-top',getComputedStyle(document.body).paddingTop);
 
  if(document.getElementById('ie-toolbar')?.dataset.ready==='true')return;
  const undo=[],redo=[];let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
@@ -70,7 +71,7 @@ export function startEditor(){
  };
  enablePxEntry('ie-size','ie-size-value','fontSize');
  enablePxEntry('ie-radius','ie-radius-value','borderRadius'); const {snapshot,restore}=createHistory(()=>[bar,imagePopup,document.getElementById('ie-marquee'),document.getElementById('ie-resume')].filter(Boolean));
-  $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}};
+  $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}syncControls()};
  let textEditing=false;const finish=()=>{textEditing=false;hideImagePopup();for(const el of selected){if(el.hasAttribute('data-edit'))el.contentEditable='false';el.classList.remove('ie-active-field');el.style.removeProperty('--ie-selection-outline')}selected.clear();active=null;if(mode==='element')$('ie-label').textContent='Select an element';syncControls()};
  const setMode=m=>{colorSession=null;mode=m;if(m==='page')finish();$('ie-page').classList.toggle('ie-selected',m==='page');$('ie-label').textContent=m==='page'?'Whole page':(active?.getAttribute('data-edit')||'Select an element');syncControls()};
  $('ie-page').onclick=()=>setMode('page');
@@ -134,8 +135,8 @@ export function startEditor(){
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!preview){e.preventDefault();e.shiftKey?$('ie-redo').click():$('ie-undo').click()}
  });
  syncControls();
- $('ie-undo').onclick=()=>{finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop())};
- $('ie-redo').onclick=()=>{finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop())};
+ $('ie-undo').onclick=()=>{finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop());setMode('page')};
+ $('ie-redo').onclick=()=>{finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop());setMode('page')};
  const applyPreview=()=>{document.body.classList.toggle('ie-preview',preview);if(preview)finish()};
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
  applyPreview();
