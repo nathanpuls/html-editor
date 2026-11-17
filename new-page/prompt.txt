@@ -1,0 +1,32 @@
+Create a responsive, single-page HTML website based on the brief below. Return only the complete HTML in one code block.
+
+**WEBSITE BRIEF:**  
+{{WEBSITE_BRIEF}}
+
+### Requirements
+
+1. **Standalone HTML:** Use inline CSS, minimal JavaScript, and no frameworks or dependencies. Include `<script src="https://edit.built.at" defer></script>` in the head.
+
+2. **Editable elements:** Give every meaningful visible element a unique, descriptive `data-edit` attribute, including headings, paragraphs, labels, images, icons, buttons, and links. Parent components AND their individual children must be independently selectable. Never use `data-label`.
+
+3. **Text blocks:** Make individual paragraphs editable. Avoid nested text-editing containers that could conflict.
+
+4. **Sections:** Give each manageable section a unique `data-section`, `id`, and descriptive `aria-label`. Keep reorderable sections as siblings.
+
+5. **Link collections:** Use `data-edit="links"` on collections where users can add, edit, delete, or reorder links. Give each child link its own `data-edit`. Use ordinary `data-edit` labels for standalone links.
+
+6. **Buttons:** Use `.button` for button-style links and buttons. Avoid global styles that interfere with the editor.
+
+7. **Design:** Follow the brief's aesthetic and complexity without unnecessary decoration or sections. Define meaningful, reusable CSS variables in `:root` for colors, typography, and dimensions.
+
+8. **Images:** Prefer self-contained visuals. Editable images should use absolute HTTPS URLs and meaningful alt text. Keep essential content usable offline.
+
+9. **Quality:** Include a meaningful page title and meta description. Use semantic, accessible, mobile-responsive HTML.
+
+10. **Editor compatibility:** Do not recreate the editor's functionality. Built.at handles editing, styling, sections, undo/redo, local drafts, and HTML export.
+
+**Before responding:** Verify that all visible content is individually editable, including text inside cards and other parent components.
+
+### Output
+
+Return only the full HTML document, beginning with `<!DOCTYPE html>`, in one code block. No explanations.
