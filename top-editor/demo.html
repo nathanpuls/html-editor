@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Studio Notes — Editor Playground</title>
+<style>
+:root{--ink:#20252b;--paper:#f6f5f2;--accent:#20252b}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 system-ui,-apple-system,sans-serif}
+.demo{width:min(1080px,calc(100% - 48px));margin:0 auto;padding:26px 0 20px;display:grid;gap:18px}
+.demo-header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:19px;font-weight:800;letter-spacing:-.7px}
+.kicker{font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#777}
+.hero{display:grid;grid-template-columns:1.3fr .7fr;align-items:center;gap:30px;padding:26px 30px;background:#fff;border:1px solid #e5e5e5;border-radius:20px}
+h1{font-size:clamp(30px,4.2vw,54px);line-height:1.07;letter-spacing:-2px;margin:10px 0 12px}h2{font-size:20px;line-height:1.2;margin:0 0 9px}h3{font-size:16px;margin:0 0 6px}
+p{margin:0;color:#555;line-height:1.5}.lead{max-width:530px}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.demo button{border:0;border-radius:999px;background:#20252b;color:#fff;padding:11px 20px;font:600 13px system-ui;cursor:pointer}
+.demo button.secondary{background:#e9e9e9;color:#222}
+.hero-art{height:190px;border-radius:18px;background:#e5dfd4;display:grid;place-items:center;font-size:90px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tile{padding:20px;background:#fff;border:1px solid #e5e5e5;border-radius:16px;min-height:126px}
+.tile p{font-size:13px}.tile .symbol{font-size:22px;margin-bottom:8px}
+.demo-footer{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #dedede;padding-top:13px;color:#777;font-size:12px}
+@media(min-width:850px) and (min-height:700px){.demo{min-height:calc(100dvh - 75px);align-content:center}}
+@media(max-width:650px){.demo{width:calc(100% - 28px);padding:16px 0;gap:12px}.hero{grid-template-columns:1fr;padding:20px;gap:15px}.hero-art{height:125px;font-size:64px}.tiles{grid-template-columns:1fr}.tile{min-height:0;padding:15px}.demo-footer{flex-wrap:wrap}h1{letter-spacing:-1px}}
+</style>
+
+<script src="./editor.js" defer></script>
+</head><body>
+<main class="demo">
+<header class="demo-header"><div class="brand" data-edit="Brand">the little studio.</div><span class="kicker" data-edit="Header caption">DESIGN PLAYGROUND</span></header>
+<section class="hero" data-section="hero"><div><div class="kicker" data-edit="Eyebrow">MAKE IT YOURS</div><h1 data-edit="Main heading">A simple page.<br>A lot of possibilities.</h1><p class="lead" data-edit="Introduction">Click anything to edit it. Experiment with typography, colors, buttons, and images—all without leaving this screen.</p><div class="actions"><button type="button" data-edit="Primary button">Get started</button><button class="secondary" type="button" data-edit="Secondary button">Learn more</button></div></div><div class="hero-art" role="img" aria-label="Decorative plant illustration">🌿</div></section>
+<section class="tiles" data-section="examples">
+<article class="tile"><div class="symbol" data-edit="Typography icon">✦</div><h3 data-edit="Typography title">Typography</h3><p data-edit="Typography description">Change the font, size, and text color.</p></article>
+<article class="tile"><div class="symbol" data-edit="Colors icon">◉</div><h3 data-edit="Colors title">Colors</h3><p data-edit="Colors description">Try a new background or matching styles.</p></article>
+<article class="tile"><div class="symbol" data-edit="Shapes icon">▢</div><h3 data-edit="Shapes title">Shapes</h3><p data-edit="Shapes description">Round the corners of cards and buttons.</p></article>
+</section>
+<footer class="demo-footer"><span data-edit="Footer left">Made for experimenting.</span><span data-edit="Footer right">Edit a little. Make it yours.</span></footer>
+</main></body></html>

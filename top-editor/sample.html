@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" class="sample-document">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Independent editor verification page"><title>Built.at toolbar test</title>
+<style>body{margin:0;padding:30px;background:#faf8f3;color:#25313b;font:18px/1.5 system-ui}main{max-width:780px;margin:auto}section{padding:24px;border:1px solid #ddd;border-radius:12px;margin:20px 0}h1{font-size:36px}a{color:#176480}</style>
+<style id="author-second-style">.intro{font-weight:500}.test-footer{border-top:2px solid #25313b;padding:20px}</style>
+<script id="author-script">document.addEventListener('DOMContentLoaded',()=>document.body.dataset.authorScript='ran');</script>
+<script src="./editor.js" defer></script>
+</head>
+<body class="author-page">
+<header><p data-edit="Site name">Independent sample</p></header>
+<main id="website"><section data-section="welcome"><h1 data-edit="Welcome heading">Edit this heading</h1><p class="intro" data-edit="Introduction">This sample has no demo class and has multiple stylesheets.</p><a href="https://built.at" data-edit="Website link">Visit Built.at</a></section>
+<section data-section="details"><div data-edit="Article copy"><p>First paragraph.</p><p>Second paragraph.</p></div><img width="90" height="60" data-edit="Sample image" alt="Blue rectangle" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='60'%3E%3Cpath fill='%2328638a' d='M0 0h90v60H0z'/%3E%3C/svg%3E"></section></main>
+<footer class="test-footer"><span data-edit="Footer copy">The footer must survive Copy HTML.</span></footer>
+</body></html>
