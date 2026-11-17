@@ -121,3 +121,16 @@ body.ie-preview .ie-popover{display:none!important}
 .ie-active-field{outline:none!important;box-shadow:none!important;filter:none!important}
 .ie-selection-frame{position:fixed;z-index:2147483599;pointer-events:none;box-sizing:border-box;border:1px solid #6B9AC4;border-radius:0;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
 body.ie-preview .ie-selection-frame{display:none!important}
+
+/* Small spacing refinements keep the compact toolbar comfortable. */
+#ie-toolbar .ie-brand{font-size:16px!important;margin-right:7px!important}
+#ie-toolbar #ie-search.ie-unified-picker{margin-right:6px}
+#ie-toolbar .ie-control:has(#ie-font),#ie-toolbar .ie-control:has(#ie-size){gap:7px}
+#ie-toolbar #ie-delete svg{width:19px;height:19px;stroke-width:1.9}
+.ie-search-input-wrap{position:relative}
+#ie-search-popover input[type=search]{padding-right:36px;appearance:none;-webkit-appearance:none}
+#ie-search-popover input::-webkit-search-cancel-button,#ie-search-popover input::-webkit-search-decoration{display:none;-webkit-appearance:none}
+#ie-search-popover .ie-search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:4px;border:0;border-radius:5px;background:transparent;color:#171717}
+#ie-search-popover .ie-search-clear[hidden]{display:none!important}
+#ie-search-popover .ie-search-clear:hover{background:#f1f2f4}
+#ie-search-popover .ie-search-clear svg{display:block;width:16px;height:16px}

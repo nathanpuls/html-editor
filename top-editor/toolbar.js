@@ -5,7 +5,7 @@ export const toolbarHTML='<span class="ie-brand">Built.at</span><button id="ie-p
 export function mountTools({bar,select,elementName,change,revert}){
  const runtime=el=>{el.dataset.builtAtEditorRuntime='';document.body.append(el);return el};
  const search=runtime(document.createElement('div'));search.id='ie-search-popover';search.className='ie-popover';search.hidden=true;
- search.innerHTML='<input type="search" placeholder="Search" aria-label="Search" autocomplete="off"><div class="ie-results" role="listbox" aria-label="Search results"></div>';
+ search.innerHTML='<div class="ie-search-input-wrap"><input type="search" placeholder="Search" aria-label="Search" autocomplete="off"><button type="button" class="ie-search-clear" aria-label="Clear search" title="Clear search" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12"/></svg></button></div><div class="ie-results" role="listbox" aria-label="Search results"></div>';
  const menu=runtime(document.createElement('div'));menu.id='ie-menu-popover';menu.className='ie-popover';menu.hidden=true;
  menu.innerHTML='<button type="button" id="ie-settings-action">Page settings</button><a id="ie-new-page" target="_blank" rel="noopener">New page <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 3h7v7M21 3l-11 11M10 3H3v18h18v-7"/></svg></a><hr><button type="button" id="ie-revert-action">Revert changes…</button>';
  menu.querySelector('a').href=document.querySelector('script[data-new-page-url]')?.dataset.newPageUrl||'https://built.at/editor#website-description';
@@ -18,6 +18,7 @@ export function mountTools({bar,select,elementName,change,revert}){
  let matches=[],index=-1;
  const choose=i=>{const el=matches[i];if(!el?.isConnected)return;close();select(el);el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true})};
  const draw=()=>{
+  search.querySelector('.ie-search-clear').hidden=!input.value;
   const query=input.value.trim().toLocaleLowerCase();index=-1;results.replaceChildren();matches=[];
   
   const candidates=[...document.body.querySelectorAll('*')].filter(el=>!el.closest('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-codex-agent-overlay-root]')&&!el.matches('script,style,template,noscript')&&el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden');
@@ -33,6 +34,7 @@ export function mountTools({bar,select,elementName,change,revert}){
  searchButton.onclick=()=>{if(!search.hidden){close();return}open(search,searchButton);input.value='';draw();input.focus()};
  menuButton.onclick=()=>{if(!menu.hidden){close();return}open(menu,menuButton);menu.querySelector('button').focus()};
  input.oninput=draw;
+ search.querySelector('.ie-search-clear').onclick=()=>{input.value='';draw();input.focus()};
  input.onkeydown=e=>{const rows=[...results.querySelectorAll('button')];if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!rows.length)return;index=(index+(e.key==='ArrowDown'?1:-1)+rows.length)%rows.length;rows.forEach((row,i)=>{row.setAttribute('aria-selected',String(i===index));if(i===index)row.scrollIntoView({block:'nearest'})})}if(e.key==='Enter'&&rows.length){e.preventDefault();rows[Math.max(0,index)].click()}};
  menu.querySelector('#ie-settings-action').onclick=()=>{open(settings,menuButton);settings.querySelector('[name=title]').value=document.title;settings.querySelector('[name=favicon]').value=(()=>{const icon=document.head.querySelector('link[rel~="icon"]');return icon?.hasAttribute('data-codex-favicon-badge')?icon.getAttribute('data-codex-original-favicon-href')||'':icon?.getAttribute('href')||''})();settings.querySelector('[role=alert]').hidden=true;settings.querySelector('input').focus()};
  settings.querySelector('#ie-settings-cancel').onclick=()=>{close();menuButton.focus()};

@@ -1,4 +1,4 @@
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261117-copy-blue';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261117-spacing';
 import {hex,ensureGoogleFont} from './design.js';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
