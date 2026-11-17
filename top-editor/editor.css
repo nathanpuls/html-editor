@@ -134,3 +134,5 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-search-popover .ie-search-clear[hidden]{display:none!important}
 #ie-search-popover .ie-search-clear:hover{background:#f1f2f4}
 #ie-search-popover .ie-search-clear svg{display:block;width:16px;height:16px}
+
+#ie-toolbar #ie-copy{width:92px;min-width:92px;max-width:92px;box-sizing:border-box}#ie-toolbar #ie-copy.ie-copied svg{display:none!important}
