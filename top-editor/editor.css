@@ -70,3 +70,15 @@ body.ie-enabled:not(.ie-preview){padding-top:var(--ie-toolbar-height,60px)!impor
 body.ie-preview #ie-resume{display:block}
 body.ie-enabled:not(.ie-preview){padding-top:calc(var(--ie-original-padding-top,0px) + var(--ie-toolbar-height,60px))!important}
 body.ie-preview{padding-top:var(--ie-original-padding-top,0px)!important}
+/* Search, menu, and page settings share a compact popover surface. */
+.ie-popover{position:fixed;z-index:2147483602;width:300px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 85px);overflow:auto;padding:10px;background:#fff;color:#171717;border:1px solid #ddd;border-radius:14px;box-shadow:0 8px 30px #0002;font:14px/1.4 system-ui,sans-serif;text-align:left}
+.ie-popover[hidden]{display:none!important}.ie-popover *{box-sizing:border-box}
+.ie-popover input{display:block;width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#171717;font:inherit}
+.ie-popover button,.ie-popover a{font:inherit;color:#171717;cursor:pointer}
+.ie-popover button:focus-visible,.ie-popover a:focus-visible,.ie-popover input:focus{outline:2px solid #171717;outline-offset:2px}
+#ie-search-popover{width:350px}.ie-results{max-height:280px;overflow:auto;margin-top:6px}
+.ie-results button{display:block;width:100%;padding:10px;text-align:left;border:0;border-radius:8px;background:#fff}
+.ie-results button:hover,.ie-results button[aria-selected=true]{background:#f1f2f4}.ie-results strong,.ie-results span{display:block}.ie-results span{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ie-results p{margin:12px;color:#666;font:inherit}
+#ie-menu-popover{width:230px;padding:6px}#ie-menu-popover button,#ie-menu-popover a{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 12px;border:0;border-radius:8px;background:#fff;text-decoration:none;text-align:left}#ie-menu-popover button:hover,#ie-menu-popover a:hover{background:#f1f2f4}#ie-menu-popover svg{width:16px;height:16px}#ie-menu-popover hr{border:0;border-top:1px solid #eee;margin:5px}
+#ie-settings-popover label{display:block;margin:12px 0;font-weight:500}#ie-settings-popover label input{margin-top:5px}.ie-settings-actions{display:flex;justify-content:flex-end;gap:8px}.ie-settings-actions button{border:1px solid #ddd;border-radius:999px;padding:8px 15px;background:#fff}.ie-settings-actions button[type=submit]{background:#171717;color:#fff;border-color:#171717}#ie-settings-popover [role=alert]{color:#a21;font:12px system-ui}
+body.ie-preview .ie-popover{display:none!important}
