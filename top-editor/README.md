@@ -33,3 +33,15 @@ The exact hostname routes take precedence over Built.at's existing `*.built.at/*
 Samples: https://edit.built.at/demo.html, https://edit.built.at/sample.html, https://side-edit.built.at/demo.html. The staging sample at https://built-at-editors.natepuls.workers.dev/top/sample.html loads the production toolbar across origins.
 
 Verified in Chrome: both loaders initialize independently; top-toolbar text edit/undo/redo; section delete and undo with nested paragraphs/image; full document export keeps all author styles/script/footer and strips editor code; side-panel content edit, undo, and Copy HTML. No frameworks, package installation or build pipeline required.
+
+## Search, menu and drafts
+
+Click the magnifying glass to open **Search**. It matches visible text, descriptive `data-edit` names, section names, element tags, IDs, accessible labels and image alt text, including text outside marked fields. Choosing a result scrolls to and selects its element. Arrow keys/Enter choose a result; Escape closes the popover.
+
+The ellipsis menu contains **Page settings**, **New page**, and **Revert changes…**. Page settings edits the HTML title and favicon as one undoable action. New page opens the existing website creation flow at `https://built.at/editor#website-description` in another tab. A hosting system may override that destination with `data-new-page-url="https://your-host/new"` on the installation script.
+
+Drafts save automatically to localStorage and restore on refresh. They are isolated by page URL, ignore editor/preview query flags, and require the original source fingerprint to match. Changed originals discard stale drafts. Revert confirms, restores the original loaded page, clears undo/redo and removes that page's saved draft. A blocked/full localStorage does not break editing or Copy HTML.
+
+Image details include alt text; selecting a link or linked image exposes its destination URL. Page settings, image/link attributes, text, styles and section changes are included in history, drafts and clean HTML export. Search/menu/settings controls are always excluded from export.
+
+Run `node tests/toolbar-drafts.mjs` to verify source matching, refresh restoration, page isolation, clearing and blocked storage.

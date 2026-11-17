@@ -11,7 +11,8 @@ export default {async fetch(request){
  if(request.method==='OPTIONS')return new Response(null,{headers:{...headers,'access-control-allow-methods':'GET, HEAD, OPTIONS'}});
  if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405,headers});
  if(!(top?topFiles:sideFiles).has(file))return new Response('Not found',{status:404,headers});
- const source='https://raw.githubusercontent.com/nathanpuls/html-editor/'+(top?'main/top-editor/':sideRelease+'/')+file;
+ const source=new URL('https://raw.githubusercontent.com/nathanpuls/html-editor/'+(top?'main/top-editor/':sideRelease+'/')+file);
+ if(top)source.searchParams.set('refresh',String(Date.now()));
  try{
   const response=await fetch(source,{cf:{cacheTtl:0}});
   if(!response.ok)return new Response('Editor asset unavailable',{status:502,headers});

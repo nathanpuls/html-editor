@@ -7,12 +7,14 @@ export function exportHTML(originals){
  const clones=[page,...page.querySelectorAll('*')];
  clones.forEach((el,i)=>{
   if(el.matches(runtimeSelector)){el.remove();return}
+  if(el.hasAttribute('data-codex-favicon-badge')){const href=el.getAttribute('data-codex-original-favicon-href');if(!href){el.remove();return}el.setAttribute('href',href);el.removeAttribute('data-codex-favicon-badge');el.removeAttribute('data-codex-original-favicon-href')}
   if(el.tagName==='SCRIPT'&&el.src){
    const url=new URL(el.getAttribute('src'),document.baseURI);
    if(['edit.built.at','side-edit.built.at'].includes(url.hostname)){el.remove();return}
   }
   if(el.classList.contains('ie-active-field')){el.classList.remove('ie-active-field');if(!el.className)el.removeAttribute('class')}
   if(el===page.querySelector('body'))el.classList.remove('ie-enabled','ie-preview','ie-dragging');
+  if(el.hasAttribute('class')&&!el.getAttribute('class').trim())el.removeAttribute('class');
   const original=originals.get(live[i]);
   if(original)for(const name of ['contenteditable','spellcheck']){if(original[name]===null)el.removeAttribute(name);else el.setAttribute(name,original[name])}
   if(el.hasAttribute('style')){el.style.removeProperty('--ie-selection-outline');el.style.removeProperty('--ie-toolbar-height');el.style.removeProperty('--ie-original-padding-top');if(!el.getAttribute('style').trim())el.removeAttribute('style')}
