@@ -57,18 +57,19 @@ export function createDraftStore(sourceHTML,serialize,apply){
  const url=new URL(location.href);for(const name of ['edit','preview','inspect','editor-load'])url.searchParams.delete(name);
  const key='built-at:toolbar:draft:'+url.origin+url.pathname+url.search;
  const source=sourceHTML.length+':'+(hash>>>0).toString(16);
+ console.info('[Built.at draft] source',source);
  let last=sourceHTML,timer=null,paused=false;
  const clear=()=>{clearTimeout(timer);last=sourceHTML;try{localStorage.removeItem(key)}catch{}};
  const save=()=>{
   if(paused)return;
   const html=serialize();if(html===last)return;
-  try{if(html===sourceHTML)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify({version:1,source,html}));last=html}catch{}
+  try{if(html===sourceHTML)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify({version:1,source,html}));last=html;console.info('[Built.at draft] saved',source,html.length)}catch(error){console.warn('[Built.at draft] save failed',String(error))}
  };
  const restore=()=>{
-  try{const draft=JSON.parse(localStorage.getItem(key)||'null');if(!draft)return false;
+  try{const draft=JSON.parse(localStorage.getItem(key)||'null');if(!draft){console.info('[Built.at draft] none');return false}console.info('[Built.at draft] restoring',draft.source,source);
    if(draft.version!==1||draft.source!==source||typeof draft.html!=='string'){clear();return false}
    paused=true;apply(draft.html);last=draft.html;return true;
-  }catch{clear();return false}finally{paused=false}
+  }catch(error){console.warn('[Built.at draft] restore failed',String(error));clear();return false}finally{paused=false}
  };
  const observer=new MutationObserver(()=>{if(paused)return;clearTimeout(timer);timer=setTimeout(save,350)});
  const watch=()=>{observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});document.addEventListener('input',schedule,true);window.addEventListener('pagehide',save)};
