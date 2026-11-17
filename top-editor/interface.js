@@ -40,12 +40,22 @@ export function startEditor(){
  const updateColorSwatches=()=>{const t=$('ie-text-swatch'),b=$('ie-bg-swatch'),r=$('ie-border-swatch');t.style.color=$('ie-color').value;b.style.setProperty('--ie-swatch-color',$('ie-bg').value);r.style.setProperty('--ie-swatch-color',$('ie-border').value);r.style.opacity=$('ie-border-none').dataset.none==='true'?'.3':'1';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';};['ie-color','ie-bg','ie-border'].forEach(id=>$(id).addEventListener('input',updateColorSwatches));
  let colorSession=null;
  const matchingElements=el=>mode==='element'&&selected.size>1?[...selected].filter(x=>x.isConnected):[el];
- const styleChange=(key,value,live=false)=>{if(mode==='element'&&!active)return;const el=current();if(live){if(!colorSession||colorSession.el!==el||colorSession.key!==key){undo.push(snapshot());redo.length=0;colorSession={el,key}}}else{colorSession=null;undo.push(snapshot());redo.length=0}if(mode==='page'&&key==='color'){
+ const styleChange=(key,value,live=false)=>{if(mode==='element'&&!active)return;const el=current();if(live){if(!colorSession||colorSession.el!==el||colorSession.key!==key){undo.push(snapshot());redo.length=0;colorSession={el,key}}}else{colorSession=null;undo.push(snapshot());redo.length=0}if(mode==='page'&&key==='fontFamily'){
+  const targets=[document.body,...document.body.querySelectorAll('*')].filter(target=>!target.closest('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-codex-agent-overlay-root]'));
+  for(const target of targets){if(value)target.style.setProperty('font-family',value,'important');else target.style.removeProperty('font-family')}
+  let sheet=document.getElementById('ie-page-font-style');
+  if(!value){sheet?.remove()}else{
+   if(!sheet){sheet=document.createElement('style');sheet.id='ie-page-font-style';document.head.append(sheet)}
+   // CSSOM serialization keeps font names inside a valid declaration.
+   const declaration=document.createElement('span');declaration.style.fontFamily=value;
+   sheet.textContent='body,body :not([data-built-at-editor-runtime]):not([data-built-at-editor-runtime] *){font-family:'+declaration.style.fontFamily+'!important}';
+  }
+ }else if(mode==='page'&&key==='color'){
   document.body.style.setProperty('--ie-page-text-color',value);
   let sheet=document.getElementById('ie-page-text-style');
   if(!sheet){sheet=document.createElement('style');sheet.id='ie-page-text-style';document.head.append(sheet)}
   sheet.textContent='body :not(#ie-toolbar):not(#ie-toolbar *):not([data-built-at-editor-runtime]):not([data-built-at-editor-runtime] *){color:var(--ie-page-text-color)!important}';
- }else {for(const target of matchingElements(el)){if(key==='borderColor'){target.style.removeProperty('border-style');target.style.setProperty('border-color',value,'important');const cs=getComputedStyle(target);if(parseFloat(cs.borderTopWidth)===0||cs.borderTopStyle==='none'){target.style.setProperty('border-width','1px','important');target.style.setProperty('border-style','solid','important')}}else if(key==='color'&&mode==='element')target.style.setProperty('color',value,'important');else target.style[key]=value}}if(key==='backgroundColor')updateSelectionContrast()};
+ }else {for(const target of matchingElements(el)){if(key==='borderColor'){target.style.removeProperty('border-style');target.style.setProperty('border-color',value,'important');const cs=getComputedStyle(target);if(parseFloat(cs.borderTopWidth)===0||cs.borderTopStyle==='none'){target.style.setProperty('border-width','1px','important');target.style.setProperty('border-style','solid','important')}}else if(key==='color'&&mode==='element')target.style.setProperty('color',value,'important');else if(key==='fontFamily')target.style.setProperty('font-family',value,'important');else target.style[key]=value}}if(key==='backgroundColor')updateSelectionContrast()};
  $('ie-font').onchange=e=>{ensureGoogleFont(e.target.value);styleChange('fontFamily',e.target.value)};
  $('ie-size').oninput=e=>{const n=Number(e.target.value);$('ie-size-value').textContent=n+'px';styleChange('fontSize',n+'px',true)};$('ie-size').onchange=()=>{colorSession=null};
  $('ie-color').oninput=e=>styleChange('color',e.target.value,true);$('ie-color').onchange=()=>{colorSession=null};
