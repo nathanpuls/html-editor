@@ -1,4 +1,4 @@
-import {toolbarHTML,mountTools} from './toolbar.js';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261117-copy-blue';
 import {hex,ensureGoogleFont} from './design.js';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
@@ -171,4 +171,18 @@ export function startEditor(){
  });
  drafts.restore();drafts.watch();
 
+ // Selection frames stay rectangular and never alter the author's border or shadow.
+ const frames=new Map();
+ const drawSelection=()=>{
+  const items=preview?new Set():selected;
+  for(const [el,frame] of frames)if(!items.has(el)||!el.isConnected){frame.remove();frames.delete(el)}
+  for(const el of items){if(!el.isConnected)continue;let frame=frames.get(el);
+   if(!frame){frame=document.createElement('div');frame.dataset.builtAtEditorRuntime='';frame.className='ie-selection-frame';frame.setAttribute('aria-hidden','true');document.body.append(frame);frames.set(el,frame)}
+   const r=el.getBoundingClientRect();const style='left:'+(r.left-3)+'px;top:'+(r.top-3)+'px;width:'+(r.width+6)+'px;height:'+(r.height+6)+'px';
+   if(frame.style.cssText.replace(/\s/g,'')!==style+';')frame.style.cssText=style;
+  }
+ };
+ new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('[data-built-at-editor-runtime]')))drawSelection()}).observe(document.body,{subtree:true,attributes:true,childList:true,characterData:true});
+ window.addEventListener('scroll',drawSelection,true);window.addEventListener('resize',drawSelection);
+ document.addEventListener('pointerup',drawSelection,true);document.addEventListener('keydown',()=>queueMicrotask(drawSelection));
 }

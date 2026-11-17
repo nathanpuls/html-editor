@@ -116,3 +116,8 @@ body.ie-preview .ie-popover{display:none!important}
 #ie-toolbar #ie-copy{flex:none;padding:8px 12px}
 
 #ie-toolbar #ie-copy{display:inline-flex;align-items:center;justify-content:center;gap:7px}#ie-toolbar #ie-copy svg{width:16px;height:16px;flex:none}
+
+/* Muted rectangular selection frames with a fine white contrast edge. */
+.ie-active-field{outline:none!important;box-shadow:none!important;filter:none!important}
+.ie-selection-frame{position:fixed;z-index:2147483599;pointer-events:none;box-sizing:border-box;border:1px solid #6B9AC4;border-radius:0;box-shadow:0 0 0 1px rgba(255,255,255,.85)}
+body.ie-preview .ie-selection-frame{display:none!important}
