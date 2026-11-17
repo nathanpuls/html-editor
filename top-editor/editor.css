@@ -114,3 +114,5 @@ body.ie-preview .ie-popover{display:none!important}
 #ie-toolbar input[type=range]{width:clamp(48px,5vw,85px)}
 #ie-toolbar :is(#ie-close,#ie-menu,#ie-undo,#ie-redo,#ie-delete){flex:0 0 30px;width:30px;min-width:30px}
 #ie-toolbar #ie-copy{flex:none;padding:8px 12px}
+
+#ie-toolbar #ie-copy{display:inline-flex;align-items:center;justify-content:center;gap:7px}#ie-toolbar #ie-copy svg{width:16px;height:16px;flex:none}

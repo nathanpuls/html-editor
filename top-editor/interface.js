@@ -148,8 +148,8 @@ export function startEditor(){
  setMode('page');
  $('ie-copy').onclick=async()=>{
   if(textEditing&&active){active.blur();active.contentEditable='false';textEditing=false}
-  try{await copyHTML(exportHTML(authorAttributes));$('ie-copy').textContent='Copied!';setTimeout(()=>$('ie-copy').textContent='Copy HTML',1600)}
-  catch(error){console.error('Editor export copy failed',error);$('ie-copy').textContent='Copy failed'}
+  try{await copyHTML(exportHTML(authorAttributes));$('ie-copy-label').textContent='Copied!';setTimeout(()=>$('ie-copy-label').textContent='HTML',1600)}
+  catch(error){console.error('Editor export copy failed',error);$('ie-copy-label').textContent='Copy failed'}
  };
  document.addEventListener('click',e=>{if(!preview&&!bar.contains(e.target)&&!imagePopup.contains(e.target)&&!e.target.closest('[data-built-at-editor-runtime]')&&e.target.closest('a,button,input[type=submit]')){e.preventDefault();e.stopPropagation()}},true);
  document.addEventListener('submit',e=>{if(!preview&&!e.target.closest('[data-built-at-editor-runtime]'))e.preventDefault()},true);
