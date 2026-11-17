@@ -19,12 +19,13 @@ export function mountTools({bar,select,elementName,change,revert}){
  const choose=i=>{const el=matches[i];if(!el?.isConnected)return;close();select(el);el.scrollIntoView({block:'center',behavior:'smooth'});el.focus({preventScroll:true})};
  const draw=()=>{
   const query=input.value.trim().toLocaleLowerCase();index=-1;results.replaceChildren();matches=[];
-  if(!query)return;
+  
   const candidates=[...document.body.querySelectorAll('*')].filter(el=>!el.closest('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-codex-agent-overlay-root]')&&!el.matches('script,style,template,noscript')&&el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden');
   const text=el=>(el.hasAttribute('data-edit')?el.innerText:[...el.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(' '))||'';
-  matches=candidates.filter(el=>[text(el),el.getAttribute('data-edit'),el.getAttribute('data-section'),el.getAttribute('aria-label'),el.getAttribute('alt'),el.id,el.tagName].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)).slice(0,50);
-  if(!matches.length){const empty=document.createElement('p');empty.textContent='No results';results.append(empty)}
+  matches=candidates.filter(el=>(query||el.hasAttribute('data-edit')||el.hasAttribute('data-section'))&&[text(el),el.getAttribute('data-edit'),el.getAttribute('data-section'),el.getAttribute('aria-label'),el.getAttribute('alt'),el.id,el.tagName].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)).slice(0,50);
+  if(!matches.length&&query){const empty=document.createElement('p');empty.textContent='No results';results.append(empty)}
   matches.forEach((el,i)=>{const row=document.createElement('button');row.type='button';row.setAttribute('role','option');row.setAttribute('aria-selected','false');const name=document.createElement('strong');name.textContent=elementName(el);const snippet=document.createElement('span');snippet.textContent=(text(el).trim()||el.getAttribute('alt')||el.getAttribute('aria-label')||'').slice(0,140);row.append(name,snippet);row.onclick=()=>choose(i);results.append(row)});
+  if(!query||/page|settings|title|favicon/.test(query)){const setting=document.createElement('button');setting.type='button';setting.textContent='Page settings';setting.onclick=()=>menu.querySelector('#ie-settings-action').click();results.prepend(setting)}
   position(search,searchButton);
  };
  searchButton.onclick=()=>{if(!search.hidden){close();return}open(search,searchButton);input.value='';draw();input.focus()};
@@ -40,5 +41,6 @@ export function mountTools({bar,select,elementName,change,revert}){
  menu.querySelector('#ie-revert-action').onclick=()=>{close();if(window.confirm('Revert all changes and clear this page’s saved draft?'))revert()};
  document.addEventListener('pointerdown',e=>{if(![search,menu,settings,searchButton,menuButton].some(el=>el.contains(e.target)))close()},true);
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(!search.hidden||!menu.hidden||!settings.hidden)){e.preventDefault();e.stopImmediatePropagation();const back=!search.hidden?searchButton:menuButton;close();back.focus()}},true);
+ const picker=bar.querySelector('#ie-label');picker.hidden=true;picker.style.setProperty('display','none','important');const trigger=document.createElement('button');trigger.id='ie-element-picker';trigger.type='button';trigger.textContent='Select Item ⌄';trigger.setAttribute('aria-label','Choose an element');picker.after(trigger);trigger.onclick=searchButton.onclick;const observer=new MutationObserver(()=>{const option=picker.selectedOptions[0];trigger.textContent=(option?.value?option.textContent:'Select Item')+' ⌄'});observer.observe(picker,{childList:true,subtree:true,attributes:true});
  window.addEventListener('resize',close);return {close};
 }

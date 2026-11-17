@@ -83,3 +83,13 @@ body.ie-preview{padding-top:var(--ie-original-padding-top,0px)!important}
 #ie-settings-popover label{display:block;margin:12px 0;font-weight:500}#ie-settings-popover label input{margin-top:5px}.ie-settings-actions{display:flex;justify-content:flex-end;gap:8px}.ie-settings-actions button{border:1px solid #ddd;border-radius:999px;padding:8px 15px;background:#fff}.ie-settings-actions button[type=submit]{background:#171717;color:#fff;border-color:#171717}#ie-settings-popover [role=alert]{color:#a21;font:12px system-ui}
 body.ie-preview .ie-popover{display:none!important}
 #ie-image-popup [hidden]{display:none!important}
+/* Quiet controls and one shared typeface. */
+#ie-toolbar,#ie-toolbar .ie-brand,#ie-toolbar button,#ie-toolbar select,#ie-toolbar input,.ie-popover{font-family:system-ui,-apple-system,sans-serif!important}
+#ie-toolbar .ie-brand{font-weight:700}
+#ie-toolbar :is(button,select,input,textarea):focus,#ie-toolbar :is(button,select,input,textarea):focus-visible,.ie-popover :is(button,a,input):focus,.ie-popover :is(button,a,input):focus-visible{outline:none!important;box-shadow:none!important}
+#ie-toolbar :is(#ie-close,#ie-menu,#ie-undo,#ie-redo,#ie-delete,#ie-search){border:0!important;background:transparent;border-radius:6px!important}
+#ie-toolbar :is(#ie-close,#ie-menu,#ie-undo,#ie-redo,#ie-delete,#ie-search):hover{background:#f1f2f4}
+#ie-toolbar .ie-control:has(#ie-color),#ie-toolbar .ie-control:has(#ie-bg),#ie-toolbar .ie-border-control,#ie-toolbar .ie-control:has(#ie-radius){border-color:transparent!important;background:#f8f9fa}
+#ie-search-popover input{border-color:#ddd}#ie-search-popover input:focus{border-color:#888}
+#ie-resume{padding:10px;width:40px;height:40px;border:0;box-shadow:0 2px 10px #0001}#ie-resume svg{display:block;width:20px;height:20px}
+#ie-element-picker{background:#f1f2f4!important;color:#555;min-width:135px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
