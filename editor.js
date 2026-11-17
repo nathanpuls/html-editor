@@ -12,6 +12,7 @@
  import(asset('interface.js')).then(async({startEditor})=>{
    startEditor();
    const {mountInlineEditor}=await import(asset('inline editor/inline.js'));
-   mountInlineEditor();
+   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mountInlineEditor,{once:true});
+   else mountInlineEditor();
  }).catch(error=>console.error('HTML Editor failed to initialize',error));
 })();
