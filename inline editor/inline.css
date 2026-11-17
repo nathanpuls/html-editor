@@ -1,0 +1,18 @@
+/* A top-toolbar presentation of the original editor. All existing editing logic is retained. */
+#ue-pencil{display:none!important}
+#ie-bar{position:fixed;top:0;left:0;right:0;height:56px;z-index:2147483590;background:#fff;color:#222;border-bottom:1px solid #e5e5e5;display:flex;align-items:center;gap:9px;padding:7px 15px;font:13px system-ui,sans-serif;box-shadow:0 2px 12px #00000009}
+#ie-bar *{box-sizing:border-box}#ie-bar button{font:inherit;cursor:pointer;border:1px solid #e7e7e7;background:#fff;color:#252525;border-radius:8px;padding:8px 11px;white-space:nowrap}
+#ie-bar button:hover{background:#f4f4f4}#ie-bar .ie-logo{font-weight:750;border:0;font-size:15px}#ie-bar .ie-brand{background:#242424;color:white;border-radius:7px;padding:6px 8px;margin-right:5px}
+#ie-bar .ie-context{display:flex;gap:6px;align-items:center;flex:1;min-width:0;overflow:auto;scrollbar-width:none}#ie-bar .ie-muted{color:#888;white-space:nowrap}
+#ie-bar .ie-copy{background:#242424;color:#fff;border-color:#242424}
+body.ie-active{padding-top:56px!important}
+body.ie-active [data-edit]{cursor:pointer}body.ie-active [data-edit]:hover{outline:2px dashed #8364d8;outline-offset:4px}
+body.ie-active [data-edit].ie-selected{outline:2px solid #7451d1;outline-offset:4px}
+#ue-screen:not([hidden]){position:fixed!important;top:56px!important;left:12px!important;right:auto!important;bottom:auto!important;width:min(410px,calc(100vw - 24px))!important;height:min(74dvh,740px)!important;max-height:calc(100dvh - 70px)!important;overflow:auto!important;padding:18px!important;border:1px solid #e5e5e5!important;border-radius:12px!important;box-shadow:0 14px 45px #0002!important;z-index:2147483600!important;background:#fff!important}
+#ue-screen:not([hidden]) #ue-wrap{width:100%!important;max-width:none!important}
+#ue-screen:not([hidden]) #ue-resize,#ue-screen:not([hidden]) #ue-resize-right{display:none!important}
+#ue-screen:not([hidden]) #ue-head{margin-bottom:12px!important}
+#ue-screen:not([hidden]) #ue-heading strong{font-size:16px!important}
+#ue-screen:not([hidden]) #ue-searchbar{margin-bottom:10px!important}
+#ue-screen:not([hidden]) #ue-actions{position:sticky;bottom:-18px;background:white;padding:12px 0;z-index:2}
+@media(max-width:560px){#ie-bar{padding:6px;gap:3px}#ie-bar button{padding:8px 7px}#ie-bar .ie-label{display:none}#ue-screen:not([hidden]){left:6px!important;width:calc(100vw - 12px)!important}}
