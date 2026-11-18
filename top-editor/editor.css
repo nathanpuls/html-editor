@@ -135,7 +135,7 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-search-popover .ie-search-clear:hover{background:#f1f2f4}
 #ie-search-popover .ie-search-clear svg{display:block;width:16px;height:16px}
 
-#ie-toolbar #ie-copy{width:92px;min-width:92px;max-width:92px;box-sizing:border-box}#ie-toolbar #ie-copy.ie-copied svg{display:none!important}
+#ie-toolbar #ie-copy{width:92px;min-width:92px;max-width:92px;box-sizing:border-box}
 
 /* Match the font dropdown: quiet gray outlines, white control surfaces. */
 #ie-toolbar #ie-search.ie-unified-picker{border:1px solid #ddd!important;background:#fff!important}
@@ -195,3 +195,11 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-search-popover .ie-search-input-wrap>svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:17px;height:17px;pointer-events:none;color:#666}
 #ie-search-popover input[type=search]{padding-left:36px}
 #ie-search-popover .ie-results{flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
+
+/* Copy matches the other icon actions without changing width on success. */
+#ie-toolbar #ie-copy{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;min-width:30px;max-width:30px;height:34px;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;color:#171717;box-shadow:none!important;gap:0}
+#ie-toolbar #ie-copy svg{width:17px;height:17px;stroke-width:1.9;flex:none}
+#ie-toolbar #ie-copy .ie-copy-check{display:none}
+#ie-toolbar #ie-copy.ie-copied>svg[data-lucide=copy]{display:none}
+#ie-toolbar #ie-copy.ie-copied .ie-copy-check{display:block}
+#ie-toolbar .ie-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
