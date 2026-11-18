@@ -40,6 +40,7 @@ export function applyDocument(html){
   const old=[...node.childNodes].filter(n=>!runtime(n));const used=new Set();
   let previous=null;
   for(const child of next.childNodes){
+   if(runtime(child))continue;
    let match=old.find(n=>!used.has(n)&&key(n)===key(child));
    if(match){used.add(match);patch(match,child)}else match=document.importNode(child,true);
    const anchor=previous?previous.nextSibling:node.firstChild;
@@ -51,14 +52,14 @@ export function applyDocument(html){
  patch(document.documentElement,parsed.documentElement);
 }
 
-/* Automatic per-page drafts. The source fingerprint rejects stale drafts. */
+/* Automatic per-page drafts. Runtime source changes must not discard edits. */
 export function createDraftStore(sourceHTML,serialize,apply){
  let hash=2166136261;for(let i=0;i<sourceHTML.length;i++){hash^=sourceHTML.charCodeAt(i);hash=Math.imul(hash,16777619)}
  const url=new URL(location.href);for(const name of ['edit','preview','inspect','editor-load'])url.searchParams.delete(name);
  const key='built-at:toolbar:draft:'+url.origin+url.pathname+url.search;
  const source=sourceHTML.length+':'+(hash>>>0).toString(16);
  let last=sourceHTML,timer=null,paused=false;
- const clear=()=>{clearTimeout(timer);last=sourceHTML;try{localStorage.removeItem(key)}catch{}};
+ const clear=()=>{clearTimeout(timer);timer=null;last=sourceHTML;try{localStorage.removeItem(key)}catch{}};
  const save=()=>{
   if(paused)return;
   const html=serialize();if(html===last)return;
@@ -66,13 +67,14 @@ export function createDraftStore(sourceHTML,serialize,apply){
  };
  const restore=()=>{
   try{const draft=JSON.parse(localStorage.getItem(key)||'null');if(!draft)return false;
-   if(draft.version!==1||draft.source!==source||typeof draft.html!=='string'){clear();return false}
+   if(draft.version!==1||typeof draft.html!=='string'){clear();return false}
    paused=true;apply(draft.html);last=draft.html;return true;
   }catch{clear();return false}finally{paused=false}
  };
- const observer=new MutationObserver(()=>{if(paused)return;clearTimeout(timer);timer=setTimeout(save,350)});
- const watch=()=>{observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});document.addEventListener('input',schedule,true);window.addEventListener('pagehide',save)};
- const schedule=()=>{clearTimeout(timer);timer=setTimeout(save,350)};
+ const runtime=node=>node.nodeType===1?node.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]'):node.parentElement?.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]');
+ const observer=new MutationObserver(records=>{if(paused||records.every(r=>runtime(r.target)))return;schedule()});
+ const watch=()=>{observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});document.addEventListener('input',schedule,true);window.addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()})};
+ const schedule=()=>{if(timer!==null)return;timer=setTimeout(()=>{timer=null;save()},150)};
  const reset=fn=>{paused=true;observer.disconnect();clear();try{fn()}finally{paused=false;watch()}};
  return {restore,watch,clear,reset,save};
 }

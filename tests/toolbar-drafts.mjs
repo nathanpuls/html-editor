@@ -10,11 +10,11 @@ assert.equal(first.restore(),false);
 output='edited';first.save();assert.equal(values.size,1);
 const refresh=createDraftStore('original',()=>'',html=>restored=html);
 assert.equal(refresh.restore(),true);assert.equal(restored,'edited');
-// A changed source must never restore an older working copy.
+// Runtime or host source changes must not silently discard unfinished edits.
 restored=null;const changed=createDraftStore('new original',()=>'',html=>restored=html);
-assert.equal(changed.restore(),false);assert.equal(restored,null);assert.equal(values.size,0);
+assert.equal(changed.restore(),true);assert.equal(restored,'edited');assert.equal(values.size,1);
 first.save(); // last saved value is unchanged; no redundant storage write.
-assert.equal(values.size,0);
+assert.equal(values.size,1);
 output='second edit';first.save();
 globalThis.location.href='https://example.com/different-page';
 assert.equal(createDraftStore('original',()=>'',()=>{}).restore(),false);

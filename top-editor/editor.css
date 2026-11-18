@@ -184,3 +184,5 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-toolbar .ie-control > :is(select,input,output,.ie-color-picker){
  align-self:center!important;
 }
+
+#ie-toolbar #ie-select-similar{height:34px;flex-shrink:0;border:1px solid #ddd;border-radius:18px;padding:0 10px;background:white;color:#222;font:inherit;font-size:12px}#ie-toolbar #ie-select-similar[hidden]{display:none!important}
