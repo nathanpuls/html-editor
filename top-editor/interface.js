@@ -45,7 +45,7 @@ SOFTWARE.
 
 */
 import {toolbarHTML,mountTools} from './toolbar.js?v=20261117-search-match';
-import {hex,ensureGoogleFont} from './design.js';
+import {hex,ensureGoogleFont,mountColorPicker} from './design.js';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
@@ -139,7 +139,7 @@ const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el
 ['ie-font','ie-size'].forEach(id=>$(id).disabled=!enabled||!targets.length||!targets.every(textCapable));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));
 ['ie-bg','ie-radius','ie-border','ie-border-none'].forEach(id=>$(id).disabled=!enabled||!targets.length);
-const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.size>1?selected.size+' selected':elementName(active);refreshElementList();$('ie-label').title=name;$('ie-label').classList.toggle('ie-selected',mode==='element'&&!!active);if(!enabled)return;const c=getComputedStyle(current());const paint=current().matches('svg,svg *')?[current(),...current().querySelectorAll('*')].map(node=>getComputedStyle(node)).find(style=>style.stroke!=='none'||style.fill!=='none'):null;$('ie-font').value=[...$('ie-font').options].some(o=>o.value===c.fontFamily)?c.fontFamily:'';$('ie-size').value=Math.round(parseFloat(c.fontSize))||16;$('ie-color').value=mode==='page'?(document.body.style.getPropertyValue('--ie-page-text-color')||hex(c.color)):(paint?hex(paint.stroke!=='none'?paint.stroke:paint.fill):(current().style.color?hex(current().style.color):hex(c.color)));$('ie-bg').value=c.backgroundColor==='rgba(0, 0, 0, 0)'?'#ffffff':hex(c.backgroundColor);$('ie-radius').value=Math.round(parseFloat(c.borderTopLeftRadius))||0;$('ie-size-value').textContent=$('ie-size').value+'px';$('ie-radius-value').textContent=$('ie-radius').value+'px';$('ie-border').value=hex(c.borderTopColor);$('ie-border-none').dataset.none=(c.borderTopStyle==='none'||parseFloat(c.borderTopWidth)===0)?'true':'false';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';updateColorSwatches()};
+const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.size>1?selected.size+' selected':elementName(active);refreshElementList();$('ie-label').title=name;$('ie-label').classList.toggle('ie-selected',mode==='element'&&!!active);if(!enabled)return;const c=getComputedStyle(current());const paint=current().matches('svg,svg *')?[current(),...current().querySelectorAll('*')].map(node=>getComputedStyle(node)).find(style=>style.stroke!=='none'||style.fill!=='none'):null;$('ie-font').value=[...$('ie-font').options].some(o=>o.value===c.fontFamily)?c.fontFamily:'';$('ie-size').value=Math.round(parseFloat(c.fontSize))||16;$('ie-color').value=mode==='page'?(document.body.style.getPropertyValue('--ie-page-text-color')||hex(c.color)):(paint?hex(paint.stroke!=='none'?paint.stroke:paint.fill):(current().style.color?hex(current().style.color):hex(c.color)));$('ie-bg').value=hex(c.backgroundColor);$('ie-radius').value=Math.round(parseFloat(c.borderTopLeftRadius))||0;$('ie-size-value').textContent=$('ie-size').value+'px';$('ie-radius-value').textContent=$('ie-radius').value+'px';$('ie-border').value=hex(c.borderTopColor);$('ie-border-none').dataset.none=(c.borderTopStyle==='none'||parseFloat(c.borderTopWidth)===0)?'true':'false';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';updateColorSwatches()};
  const updateColorSwatches=()=>{const t=$('ie-text-swatch'),b=$('ie-bg-swatch'),r=$('ie-border-swatch');t.style.color=$('ie-color').value;b.style.setProperty('--ie-swatch-color',$('ie-bg').value);r.style.setProperty('--ie-swatch-color',$('ie-border').value);r.style.opacity=$('ie-border-none').dataset.none==='true'?'.3':'1';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';$('ie-border-none').closest('label').dataset.ieTooltip=$('ie-border-none').checked?'Remove border':'Add border';};['ie-color','ie-bg','ie-border'].forEach(id=>$(id).addEventListener('input',updateColorSwatches));
  let colorSession=null;
  const matchingElements=el=>mode==='element'&&selected.size>1?[...selected].filter(x=>x.isConnected):[el];
@@ -341,6 +341,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
+ mountColorPicker(bar);
 
  // Selection frames stay rectangular and never alter the author's border or shadow.
  const frames=new Map();

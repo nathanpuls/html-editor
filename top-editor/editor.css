@@ -223,3 +223,20 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-menu-popover .ie-shortcuts kbd{padding:0;background:transparent;border:0}
 #ie-toolbar .ie-control:has(#ie-color),#ie-toolbar .ie-control:has(#ie-bg),#ie-toolbar .ie-border-control,#ie-toolbar .ie-control:has(#ie-radius){padding-left:12px!important;padding-right:12px!important}
 #ie-toolbar #ie-font{padding-left:14px!important;padding-right:30px!important}
+
+/* Shared alpha-aware color picker. */
+#ie-toolbar .ie-color-picker .ie-color-trigger{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:transparent;opacity:0;cursor:pointer;z-index:1}
+#ie-toolbar .ie-color-picker:has(.ie-color-trigger:disabled){opacity:.4}
+#ie-color-popover{width:250px;padding:12px;box-sizing:border-box;overflow:hidden}
+#ie-color-popover .ie-color-area{position:relative;width:100%;height:145px;border-radius:7px;touch-action:none;cursor:crosshair;background-image:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent);outline:none}
+#ie-color-popover .ie-color-cursor{position:absolute;width:10px;height:10px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 2px 1px #0008;transform:translate(-50%,-50%);pointer-events:none}
+#ie-color-popover .ie-picker-row,#ie-color-popover .ie-hex-row{display:flex;align-items:center;gap:9px;margin:12px 0 0;font-size:12px}
+#ie-color-popover .ie-picker-row>span,#ie-color-popover .ie-hex-row>span{width:44px;flex:none}
+#ie-color-popover input[type=range]{appearance:none;-webkit-appearance:none;flex:1;min-width:0;width:0;height:10px;border:0;border-radius:8px;padding:0;margin:0;cursor:pointer}
+#ie-color-popover input[type=range]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:14px;height:14px;border:2px solid #fff;border-radius:50%;background:transparent;box-shadow:0 0 2px 1px #0008}
+#ie-color-popover input[type=range]::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:transparent;box-shadow:0 0 2px 1px #0008}
+#ie-color-popover .ie-hue{background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+#ie-color-popover .ie-alpha{background:linear-gradient(to right,transparent,var(--ie-alpha-color)),repeating-conic-gradient(#ddd 0% 25%,#fff 0% 50%) 0/8px 8px}
+#ie-color-popover output{min-width:32px;text-align:right;font-size:11px;color:#666}
+#ie-color-popover .ie-hex{min-width:0;flex:1;padding:7px 9px;font:12px system-ui,sans-serif;border:1px solid #ddd;border-radius:6px}
+#ie-color-popover .ie-hex[aria-invalid=true]{border-color:#c66}
