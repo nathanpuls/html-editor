@@ -213,3 +213,13 @@ body.ie-preview .ie-selection-frame{display:none!important}
 .ie-shortcuts kbd{font:11px/1.4 system-ui,sans-serif;color:#777;white-space:nowrap}
 #ie-tooltip{position:fixed;z-index:2147483647;pointer-events:none;max-width:260px;padding:6px 9px;border:0;border-radius:6px;background:#222;color:#fff;box-shadow:0 2px 8px #0002;font:12px/1.4 system-ui,-apple-system,sans-serif;text-align:center}
 #ie-tooltip[hidden]{display:none!important}
+
+/* Match action-row insets and give control pills balanced breathing room. */
+#ie-menu-popover{width:280px;box-sizing:border-box}
+#ie-menu-popover .ie-shortcuts{margin:5px 0 0;padding:5px 0 0;border-top:1px solid #eee}
+#ie-menu-popover .ie-shortcuts>button{padding:11px 12px;gap:16px}
+#ie-menu-popover .ie-shortcuts>button:disabled{color:#b8b8b8;background:transparent;cursor:default}
+#ie-menu-popover .ie-shortcuts>button:disabled kbd{color:#c4c4c4}
+#ie-menu-popover .ie-shortcuts kbd{padding:0;background:transparent;border:0}
+#ie-toolbar .ie-control:has(#ie-color),#ie-toolbar .ie-control:has(#ie-bg),#ie-toolbar .ie-border-control,#ie-toolbar .ie-control:has(#ie-radius){padding-left:12px!important;padding-right:12px!important}
+#ie-toolbar #ie-font{padding-left:14px!important;padding-right:30px!important}

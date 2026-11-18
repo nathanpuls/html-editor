@@ -223,15 +223,16 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  const endDrag=()=>{if(!drag)return;const wasDragging=drag.started;drag=null;marquee.hidden=true;document.body.classList.remove('ie-dragging');if(wasDragging)syncControls()};
  document.addEventListener('pointerup',endDrag,true);
  document.addEventListener('pointercancel',endDrag,true);
+ const selectAllElements=()=>{      finish();selected.forEach(el=>el.classList.remove('ie-active-field'));selected.clear();
+      for(const el of editableElements())if(el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden'){selected.add(el);el.classList.add('ie-active-field')}
+      active=[...selected].at(-1)||null;mode=active?'element':'page';$('ie-page').classList.toggle('ie-selected',!active);
+      updateSelectionContrast();syncControls();};
  document.addEventListener('keydown',e=>{
   if(e.target.closest?.('[data-built-at-editor-runtime]')&&e.target.matches('input,textarea,select'))return;
   if(!preview&&(e.metaKey||e.ctrlKey)&&!e.altKey&&e.key.toLowerCase()==='a'){
     const target=e.target;
     if(!target?.isContentEditable&&!target?.closest?.('input,textarea,select,[contenteditable="true"]')&&!bar.contains(target)){
-      e.preventDefault();finish();selected.forEach(el=>el.classList.remove('ie-active-field'));selected.clear();
-      for(const el of editableElements())if(el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden'){selected.add(el);el.classList.add('ie-active-field')}
-      active=[...selected].at(-1)||null;mode=active?'element':'page';$('ie-page').classList.toggle('ie-selected',!active);
-      updateSelectionContrast();syncControls();return;
+      e.preventDefault();selectAllElements();return;
     }
   }
   if((e.key==='Delete'||e.key==='Backspace')&&active&&!preview&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
@@ -277,6 +278,14 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  };
  const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()});
  tools=mountTools({bar,select,elementName,
+  shortcutActions:()=>[
+   {label:'Undo',key:'undo',enabled:undo.length>0,run:()=>$('ie-undo').click()},
+   {label:'Redo',key:'redo',enabled:redo.length>0,run:()=>$('ie-redo').click()},
+   {label:'Select all elements',key:'all',enabled:editableElements().length>0,run:selectAllElements},
+   {label:'Edit text at end',key:'edit',enabled:selected.size===1&&canEditText(active)&&!textEditing,run:()=>beginTextEdit(active)},
+   {label:'Delete selected',key:'delete',enabled:!!active,run:()=>$('ie-delete').click()},
+   {label:active?'Deselect':'Hide toolbar',key:'escape',enabled:true,run:()=>{if(active)finish();else{preview=true;applyPreview()}}}
+  ],
   similarInfo:()=>{
    if(mode!=='element'||!active)return null;
    const group=active.getAttribute('data-edit-group');let elements=[];
