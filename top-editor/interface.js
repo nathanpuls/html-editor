@@ -162,7 +162,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  setMode('page');
  $('ie-copy').onclick=async()=>{
   if(textEditing&&active){active.blur();active.contentEditable='false';textEditing=false}
-  try{await copyHTML(exportHTML(authorAttributes));$('ie-copy').classList.add('ie-copied');$('ie-copy-label').textContent='Copied!';setTimeout(()=>{$('ie-copy-label').textContent='HTML';$('ie-copy').classList.remove('ie-copied')},1600)}
+  try{await copyHTML(exportHTML(authorAttributes));$('ie-copy').classList.add('ie-copied');$('ie-copy-label').textContent='Copied!';setTimeout(()=>{$('ie-copy-label').textContent='Copy';$('ie-copy').classList.remove('ie-copied')},1600)}
   catch(error){console.error('Editor export copy failed',error);$('ie-copy-label').textContent='Copy failed'}
  };
  document.addEventListener('click',e=>{if(!preview&&!bar.contains(e.target)&&!imagePopup.contains(e.target)&&!e.target.closest('[data-built-at-editor-runtime]')&&e.target.closest('a,button,input[type=submit]')){e.preventDefault();e.stopPropagation()}},true);

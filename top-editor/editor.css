@@ -136,3 +136,8 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-search-popover .ie-search-clear svg{display:block;width:16px;height:16px}
 
 #ie-toolbar #ie-copy{width:92px;min-width:92px;max-width:92px;box-sizing:border-box}#ie-toolbar #ie-copy.ie-copied svg{display:none!important}
+
+/* Match the font dropdown: quiet gray outlines, white control surfaces. */
+#ie-toolbar #ie-search.ie-unified-picker{border:1px solid #ddd!important;background:#fff!important}
+#ie-toolbar .ie-control:has(#ie-color),#ie-toolbar .ie-control:has(#ie-bg),#ie-toolbar .ie-border-control,#ie-toolbar .ie-control:has(#ie-radius){border:1px solid #ddd!important;background:transparent!important}
+#ie-toolbar .ie-text-swatch,#ie-toolbar .ie-bg-swatch{border-color:#ddd}
