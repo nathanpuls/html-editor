@@ -141,3 +141,27 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-toolbar #ie-search.ie-unified-picker{border:1px solid #ddd!important;background:#fff!important}
 #ie-toolbar .ie-control:has(#ie-color),#ie-toolbar .ie-control:has(#ie-bg),#ie-toolbar .ie-border-control,#ie-toolbar .ie-control:has(#ie-radius){border:1px solid #ddd!important;background:transparent!important}
 #ie-toolbar .ie-text-swatch,#ie-toolbar .ie-bg-swatch{border-color:#ddd}
+
+/* One shared control height for the toolbar's complete row. */
+#ie-toolbar{--ie-control-height:34px;align-items:center!important}
+#ie-toolbar .ie-control,
+#ie-toolbar #ie-font,
+#ie-toolbar #ie-search.ie-unified-picker,
+#ie-toolbar :is(#ie-copy,#ie-close,#ie-menu,#ie-undo,#ie-redo,#ie-delete){
+ height:var(--ie-control-height)!important;
+ min-height:var(--ie-control-height)!important;
+ max-height:var(--ie-control-height)!important;
+ box-sizing:border-box!important;
+ align-items:center;
+ align-self:center;
+}
+#ie-toolbar #ie-font,#ie-toolbar #ie-search.ie-unified-picker,#ie-toolbar #ie-copy{padding-top:0!important;padding-bottom:0!important}
+#ie-toolbar .ie-control{display:flex;line-height:1.2}
+#ie-toolbar .ie-control:has(#ie-color),
+#ie-toolbar .ie-control:has(#ie-bg),
+#ie-toolbar .ie-border-control,
+#ie-toolbar .ie-control:has(#ie-radius){padding-top:0!important;padding-bottom:0!important}
+#ie-toolbar .ie-color-picker{height:26px!important;align-self:center}
+#ie-toolbar .ie-border-toggle{height:26px!important;transform:none!important;align-self:center!important}
+#ie-toolbar input[type=range]{margin-top:0;margin-bottom:0;vertical-align:middle}
+#ie-toolbar :is(#ie-close,#ie-menu,#ie-undo,#ie-redo,#ie-delete){display:inline-flex;justify-content:center;padding-top:0!important;padding-bottom:0!important}
