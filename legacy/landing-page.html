@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>HTML Editor — Make a website your own</title>
+<meta name="description" content="Describe your website, copy a ready-made AI prompt, and edit the finished HTML in your browser. No account or server required.">
+<style>
+:root{color-scheme:light;--black:#111111;--muted:#666666;--line:#e7e7e7;--light:#f8f8f8;--white:#fff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--white);color:var(--black);font-family:Manrope,Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button,textarea{font:inherit}
+button{cursor:pointer}
+a{color:inherit}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid #333;outline-offset:3px}
+.container{width:min(1120px,calc(100% - 64px));margin:0 auto}
+header{height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:inline-flex;align-items:center;gap:11px;text-decoration:none;font-weight:800;font-size:16px;letter-spacing:-.045em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border:1px solid #202020;border-radius:9px;background:#111;color:#fff}
+.lucide{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nav{display:flex;align-items:center;gap:26px;font-size:13px;font-weight:650}
+.nav a{text-decoration:none;color:#555}
+.nav a:hover{color:#111}
+.nav .nav-demo{display:inline-flex;align-items:center;gap:7px;color:#111}
+.nav .lucide{width:15px;height:15px}
+main{padding-top:116px;padding-bottom:100px}
+h1{font-size:clamp(48px,6.5vw,88px);line-height:1.035;letter-spacing:-.078em;font-weight:800;margin:0 0 24px;max-width:860px}
+.lead{font-size:18px;line-height:1.8;color:#626262;max-width:590px;margin:0 0 56px}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:64px;align-items:start}
+.editor-card{min-width:0}
+.prompt-heading{display:flex;align-items:baseline;justify-content:space-between;gap:15px;margin-bottom:13px}
+label{font-size:14px;font-weight:750;letter-spacing:-.015em}
+textarea{width:100%;min-height:245px;resize:vertical;display:block;border:1px solid #dcdcdc;border-radius:12px;padding:21px 22px;background:white;color:#171717;font-size:15px;line-height:1.7;outline:none;transition:border-color .15s,box-shadow .15s}
+textarea:focus{border-color:#444;box-shadow:0 0 0 3px #0000000a;outline:none}
+.primary{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;background:#111;color:#fff;border:1px solid #111;border-radius:10px;margin-top:13px;padding:17px 24px;font-size:14px;font-weight:800;transition:background .15s,transform .15s}
+.primary:hover{background:#303030}
+.primary:active{transform:scale(.995)}
+.primary .lucide{width:17px;height:17px}
+.helper{font-size:12px;line-height:1.8;color:#858585;margin:15px 2px 0}
+.guide{border:1px solid var(--line);border-radius:13px;padding:24px 23px 26px;background:#fcfcfc}
+.guide-heading{font-size:15px;font-weight:800;margin:0 0 24px;letter-spacing:-.025em}
+.steps{display:grid;gap:26px}
+.step{display:grid;grid-template-columns:25px 1fr;gap:12px}
+.step-icon{width:25px;height:25px;display:grid;place-items:center;background:#f0f0f0;border:1px solid #e8e8e8;border-radius:7px;color:#444}
+.step-icon .lucide{width:14px;height:14px}
+.step strong{display:block;font-size:13px;font-weight:800;line-height:1.5}
+.step p{font-size:12px;line-height:1.75;color:#777;margin:5px 0 0}
+.detail{max-width:780px;margin:0 auto 86px}
+.preview-toggle{display:inline-flex;align-items:center;gap:9px;border:0;background:transparent;padding:9px 0;font-size:13px;font-weight:750;color:#555}
+.preview-toggle:hover{color:#111}
+.preview-toggle .lucide{width:16px;height:16px;transition:transform .15s}
+.preview-toggle[aria-expanded="true"] .lucide{transform:rotate(180deg)}
+.prompt-preview{margin:15px 0 0;background:#fafafa;border:1px solid var(--line);border-radius:12px;padding:22px;max-height:430px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#555;font:12px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace}
+footer{display:flex;justify-content:flex-end;gap:20px;align-items:center;padding:26px 0 34px;color:#929292;font-size:12px}
+footer a{text-decoration:none;color:#555}footer a:hover{color:#111;text-decoration:underline}
+.footer-links{display:flex;gap:20px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+[hidden]{display:none!important}
+@media(max-width:900px){main{padding-top:85px}.workspace{grid-template-columns:minmax(0,1fr) 245px;gap:32px}}
+@media(max-width:700px){.container{width:calc(100% - 40px)}header{height:70px}main{padding-top:68px;padding-bottom:62px}h1{font-size:clamp(45px,10vw,67px)}.lead{font-size:16px;margin-bottom:38px}.workspace{grid-template-columns:1fr;gap:33px}.guide{padding:22px}.steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.step{grid-template-columns:1fr;gap:8px}.detail{margin-bottom:58px}}
+@media(max-width:480px){.nav{gap:13px}.nav a:first-child{display:none}.steps{grid-template-columns:1fr;gap:19px}.step{grid-template-columns:25px 1fr;gap:12px}h1{letter-spacing:-.065em}.prompt-heading{margin-bottom:12px}textarea{min-height:220px;padding:17px}.guide{border-radius:11px}footer{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <a class="brand" href="./index.html" aria-label="HTML Editor home">
+    <span class="brand-mark"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/><path d="m14.5 4-5 16"/></svg></span>
+    HTML Editor
+  </a>
+  <nav class="nav" aria-label="Navigation">
+    <a href="#how-it-works">How it works</a>
+    <a class="nav-demo" href="./demo.html">Try the editor <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+  </nav>
+</header>
+<main>
+  <h1>Your website.<br>Your design.</h1>
+  <p class="lead">Describe what you want. Get a ready-to-use prompt for your AI, then edit the HTML yourself. No complicated tools.</p>
+  <div class="workspace">
+    <div class="editor-card">
+      <div class="prompt-heading"><label for="website-description">Describe your website</label></div>
+      <textarea id="website-description" spellcheck="true"></textarea>
+      <button class="primary" type="button" id="copy-prompt">
+        <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        <span id="copy-label">Copy AI prompt</span>
+      </button>
+      <p class="helper">Works with ChatGPT or any AI that generates HTML. No account, API key, or server needed.</p>
+      <div id="copy-announcement" class="sr-only" role="status" aria-live="polite"></div>
+    </div>
+    <aside id="how-it-works" class="guide" aria-label="How it works">
+      <h2 class="guide-heading">How it works</h2>
+      <div class="steps">
+        <div class="step"><span class="step-icon"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span><div><strong>Describe</strong><p>Tell us what you want to create.</p></div></div>
+        <div class="step"><span class="step-icon"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg></span><div><strong>Generate</strong><p>Paste the prompt into your AI and save the HTML as a file.</p></div></div>
+        <div class="step"><span class="step-icon"><svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 5 3 3M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/><path d="M12 20h9"/></svg></span><div><strong>Edit</strong><p>Open the page and press E to make changes.</p></div></div>
+      </div>
+    </aside>
+  </div>
+</main>
+<section class="detail" aria-label="Generated prompt">
+  <button type="button" class="preview-toggle" id="preview-toggle" aria-expanded="false" aria-controls="prompt-preview">See the full AI prompt <svg class="lucide" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  <pre id="prompt-preview" class="prompt-preview" hidden></pre>
+</section>
+<footer><div class="footer-links"><a href="https://github.com/nathanpuls/html-editor">GitHub</a></div></footer>
+</div>
+<script>
+(()=>{
+  "use strict";
+  const input=document.getElementById("website-description");
+  const button=document.getElementById("copy-prompt");
+  const label=document.getElementById("copy-label");
+  const announcement=document.getElementById("copy-announcement");
+  const preview=document.getElementById("prompt-preview");
+  const toggle=document.getElementById("preview-toggle");
+  const promptText=()=>[
+    "Create a responsive, single-page HTML website that faithfully follows the user's design brief. Return only the full HTML document, beginning with <!DOCTYPE html>.",
+    "",
+    "WEBSITE BRIEF",
+    input.value.trim()||"Create a one-page website. Choose a design appropriate to its purpose, without assuming any particular style, level of complexity, or visual trend.",
+    "",
+    "TECHNICAL REQUIREMENTS — FOLLOW ALL",
+    "1. Produce one full standalone HTML document, with inline CSS and only minimal inline JavaScript if essential. No build tools, frameworks, CDNs, icon fonts, remote scripts, or dependency downloads.",
+    "2. Add <script src=\"https://edit.built.at\" defer><\/script> in the document head. The editor loads from Built.at.",
+    "3. Every user-editable heading, paragraph, image, and individual link must have one descriptive data-edit attribute, for example: <h1 data-edit=\"Hero heading\">Welcome<\/h1>. The attribute value becomes the field label. Never use data-label.",
+    "4. An editable article-style block can be a <div data-edit=\"About copy\"> containing only direct <p> children. Do not nest other editable elements inside a data-edit element, except the special links collection below.",
+    "5. Each independently manageable, reorderable section must use a unique data-section value, such as <section data-section=\"about\" aria-label=\"About\">. Keep sections as siblings under the same parent so they can be reordered. Use a stable, unique id and a human-readable aria-label.",
+    "6. For a collection of editable links that users can add, remove, and reorder, use <nav data-edit=\"links\"><a data-edit=\"Contact link\" href=\"https://example.com\">Contact<\/a><\/nav>. The exact value links is reserved for such a collection.",
+    "7. Use the .button class consistently for button-looking links and buttons. Ordinary hyperlinks must remain visually distinct from buttons. Do not style the editor UI or floating pencil with broad global button rules.",
+    "8. Let the user's brief determine the entire design: aesthetic, layout, density, complexity, color palette, typography, and content. Do not assume a modern, elaborate, minimalist, or any other style unless requested. Do not add decorative effects, sections, or features just to make the page more impressive. For the design choices actually used, expose meaningful colors and dimensions as clearly named CSS custom properties in :root (such as --page-bg, --main-text, --accent, or --hero-bg where relevant). Reuse variables consistently; do not invent unused variables. The HTML Editor discovers supported :root variables automatically in its Design tab.",
+    "9. Include a concise, meaningful <title> and a <meta name=\"description\" content=\"...\">.",
+    "10. Make the website accessible and mobile responsive: semantic landmarks, alt text, adequate contrast, keyboard-friendly links and buttons, and correct heading hierarchy.",
+    "11. Prioritize fidelity to the user's requested design over visual flourish. Make the page feel finished at whatever level of simplicity or complexity the brief calls for. Avoid generic filler, debug text, demo instructions, mock UI, or unexplained placeholders. If important details are unknown, make sensible clearly editable assumptions rather than inventing factual credentials or guarantees.",
+    "12. Keep the finished website usable offline. Prefer system fonts, CSS-generated decoration, and inline SVG. Images that rely on remote URLs will not load offline; avoid remote image dependencies unless requested. If an image needs to be editable using the current HTML Editor, provide an absolute HTTPS image URL and meaningful alt text.",
+    "13. Do not change or duplicate the HTML Editor JavaScript. The separate editor.js handles edits, undo, Style, Sections, local drafts, and copying HTML.",
+    "",
+    "OUTPUT",
+    "Return only the HTML source in one code block. No explanation before or after the HTML."
+  ].join("\n");
+  function refreshPreview(){if(!preview.hidden)preview.textContent=promptText()}
+  input.addEventListener("input",refreshPreview);
+  toggle.addEventListener("click",()=>{const open=preview.hidden;preview.hidden=!open;toggle.setAttribute("aria-expanded",String(open));toggle.textContent=open?"Hide full AI prompt":"See the full AI prompt";refreshPreview()});
+  button.addEventListener("click",async()=>{
+    const value=promptText();
+    try{
+      if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value)}
+      else{
+        const temporary=document.createElement("textarea");temporary.value=value;temporary.style.position="fixed";temporary.style.left="-9999px";document.body.append(temporary);temporary.focus();temporary.select();
+        const copied=document.execCommand("copy");temporary.remove();if(!copied)throw new Error("Clipboard unavailable");
+      }
+      label.textContent="Copied to clipboard";announcement.textContent="AI prompt copied to clipboard.";
+    }catch{
+      preview.hidden=false;toggle.setAttribute("aria-expanded","true");toggle.textContent="Hide full AI prompt";preview.textContent=value;
+      label.textContent="Select the prompt below";announcement.textContent="Clipboard access is unavailable. Select and copy the prompt shown below.";
+    }
+  });
+})();
+</script>
+</body>
+</html>

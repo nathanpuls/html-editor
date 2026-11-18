@@ -180,6 +180,9 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  };
  const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()});
  tools=mountTools({bar,select,elementName,
+  similarInfo:()=>{const group=mode==='element'&&active?.getAttribute('data-edit-group');if(!group)return null;const elements=[...document.querySelectorAll('[data-edit-group]')].filter(el=>el.getAttribute('data-edit-group')===group&&!el.closest('[data-built-at-editor-runtime]'));return elements.length>1?{group,elements}:null},
+  selectSimilar:elements=>{finish();mode='element';for(const el of elements){if(!el.isConnected)continue;selected.add(el);el.classList.add('ie-active-field')}active=[...selected].at(-1)||null;$('ie-page').classList.remove('ie-selected');updateSelectionContrast();syncControls()},
+
   change:fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()},
   revert:()=>drafts.reset(()=>{finish();restore(original);undo.length=redo.length=0;preview=false;afterRestore()})
  });

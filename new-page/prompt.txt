@@ -27,6 +27,8 @@ Create a responsive, single-page HTML website based on the brief below. Return o
 
 **Before responding:** Verify that all visible content is individually editable, including text inside cards and other parent components.
 
+11. **Related elements:** Use the same descriptive `data-edit-group` value for repeated elements that should share styling, such as `service-cards`, `service-headings`, or `service-buttons`. Every member must still have its own unique, descriptive `data-edit` label. Group parent cards separately from their headings, paragraphs, images, and buttons. Use groups only for genuinely equivalent elements; never group unrelated items merely because they share an HTML tag. Selecting similar elements changes their shared styles, not their individual content.
+
 ### Output
 
 Return only the full HTML document, beginning with `<!DOCTYPE html>`, in one code block. No explanations.
