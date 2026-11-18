@@ -72,15 +72,45 @@ export function startEditor(){
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
 
  const imagePopup=document.createElement('div');imagePopup.id='ie-image-popup';imagePopup.dataset.builtAtEditorRuntime='';imagePopup.hidden=true;
- imagePopup.innerHTML='<label for="ie-image-url">Image URL</label><input id="ie-image-url" type="url" placeholder="Paste image URL"><label for="ie-image-alt" id="ie-image-alt-label">Alt text</label><input id="ie-image-alt" type="text"><label for="ie-link-url" id="ie-link-url-label">Link URL</label><input id="ie-link-url" type="text"><button type="button" id="ie-add-link" hidden>Add new link</button><button type="button" id="ie-image-apply">Apply</button>';
+ imagePopup.innerHTML='<label for="ie-image-url">Image URL</label><input id="ie-image-url" type="url" placeholder="Paste image URL"><label for="ie-image-alt" id="ie-image-alt-label">Alt text</label><input id="ie-image-alt" type="text"><label for="ie-link-url" id="ie-link-url-label">Link URL</label><input id="ie-link-url" type="text"><button type="button" id="ie-add-link" hidden>Add new link</button><p id="ie-url-status" role="status" aria-live="polite" hidden></p>';
  document.body.append(imagePopup);
  const imageInput=imagePopup.querySelector('input');
  const imageTarget=el=>el?.tagName==='IMG'||el?.matches('.hero-art,[role="img"]')||!!el&&getComputedStyle(el).backgroundImage!=='none';
  const imageValue=el=>{if(el.tagName==='IMG')return el.getAttribute('src')||'';const bg=getComputedStyle(el).backgroundImage;return bg.startsWith('url(')?bg.slice(4,-1).replace(/^["']|["']$/g,''):''};
  const collectionLink=el=>{const link=el?.closest('a');return link?.closest('[data-edit="links"]')?link:null};
- const showImagePopup=el=>{imagePopup.hidden=false;imagePopup.querySelector('#ie-add-link').hidden=!collectionLink(el);const image=imageTarget(el),link=el.closest('a');imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-300,Math.max(10,r.bottom+10)))+'px'};
- const hideImagePopup=()=>{imagePopup.hidden=true};
- const applyImage=()=>{const el=active;if(!el||!el.isConnected)return;const url=imageInput.value.trim();const link=el.closest('a'),href=imagePopup.querySelector('#ie-link-url').value.trim();if(link&&/^\s*(javascript|vbscript|data):/i.test(href))return;undo.push(snapshot());redo.length=0;if(el.tagName==='IMG'){el.setAttribute('src',url);el.setAttribute('alt',imagePopup.querySelector('#ie-image-alt').value)}else if(imageTarget(el)){el.style.backgroundImage=url?'url("'+url.replace(/"/g,'%22')+'")':'none';el.style.backgroundSize='cover';el.style.backgroundPosition='center';if(el.matches('.hero-art')){el.style.fontSize=url?'0px':'';el.style.minHeight='125px'}}if(link)link.setAttribute('href',href);imagePopup.querySelector('#ie-image-apply').textContent='Applied';setTimeout(()=>{imagePopup.querySelector('#ie-image-apply').textContent='Apply'},1200)};
+ let popupTarget=null;
+ const showImagePopup=el=>{popupTarget=el;imagePopup.querySelector('#ie-url-status').hidden=true;imagePopup.hidden=false;imagePopup.querySelector('#ie-add-link').hidden=!collectionLink(el);const image=imageTarget(el),link=el.closest('a');imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-300,Math.max(10,r.bottom+10)))+'px'};
+ const pendingFields=new Map();let imageRevision=0;
+ const urlStatus=message=>{const status=imagePopup.querySelector('#ie-url-status');status.textContent=message;status.hidden=!message};
+ const validURL=(value,image=false)=>{if(!value||/\\s/.test(value))return false;try{const url=new URL(value,document.baseURI);return image?['http:','https:','blob:'].includes(url.protocol)||/^data:image\\//i.test(value):['http:','https:','mailto:','tel:'].includes(url.protocol)}catch{return false}};
+ const recordChange=fn=>{undo.push(snapshot());redo.length=0;fn();drafts.save()};
+ const applyField=({input,el,value,revision})=>{
+  if(!el?.isConnected)return;
+  if(input.id==='ie-link-url'){const link=el.closest('a');if(link&&validURL(value)&&link.getAttribute('href')!==value)recordChange(()=>link.setAttribute('href',value));return}
+  if(input.id==='ie-image-alt'){if(el.tagName==='IMG'&&el.getAttribute('alt')!==value)recordChange(()=>el.setAttribute('alt',value));return}
+  if(!validURL(value,true)||imageValue(el)===value)return;
+  const previous=imageValue(el),probe=new Image();
+  probe.onload=()=>{if(revision!==imageRevision||!el.isConnected||imageValue(el)!==previous)return;
+   recordChange(()=>{if(el.tagName==='IMG'){el.setAttribute('src',value);el.removeAttribute('srcset');el.removeAttribute('sizes');const picture=el.closest('picture');picture?.querySelectorAll('source').forEach(source=>{source.removeAttribute('srcset');source.removeAttribute('sizes')})}else{el.style.backgroundImage='url('+JSON.stringify(value)+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';if(el.matches('.hero-art')){el.style.fontSize='0px';el.style.minHeight='125px'}}});if(popupTarget===el)urlStatus('');
+  };
+  probe.onerror=()=>{if(revision===imageRevision&&popupTarget===el)urlStatus('Image could not load. Previous image kept.')};
+  probe.src=value;
+ };
+ const flushFields=()=>{for(const [input,record] of pendingFields){clearTimeout(record.timer);pendingFields.delete(input);applyField(record)}};
+ const cancelURLUpdates=()=>{imageRevision++;for(const record of pendingFields.values())clearTimeout(record.timer);pendingFields.clear()};
+ const hideImagePopup=()=>{flushFields();imagePopup.hidden=true};
+ const queueField=(input,immediate=false)=>{
+  if(input===imageInput)urlStatus('');
+  const prior=pendingFields.get(input);if(prior)clearTimeout(prior.timer);
+  const record={input,el:popupTarget,value:input.value.trim(),revision:input===imageInput?++imageRevision:imageRevision};
+  pendingFields.delete(input);if(immediate)applyField(record);else{record.timer=setTimeout(()=>{pendingFields.delete(input);applyField(record)},350);pendingFields.set(input,record)}
+ };
+ for(const input of imagePopup.querySelectorAll('input')){
+  let pasting=false;input.addEventListener('paste',()=>{pasting=true;queueMicrotask(()=>{pasting=false})});
+  input.addEventListener('input',e=>queueField(input,pasting||e.inputType==='insertFromPaste'));
+  input.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();hideImagePopup()}});
+ }
+ document.addEventListener('pointerdown',e=>{if(!imagePopup.hidden&&!imagePopup.contains(e.target))hideImagePopup()},true);
  imagePopup.querySelector('#ie-add-link').onclick=()=>{
   const link=collectionLink(active);if(!link)return;
   undo.push(snapshot());redo.length=0;
@@ -92,7 +122,7 @@ export function startEditor(){
   item.after(clone);const next=clone.matches('a')?clone:clone.querySelector('a');select(next);drafts.save();
  };
  for(const input of [imageInput,imagePopup.querySelector('#ie-link-url')]){input.addEventListener('focus',()=>input.select());input.addEventListener('click',()=>input.select())}
- imagePopup.querySelector('#ie-image-apply').onclick=applyImage;imageInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();applyImage()}if(e.key==='Escape')hideImagePopup()};
+
  imagePopup.addEventListener('pointerdown',e=>e.stopPropagation());
  
  const updateToolbarHeight=()=>document.body.style.setProperty('--ie-toolbar-height',Math.ceil(bar.getBoundingClientRect().height)+'px');
@@ -251,8 +281,8 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!preview){e.preventDefault();e.shiftKey?$('ie-redo').click():$('ie-undo').click()}
  });
  syncControls();
- $('ie-undo').onclick=()=>{finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop());setMode('page')};
- $('ie-redo').onclick=()=>{finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop());setMode('page')};
+ $('ie-undo').onclick=()=>{cancelURLUpdates();finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop());setMode('page')};
+ $('ie-redo').onclick=()=>{cancelURLUpdates();finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop());setMode('page')};
  let tools=null;
  const applyPreview=()=>{document.body.classList.toggle('ie-preview',preview);if(preview){finish();tools?.close()}};
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
@@ -299,7 +329,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   change:fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()},
   selectionInfo:()=>mode==='element'&&selected.size?{count:selected.size}:null,
   revertSelection:()=>{
-   const targets=[...selected].filter(el=>el.isConnected);if(!targets.length)return;
+   cancelURLUpdates();const targets=[...selected].filter(el=>el.isConnected);if(!targets.length)return;
    undo.push(snapshot());redo.length=0;finish();
    // Restore only baseline records below the selected roots. New elements
    // have no original version, so reverting them removes the addition.
@@ -308,7 +338,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
    for(const el of targets){if(originalRecords.has(el))collect(el);else el.remove()}
    restore([...records.values()]);setMode('page');drafts.save();
   },
-  revert:()=>drafts.reset(()=>{finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
+  revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
 
