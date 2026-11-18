@@ -186,3 +186,12 @@ body.ie-preview .ie-selection-frame{display:none!important}
 }
 
 #ie-toolbar #ie-select-similar{height:34px;flex-shrink:0;border:1px solid #ddd;border-radius:18px;padding:0 10px;background:white;color:#222;font:inherit;font-size:12px}#ie-toolbar #ie-select-similar[hidden]{display:none!important}
+
+/* Compact brand and a full-height searchable selection menu. */
+#ie-toolbar a.ie-brand{display:inline-flex;align-items:center;justify-content:center;width:28px;height:34px;padding:0!important;margin-right:3px!important;flex:none;text-decoration:none;background:transparent;border:0!important}
+#ie-toolbar .ie-brand img{display:block;width:26px;height:26px;max-width:none;object-fit:contain}
+#ie-search-popover{display:flex;flex-direction:column;overflow:hidden;max-height:none;box-sizing:border-box}
+#ie-search-popover .ie-search-input-wrap{flex:none;background:#fff}
+#ie-search-popover .ie-search-input-wrap>svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:17px;height:17px;pointer-events:none;color:#666}
+#ie-search-popover input[type=search]{padding-left:36px}
+#ie-search-popover .ie-results{flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
