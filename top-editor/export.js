@@ -6,7 +6,13 @@ export function exportHTML(originals){
  const live=[document.documentElement,...document.documentElement.querySelectorAll('*')];
  const clones=[page,...page.querySelectorAll('*')];
  clones.forEach((el,i)=>{
-  if(el.matches(runtimeSelector)){el.remove();return}
+  if(el.matches(runtimeSelector)&&!el.hasAttribute('data-built-at-editor-launcher')){el.remove();return}
+  // Strip only the known hosting-injected base, not author-defined base URLs.
+  if(el.tagName==='BASE'&&location.hostname==='built.at'&&/^\/editor\/?$/.test(location.pathname)&&el.getAttribute('href')==='/editor/'){el.remove();return}
+  if(el.tagName==='SCRIPT'&&el.hasAttribute('data-cf-beacon')){try{if(new URL(el.getAttribute('src'),document.baseURI).hostname==='static.cloudflareinsights.com'){el.remove();return}}catch{}}
+  if(el.hasAttribute('data-export-text'))el.textContent=el.getAttribute('data-export-text');
+  if(el.hasAttribute('data-export-disabled'))el.setAttribute('disabled','');
+  if(el.hasAttribute('data-export-enabled'))el.removeAttribute('disabled');
   if(el.hasAttribute('data-codex-favicon-badge')){const href=el.getAttribute('data-codex-original-favicon-href');if(!href){el.remove();return}el.setAttribute('href',href);el.removeAttribute('data-codex-favicon-badge');el.removeAttribute('data-codex-original-favicon-href')}
   if(el.tagName==='SCRIPT'&&el.src){
    const url=new URL(el.getAttribute('src'),document.baseURI);
