@@ -51,6 +51,10 @@ import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
 /* Selection and interaction logic extracted from Pages!B4. */
 export function startEditor(){
+ const {snapshot,restore}=createHistory(()=>[...document.querySelectorAll('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume')]);
+ // Capture the loaded document before editor setup or any saved draft is applied.
+ const original=snapshot();
+ const originalRecords=new Map(original.map(record=>[record.node,record]));
  const authorAttributes=captureAuthorAttributes();
  const sourceHTML=exportHTML(authorAttributes);
  document.body.style.setProperty('--ie-original-padding-top',getComputedStyle(document.body).paddingTop);
@@ -150,7 +154,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   }
  };
  enablePxEntry('ie-size','ie-size-value','fontSize');
- enablePxEntry('ie-radius','ie-radius-value','borderRadius'); const {snapshot,restore}=createHistory(()=>[bar,imagePopup,document.getElementById('ie-marquee'),document.getElementById('ie-resume')].filter(Boolean));
+ enablePxEntry('ie-radius','ie-radius-value','borderRadius');
   $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}syncControls()};
  let textEditing=false;
  const canEditText=el=>el?.hasAttribute('data-edit')&&!el.matches('header,footer,section,article,aside,nav,[data-section],img,svg,svg *,video,canvas,input,textarea,select,hr')&&!imageTarget(el);
@@ -265,7 +269,6 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  resume.onclick=()=>{preview=false;applyPreview()};
  document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.target.closest('input,textarea,select,[contenteditable=true]')){preview=false;applyPreview()}});
 
- const original=snapshot();
  const afterRestore=()=>{
   captureAuthorAttributes(authorAttributes);
   document.body.classList.remove('ie-enabled','ie-preview');
@@ -285,7 +288,18 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   selectSimilar:elements=>{finish();mode='element';for(const el of elements){if(!el.isConnected)continue;selected.add(el);el.classList.add('ie-active-field')}active=[...selected].at(-1)||null;$('ie-page').classList.remove('ie-selected');updateSelectionContrast();syncControls()},
 
   change:fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()},
-  revert:()=>drafts.reset(()=>{finish();restore(original);applyDocument(sourceHTML);undo.length=redo.length=0;preview=false;afterRestore()})
+  selectionInfo:()=>mode==='element'&&selected.size?{count:selected.size}:null,
+  revertSelection:()=>{
+   const targets=[...selected].filter(el=>el.isConnected);if(!targets.length)return;
+   undo.push(snapshot());redo.length=0;finish();
+   // Restore only baseline records below the selected roots. New elements
+   // have no original version, so reverting them removes the addition.
+   const records=new Map();
+   const collect=node=>{const record=originalRecords.get(node);if(!record||records.has(node))return;records.set(node,record);record.children.forEach(collect)};
+   for(const el of targets){if(originalRecords.has(el))collect(el);else el.remove()}
+   restore([...records.values()]);setMode('page');drafts.save();
+  },
+  revert:()=>drafts.reset(()=>{finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
 

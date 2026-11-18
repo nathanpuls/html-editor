@@ -73,7 +73,8 @@ export function createDraftStore(sourceHTML,serialize,apply){
  };
  const runtime=node=>node.nodeType===1?node.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]'):node.parentElement?.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]');
  const observer=new MutationObserver(records=>{if(paused||records.every(r=>runtime(r.target)))return;schedule()});
- const watch=()=>{observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});document.addEventListener('input',schedule,true);window.addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()})};
+ let listening=false;
+ const watch=()=>{observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});if(listening)return;listening=true;document.addEventListener('input',schedule,true);window.addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()})};
  const schedule=()=>{if(timer!==null)return;timer=setTimeout(()=>{timer=null;save()},150)};
  const reset=fn=>{paused=true;observer.disconnect();clear();try{fn()}finally{paused=false;watch()}};
  return {restore,watch,clear,reset,save};

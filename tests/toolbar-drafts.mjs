@@ -3,6 +3,8 @@ import {createDraftStore} from '../top-editor/history.js';
 const values=new Map();
 globalThis.localStorage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
 globalThis.MutationObserver=class{observe(){}disconnect(){}};
+globalThis.document={addEventListener(){},documentElement:{}};
+globalThis.window={addEventListener(){}};
 globalThis.location={href:'https://example.com/page?edit'};
 let output='original',restored=null;
 const first=createDraftStore('original',()=>output,html=>restored=html);
@@ -21,6 +23,11 @@ assert.equal(createDraftStore('original',()=>'',()=>{}).restore(),false);
 globalThis.location.href='https://example.com/page?preview=1';
 assert.equal(createDraftStore('original',()=>'',()=>{}).restore(),true);
 refresh.clear();assert.equal(values.size,0);
+// Reset must discard the saved edit and must not re-save it on page exit.
+output='temporary edit';first.save();assert.equal(values.size,1);
+first.reset(()=>{output='original'});assert.equal(values.size,0);
+first.save();assert.equal(values.size,0);
+assert.equal(createDraftStore('original',()=>output,()=>{}).restore(),false);
 // Storage being blocked must not break editing.
 globalThis.localStorage={getItem(){throw Error('blocked')},setItem(){throw Error('blocked')},removeItem(){throw Error('blocked')}};
 assert.doesNotThrow(()=>createDraftStore('original',()=>output,()=>{}).restore());
