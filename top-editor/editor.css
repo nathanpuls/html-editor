@@ -168,3 +168,19 @@ body.ie-preview .ie-selection-frame{display:none!important}
 
 #ie-toolbar #ie-undo,#ie-toolbar #ie-redo{color:#171717}
 #ie-toolbar #ie-undo:disabled,#ie-toolbar #ie-redo:disabled{color:#b8b8b8!important;opacity:1!important;cursor:default!important;pointer-events:none!important;background:transparent!important}
+
+/* Host forms often give every label a bottom margin. Never inherit that
+   spacing into the editor's shared control row. */
+#ie-toolbar > *,
+#ie-toolbar :is(label,button,select,input,output){
+ margin-top:0!important;
+ margin-bottom:0!important;
+}
+#ie-toolbar .ie-control{
+ margin:0!important;
+ align-self:center!important;
+ vertical-align:middle!important;
+}
+#ie-toolbar .ie-control > :is(select,input,output,.ie-color-picker){
+ align-self:center!important;
+}
