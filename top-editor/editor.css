@@ -246,3 +246,7 @@ body.ie-preview .ie-selection-frame{display:none!important}
 #ie-menu-popover button:disabled{color:#bbb;background:transparent;cursor:default}
 #ie-menu-popover button:disabled kbd{color:#c5c5c5}
 body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
+
+#ie-toolbar #ie-revert-selected{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;min-width:30px;height:var(--ie-control-height);padding:0;border:0!important;background:transparent!important;border-radius:6px;margin-left:7px;color:#171717}
+#ie-toolbar #ie-revert-selected svg{width:17px;height:17px;stroke-width:1.9}
+#ie-toolbar #ie-revert-selected:disabled{color:#b8b8b8!important;opacity:1!important;cursor:default!important}

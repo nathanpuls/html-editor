@@ -70,6 +70,7 @@ export function startEditor(){
  const bar=document.getElementById('ie-toolbar')||document.createElement('div');bar.id='ie-toolbar';bar.dataset.ready='true';bar.dataset.builtAtEditorRuntime='';
  bar.innerHTML=toolbarHTML;
  bar.querySelector('#ie-delete').before(bar.querySelector('#ie-undo'),bar.querySelector('#ie-redo'));
+ bar.querySelector('#ie-redo').after(bar.querySelector('#ie-revert-selected'));
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
 
  const imagePopup=document.createElement('div');imagePopup.id='ie-image-popup';imagePopup.dataset.builtAtEditorRuntime='';imagePopup.hidden=true;
@@ -129,13 +130,29 @@ export function startEditor(){
  const updateToolbarHeight=()=>document.body.style.setProperty('--ie-toolbar-height',Math.ceil(bar.getBoundingClientRect().height)+'px');
  new ResizeObserver(updateToolbarHeight).observe(bar);updateToolbarHeight();
  const $=id=>bar.querySelector('#'+id);
+ // Compare authored state only; selection and editing markers are not edits.
+ const authorAttributesFor=attributes=>{
+  const values=new Map(attributes.filter(([name])=>!['contenteditable','spellcheck'].includes(name)));
+  if(values.has('class')){const value=values.get('class').split(/\s+/).filter(c=>c&&!['ie-active-field','ie-enabled','ie-preview','ie-dragging'].includes(c)).sort().join(' ');if(value)values.set('class',value);else values.delete('class')}
+  if(values.has('style')){const style=document.createElement('span').style;style.cssText=values.get('style');for(const name of ['--ie-selection-outline','--ie-toolbar-height','--ie-original-padding-top'])style.removeProperty(name);const value=[...style].sort().map(name=>name+':'+style.getPropertyValue(name)+'!'+style.getPropertyPriority(name)).join(';');if(value)values.set('style',value);else values.delete('style')}
+  return JSON.stringify([...values].sort(([a],[b])=>a.localeCompare(b)));
+ };
+ const changedFromOriginal=node=>{
+  const record=originalRecords.get(node);if(!record)return true;
+  if(record.text!==null&&node.data!==record.text)return true;
+  if(record.attributes&&authorAttributesFor([...node.attributes].map(a=>[a.name,a.value]))!==authorAttributesFor(record.attributes))return true;
+  const children=[...node.childNodes].filter(child=>!(child.nodeType===1&&child.matches('[data-built-at-editor-runtime]')));
+  return children.length!==record.children.length||children.some((child,index)=>child!==record.children[index]||changedFromOriginal(child));
+ };
+ const canRevertSelection=()=>mode==='element'&&[...selected].some(el=>el.isConnected&&changedFromOriginal(el));
+ const syncRevertButton=()=>{const button=bar.querySelector('#ie-revert-selected');if(button){const disabled=preview||!canRevertSelection();if(button.disabled!==disabled)button.disabled=disabled}};
  const current=()=>mode==='page'?document.body:(active||document.body);const structural=el=>el&&el.matches('header,footer,section,article,aside,nav,.card,.hero-art,[role="img"],button,.button,.btn,img,[data-section]');
  const editableSelector='[data-edit="links"] a,[data-edit],article,.tile,.card,.hero-art,img,[role="img"],header,footer,section,aside,nav,[data-section]';
  const editableElements=()=>[...document.querySelectorAll(editableSelector)].filter(el=>!el.closest('#ie-toolbar,#ie-image-popup')&&el.isConnected);
  const elementName=el=>{if(!el)return 'Select Item';if(el.getAttribute('data-edit'))return el.getAttribute('data-edit');if(el.matches('article,.tile,.card')){const group=editableElements().filter(x=>x.matches('article,.tile,.card'));return 'Article '+(group.indexOf(el)+1)}if(el.matches('img,.hero-art,[role="img"]'))return el.getAttribute('data-edit')||'Hero image';const label=el.getAttribute('data-edit');if(label)return label;const tag=el.tagName.toLowerCase();const group=editableElements().filter(x=>x.tagName===el.tagName);return tag.charAt(0).toUpperCase()+tag.slice(1)+(group.length>1?' '+(group.indexOf(el)+1):'')};
  let elementOptions=[];
  const refreshElementList=()=>{const list=$('ie-label');const elements=editableElements();elementOptions=elements;list.replaceChildren(new Option('Select Item',''));elements.forEach((el,i)=>list.add(new Option(elementName(el),String(i))));list.value=active?String(elements.indexOf(active)):'';if(list.value==='-1')list.value=''};
-  const syncControls=()=>{syncHistoryButtons();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
+  const syncControls=()=>{syncHistoryButtons();syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
 const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el.textContent.trim()||el.matches('input,textarea,select,button'));
 ['ie-font','ie-size'].forEach(id=>$(id).disabled=!enabled||!targets.length||!targets.every(textCapable));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));
@@ -309,6 +326,17 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   document.body.classList.add('ie-enabled');updateToolbarHeight();setMode('page');
  };
  const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()});
+ const revertSelected=()=>{
+   cancelURLUpdates();const targets=[...selected].filter(el=>el.isConnected);if(!targets.length)return;
+   undo.push(snapshot());redo.length=0;finish();
+   // Restore only baseline records below the selected roots. New elements
+   // have no original version, so reverting them removes the addition.
+   const records=new Map();
+   const collect=node=>{const record=originalRecords.get(node);if(!record||records.has(node))return;records.set(node,record);record.children.forEach(collect)};
+   for(const el of targets){if(originalRecords.has(el))collect(el);else el.remove()}
+   restore([...records.values()]);setMode('page');drafts.save();
+  };
+ bar.querySelector('#ie-revert-selected').onclick=()=>{if(canRevertSelection())revertSelected()};
  tools=mountTools({bar,select,elementName,
   ensureEditor:()=>{preview=false;applyPreview()},
   shortcutActions:()=>[
@@ -331,17 +359,8 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   selectSimilar:elements=>{finish();mode='element';for(const el of elements){if(!el.isConnected)continue;selected.add(el);el.classList.add('ie-active-field')}active=[...selected].at(-1)||null;$('ie-page').classList.remove('ie-selected');updateSelectionContrast();syncControls()},
 
   change:fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()},
-  selectionInfo:()=>mode==='element'&&selected.size?{count:selected.size}:null,
-  revertSelection:()=>{
-   cancelURLUpdates();const targets=[...selected].filter(el=>el.isConnected);if(!targets.length)return;
-   undo.push(snapshot());redo.length=0;finish();
-   // Restore only baseline records below the selected roots. New elements
-   // have no original version, so reverting them removes the addition.
-   const records=new Map();
-   const collect=node=>{const record=originalRecords.get(node);if(!record||records.has(node))return;records.set(node,record);record.children.forEach(collect)};
-   for(const el of targets){if(originalRecords.has(el))collect(el);else el.remove()}
-   restore([...records.values()]);setMode('page');drafts.save();
-  },
+  selectionInfo:()=>mode==='element'&&selected.size?{count:selected.size,changed:canRevertSelection()}:null,
+  revertSelection:revertSelected,
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
@@ -358,7 +377,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
    if(frame.style.cssText.replace(/\s/g,'')!==style+';')frame.style.cssText=style;
   }
  };
- new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('[data-built-at-editor-runtime]')))drawSelection()}).observe(document.body,{subtree:true,attributes:true,childList:true,characterData:true});
+ new MutationObserver(records=>{if(records.some(r=>!(r.target.nodeType===1?r.target:r.target.parentElement)?.closest('[data-built-at-editor-runtime]'))){drawSelection();syncRevertButton()}}).observe(document.body,{subtree:true,attributes:true,childList:true,characterData:true});
  window.addEventListener('scroll',drawSelection,true);window.addEventListener('resize',drawSelection);
  document.addEventListener('pointerup',drawSelection,true);document.addEventListener('keydown',()=>queueMicrotask(drawSelection));
 }
