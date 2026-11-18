@@ -250,3 +250,13 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 #ie-toolbar #ie-revert-selected{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;min-width:30px;height:var(--ie-control-height);padding:0;border:0!important;background:transparent!important;border-radius:6px;margin-left:7px;color:#171717}
 #ie-toolbar #ie-revert-selected svg{width:17px;height:17px;stroke-width:1.9}
 #ie-toolbar #ie-revert-selected:disabled{color:#b8b8b8!important;opacity:1!important;cursor:default!important}
+
+/* Match color swatches and keep shortcut badges independent of page styles. */
+#ie-toolbar .ie-border-control .ie-border-swatch{box-sizing:border-box;width:24px!important;height:24px!important;border-width:3px!important;outline:none!important;box-shadow:0 0 0 1px #ddd}
+#ie-menu-popover .ie-action-heading{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px;width:100%;box-sizing:border-box}
+#ie-menu-popover .ie-action-heading>strong{display:block;flex:1;margin:0!important;font:600 14px/1.4 system-ui,sans-serif;letter-spacing:normal;text-transform:none}
+#ie-menu-popover kbd{display:inline-flex!important;align-items:center;justify-content:center;flex:none;min-height:21px;box-sizing:border-box;padding:1px 6px;margin:0 0 0 12px;border:1px solid #e3e3e3;border-radius:5px;background:#f7f7f7;color:#777;font:11px/1.4 system-ui,sans-serif;letter-spacing:normal;white-space:nowrap;text-transform:none}
+#ie-menu-popover button:disabled kbd{color:#bbb;border-color:#eee;background:#fafafa}
+
+#ie-menu-popover{overflow-x:hidden}
+#ie-menu-popover>button,#ie-menu-popover>a{box-sizing:border-box!important;margin:0!important;min-width:0}
