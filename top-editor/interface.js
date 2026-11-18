@@ -69,6 +69,7 @@ export function startEditor(){
  const undo=historyStack(),redo=historyStack();let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
  const bar=document.getElementById('ie-toolbar')||document.createElement('div');bar.id='ie-toolbar';bar.dataset.ready='true';bar.dataset.builtAtEditorRuntime='';
  bar.innerHTML=toolbarHTML;
+ bar.querySelector('#ie-delete').before(bar.querySelector('#ie-undo'),bar.querySelector('#ie-redo'));
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
 
  const imagePopup=document.createElement('div');imagePopup.id='ie-image-popup';imagePopup.dataset.builtAtEditorRuntime='';imagePopup.hidden=true;
@@ -259,6 +260,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
       updateSelectionContrast();syncControls();};
  document.addEventListener('keydown',e=>{
   if(e.target.closest?.('[data-built-at-editor-runtime]')&&e.target.matches('input,textarea,select'))return;
+  if(e.target.closest?.('[data-built-at-editor-runtime]')&&!e.metaKey&&!e.ctrlKey&&e.key!=='Escape')return;
   if(!preview&&(e.metaKey||e.ctrlKey)&&!e.altKey&&e.key.toLowerCase()==='a'){
     const target=e.target;
     if(!target?.isContentEditable&&!target?.closest?.('input,textarea,select,[contenteditable="true"]')&&!bar.contains(target)){
@@ -283,8 +285,8 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  syncControls();
  $('ie-undo').onclick=()=>{cancelURLUpdates();finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop());setMode('page')};
  $('ie-redo').onclick=()=>{cancelURLUpdates();finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop());setMode('page')};
- let tools=null;
- const applyPreview=()=>{document.body.classList.toggle('ie-preview',preview);if(preview){finish();tools?.close()}};
+ let tools=null,colorPicker=null;
+ const applyPreview=()=>{document.body.classList.toggle('ie-preview',preview);if(preview){finish();tools?.close();colorPicker?.close()}};
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
  applyPreview();
  setMode('page');
@@ -298,7 +300,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  document.addEventListener('submit',e=>{if(!preview&&!e.target.closest('[data-built-at-editor-runtime]'))e.preventDefault()},true);
  const resume=document.createElement('button');resume.id='ie-resume';resume.dataset.builtAtEditorRuntime='';resume.type='button';resume.innerHTML='<svg data-lucide="pencil" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /> </svg>';resume.setAttribute('aria-label','Open editor');document.body.append(resume);
  resume.onclick=()=>{preview=false;applyPreview()};
- document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.target.closest('input,textarea,select,[contenteditable=true]')){preview=false;applyPreview()}});
+
 
  const afterRestore=()=>{
   captureAuthorAttributes(authorAttributes);
@@ -308,13 +310,15 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
  };
  const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()});
  tools=mountTools({bar,select,elementName,
+  ensureEditor:()=>{preview=false;applyPreview()},
   shortcutActions:()=>[
-   {label:'Undo',key:'undo',enabled:undo.length>0,run:()=>$('ie-undo').click()},
-   {label:'Redo',key:'redo',enabled:redo.length>0,run:()=>$('ie-redo').click()},
-   {label:'Select all elements',key:'all',enabled:editableElements().length>0,run:selectAllElements},
-   {label:'Edit text at end',key:'edit',enabled:selected.size===1&&canEditText(active)&&!textEditing,run:()=>beginTextEdit(active)},
+   {label:'Undo',key:'undo',enabled:!preview&&undo.length>0,run:()=>$('ie-undo').click()},
+   {label:'Redo',key:'redo',enabled:!preview&&redo.length>0,run:()=>$('ie-redo').click()},
+   {label:'Select all elements',key:'all',enabled:!preview&&editableElements().length>0,run:selectAllElements},
+   {label:'Edit text at end',key:'edit',enabled:!preview&&selected.size===1&&canEditText(active)&&!textEditing,run:()=>beginTextEdit(active)},
    {label:'Delete selected',key:'delete',enabled:!!active,run:()=>$('ie-delete').click()},
-   {label:active?'Deselect':'Hide toolbar',key:'escape',enabled:true,run:()=>{if(active)finish();else{preview=true;applyPreview()}}}
+   {label:'Deselect',key:'escape',enabled:!!active,run:finish},
+   {label:preview?'Edit':'Close editor',key:'toggle',enabled:true,run:()=>{preview=!preview;applyPreview()}}
   ],
   similarInfo:()=>{
    if(mode!=='element'||!active)return null;
@@ -341,7 +345,7 @@ const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.s
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
- mountColorPicker(bar);
+ colorPicker=mountColorPicker(bar);
 
  // Selection frames stay rectangular and never alter the author's border or shadow.
  const frames=new Map();
