@@ -56,7 +56,13 @@ export function startEditor(){
  document.body.style.setProperty('--ie-original-padding-top',getComputedStyle(document.body).paddingTop);
 
  if(document.getElementById('ie-toolbar')?.dataset.ready==='true')return;
- const undo=[],redo=[];let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
+ function syncHistoryButtons(){
+ const undoButton=document.getElementById('ie-undo'),redoButton=document.getElementById('ie-redo');
+ if(undoButton)undoButton.disabled=undo.length===0;
+ if(redoButton)redoButton.disabled=redo.length===0;
+ }
+ const historyStack=()=>new Proxy([],{set(target,key,value){const result=Reflect.set(target,key,value);syncHistoryButtons();return result}});
+ const undo=historyStack(),redo=historyStack();let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
  const bar=document.getElementById('ie-toolbar')||document.createElement('div');bar.id='ie-toolbar';bar.dataset.ready='true';bar.dataset.builtAtEditorRuntime='';
  bar.innerHTML=toolbarHTML;
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
@@ -82,7 +88,7 @@ export function startEditor(){
  const elementName=el=>{if(!el)return 'Select Item';if(el.getAttribute('data-edit'))return el.getAttribute('data-edit');if(el.matches('article,.tile,.card')){const group=editableElements().filter(x=>x.matches('article,.tile,.card'));return 'Article '+(group.indexOf(el)+1)}if(el.matches('img,.hero-art,[role="img"]'))return el.getAttribute('data-edit')||'Hero image';const label=el.getAttribute('data-edit');if(label)return label;const tag=el.tagName.toLowerCase();const group=editableElements().filter(x=>x.tagName===el.tagName);return tag.charAt(0).toUpperCase()+tag.slice(1)+(group.length>1?' '+(group.indexOf(el)+1):'')};
  let elementOptions=[];
  const refreshElementList=()=>{const list=$('ie-label');const elements=editableElements();elementOptions=elements;list.replaceChildren(new Option('Select Item',''));elements.forEach((el,i)=>list.add(new Option(elementName(el),String(i))));list.value=active?String(elements.indexOf(active)):'';if(list.value==='-1')list.value=''};
-  const syncControls=()=>{$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
+  const syncControls=()=>{syncHistoryButtons();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
 const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el.textContent.trim()||el.matches('input,textarea,select,button'));
 ['ie-font','ie-size','ie-color'].forEach(id=>$(id).disabled=!enabled||!targets.length||!targets.every(textCapable));
 ['ie-bg','ie-radius','ie-border','ie-border-none'].forEach(id=>$(id).disabled=!enabled||!targets.length);
