@@ -127,7 +127,7 @@ export function mountFontPicker(select,button,{reset}={}){
   panel.append(makeResetButton(()=>{close(true);reset?.('fontFamily')}));
   panel.hidden=false;button.setAttribute('aria-expanded','true');
   panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,anchor.left))+'px';
-  panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,anchor.bottom+8))+'px';
+  const top=Math.max(8,Math.min(innerHeight-80,anchor.bottom+8));panel.style.top=top+'px';panel.style.height=Math.max(0,(innerHeight-top-8)*.93)+'px';
   const chosen=panel.querySelector('[aria-selected="true"]')||panel.firstElementChild;chosen?.focus({preventScroll:true});if(chosen)panel.scrollTop=Math.max(0,chosen.offsetTop-panel.clientHeight/2);
  };
  button.onclick=()=>panel.hidden?open():close(true);
