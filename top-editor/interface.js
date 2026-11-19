@@ -44,8 +44,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-direct';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountOverflow,contrastingInk,outlineName,mountPageColors} from './design.js?v=20261119-direct';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-contract';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountOverflow,contrastingInk,outlineName,mountPageColors} from './design.js?v=20261119-contract';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
@@ -75,14 +75,13 @@ export function startEditor(){
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
 
  const imagePopup=document.createElement('div');imagePopup.id='ie-image-popup';imagePopup.dataset.builtAtEditorRuntime='';imagePopup.hidden=true;
- imagePopup.innerHTML='<label for="ie-image-url">Image URL</label><input id="ie-image-url" type="url" placeholder="Paste image URL"><label for="ie-image-alt" id="ie-image-alt-label">Alt text</label><input id="ie-image-alt" type="text"><label for="ie-link-url" id="ie-link-url-label">Link URL</label><input id="ie-link-url" type="text"><button type="button" id="ie-add-link" hidden>Add new link</button><label for="ie-placeholder">Placeholder</label><input id="ie-placeholder" type="text"><label for="ie-icon-name">Lucide icon</label><input id="ie-icon-name" type="text" placeholder="arrow-up-right"><p id="ie-url-status" role="status" aria-live="polite" hidden></p>';
+ imagePopup.innerHTML='<label for="ie-image-url">Image URL</label><input id="ie-image-url" type="url" placeholder="Paste image URL"><label for="ie-image-alt" id="ie-image-alt-label">Alt text</label><input id="ie-image-alt" type="text"><label for="ie-link-url" id="ie-link-url-label">Link URL</label><input id="ie-link-url" type="text"><label for="ie-placeholder">Placeholder</label><input id="ie-placeholder" type="text"><label for="ie-icon-name">Lucide icon</label><input id="ie-icon-name" type="text" placeholder="arrow-up-right"><p id="ie-url-status" role="status" aria-live="polite" hidden></p>';
  document.body.append(imagePopup);
  const imageInput=imagePopup.querySelector('input');
  const imageTarget=el=>el?.tagName==='IMG'||el?.matches('.hero-art,[role="img"]')||!!el&&getComputedStyle(el).backgroundImage!=='none';
  const imageValue=el=>{if(el.tagName==='IMG')return el.getAttribute('src')||'';const bg=getComputedStyle(el).backgroundImage;return bg.startsWith('url(')?bg.slice(4,-1).replace(/^["']|["']$/g,''):''};
- const collectionLink=el=>{const link=el?.closest('a');return link?.closest('[data-edit="links"]')?link:null};
  let popupTarget=null;
- const showImagePopup=el=>{document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:imagePopup}));popupTarget=el;imagePopup.querySelector('#ie-url-status').hidden=true;imagePopup.hidden=false;imagePopup.querySelector('#ie-add-link').hidden=!collectionLink(el);const image=imageTarget(el),link=el.closest('a');for(const id of ['ie-placeholder']){const input=imagePopup.querySelector('#'+id),visible=el.matches('input,textarea');input.hidden=!visible;input.previousElementSibling.hidden=!visible;input.value=el.getAttribute('placeholder')||''}const icon=imagePopup.querySelector('#ie-icon-name'),svg=el.matches('svg')?el:el.querySelector('svg');icon.hidden=!svg;icon.previousElementSibling.hidden=!svg;icon.value=svg?.getAttribute('data-lucide')||el.getAttribute('data-lucide')||'';imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-imagePopup.offsetHeight-10,Math.max(bar.getBoundingClientRect().bottom+8,r.bottom+10)))+'px'};
+ const showImagePopup=el=>{document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:imagePopup}));popupTarget=el;imagePopup.querySelector('#ie-url-status').hidden=true;imagePopup.hidden=false;const image=imageTarget(el),link=el.closest('a');for(const id of ['ie-placeholder']){const input=imagePopup.querySelector('#'+id),visible=el.matches('input,textarea');input.hidden=!visible;input.previousElementSibling.hidden=!visible;input.value=el.getAttribute('placeholder')||''}const icon=imagePopup.querySelector('#ie-icon-name'),svg=el.matches('svg')?el:el.querySelector('svg');icon.hidden=!svg;icon.previousElementSibling.hidden=!svg;icon.value=svg?.getAttribute('data-lucide')||el.getAttribute('data-lucide')||'';imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-imagePopup.offsetHeight-10,Math.max(bar.getBoundingClientRect().bottom+8,r.bottom+10)))+'px'};
  const pendingFields=new Map();let imageRevision=0;
  const urlStatus=message=>{const status=imagePopup.querySelector('#ie-url-status');status.textContent=message;status.hidden=!message};
  const validURL=(value,image=false)=>{if(!value||/\s/.test(value))return false;try{const url=new URL(value,document.baseURI);return image?['http:','https:','blob:'].includes(url.protocol)||/^data:image\//i.test(value):['http:','https:','mailto:','tel:'].includes(url.protocol)}catch{return false}};
@@ -124,16 +123,6 @@ export function startEditor(){
   input.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();hideImagePopup()}});
  }
  document.addEventListener('pointerdown',e=>{if(!imagePopup.hidden&&!imagePopup.contains(e.target))hideImagePopup()},true);
- imagePopup.querySelector('#ie-add-link').onclick=()=>{
-  const link=collectionLink(active);if(!link)return;
-  undo.push(snapshot());redo.length=0;
-  let item=link;const collection=link.closest('[data-edit="links"]');
-  while(item.parentElement!==collection&&item.parentElement.children.length===1)item=item.parentElement;
-  const clone=item.cloneNode(true);const suffix='-'+Date.now().toString(36);const ids=new Map();
-  for(const node of [clone,...clone.querySelectorAll('*')]){if(node.id){ids.set(node.id,node.id+suffix);node.id+=suffix}node.classList.remove('ie-active-field');node.removeAttribute('contenteditable');node.removeAttribute('spellcheck');node.style.removeProperty('--ie-selection-outline');if(node.hasAttribute('data-edit')&&node!==collection)node.setAttribute('data-edit',node.getAttribute('data-edit')+' copy')}
-  for(const node of [clone,...clone.querySelectorAll('*')])for(const attr of [...node.attributes]){let value=attr.value;for(const [old,id] of ids){if(value==='#'+old)value='#'+id;value=value.replaceAll('url(#'+old+')','url(#'+id+')');if(['aria-labelledby','aria-describedby','for'].includes(attr.name))value=value.split(' ').map(x=>x===old?id:x).join(' ')}if(value!==attr.value)node.setAttribute(attr.name,value)}
-  item.after(clone);const next=clone.matches('a')?clone:clone.querySelector('a');select(next);drafts.save();
- };
  for(const input of [imageInput,imagePopup.querySelector('#ie-link-url')]){input.addEventListener('focus',()=>input.select());input.addEventListener('click',()=>input.select())}
 
  imagePopup.addEventListener('pointerdown',e=>e.stopPropagation());
@@ -157,8 +146,8 @@ export function startEditor(){
  };
  const canRevertSelection=()=>mode==='element'&&[...selected].some(el=>el.isConnected&&changedFromOriginal(el));
  const syncRevertButton=()=>{const button=bar.querySelector('#ie-revert-selected');if(button){const disabled=preview||!canRevertSelection();if(button.disabled!==disabled)button.disabled=disabled}};
- const current=()=>mode==='page'?document.body:(active||document.body);const structural=el=>el&&el.matches('header,footer,section,article,aside,nav,.card,.hero-art,[role="img"],button,.button,.btn,img,[data-section]');
- const editableSelector='input,textarea,[data-edit="links"] a,[data-edit],article,.tile,.card,.hero-art,img,[role="img"],header,footer,section,aside,nav,[data-section]';
+ const current=()=>mode==='page'?document.body:(active||document.body);const structural=el=>el&&el.matches('header,footer,section,article,aside,nav,.card,.hero-art,[role="img"],button,.button,.btn,img');
+ const editableSelector='[data-edit]';
  const editableElements=()=>[...document.querySelectorAll(editableSelector)].filter(el=>!el.closest('[data-built-at-editor-runtime]')&&el.isConnected);
  const elementName=el=>el?outlineName(el):'Page';
  let elementOptions=[];
@@ -195,7 +184,7 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
  mountNumber($('ie-size'),1,500);mountNumber($('ie-radius'),0,1000);
   $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}syncControls()};
  let textEditing=false;
- const canEditText=el=>el&&!!el.textContent.trim()&&!el.querySelector('[data-edit]')&&!el.matches('header,footer,section,article,aside,nav,[data-section],img,svg,svg *,video,canvas,input,textarea,select,hr')&&!imageTarget(el);
+ const canEditText=el=>el&&!!el.textContent.trim()&&!el.querySelector('[data-edit]')&&!el.matches('header,footer,section,article,aside,nav,img,svg,svg *,video,canvas,input,textarea,select,hr')&&!imageTarget(el);
  const placeCaret=(el,point)=>{
   const selection=document.getSelection();let range=null;
   if(point){if(document.caretPositionFromPoint){const caret=document.caretPositionFromPoint(point.x,point.y);if(caret&&el.contains(caret.offsetNode)){range=document.createRange();range.setStart(caret.offsetNode,caret.offset);range.collapse(true)}}else if(document.caretRangeFromPoint){const hit=document.caretRangeFromPoint(point.x,point.y);if(hit&&el.contains(hit.startContainer))range=hit}}
@@ -226,7 +215,7 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
  }
  document.addEventListener('pointerdown',e=>{
   if(preview||bar.contains(e.target)||imagePopup.contains(e.target)||e.target.closest?.('[data-built-at-editor-runtime]'))return;
-  const el=e.target.closest?.('input,textarea,[data-edit="links"] a,[data-edit],header,footer,section,article,aside,nav,.card,.hero-art,[role="img"],button,.button,.btn,img,[data-section]');
+  const el=e.target.closest?.('[data-edit]');
   if(!el){setMode('page');return;}
   if(e.shiftKey){e.preventDefault();if(!selected.size){select(el)}else if(selected.has(el)){selected.delete(el);el.classList.remove('ie-active-field');if(el.hasAttribute('data-edit'))el.contentEditable='false';active=[...selected].at(-1)||null;if(!active)finish();else syncControls()}else{selected.add(el);el.classList.add('ie-active-field');active=el;syncControls();}syncControls();return}if(active===el&&selected.size===1&&!textEditing&&canEditText(el)){e.preventDefault();beginTextEdit(el,{point:{x:e.clientX,y:e.clientY}});return}
   if(active!==el||selected.size>1){select(el)}
@@ -323,8 +312,6 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
    if(mode!=='element'||!active)return null;
    const group=active.getAttribute('data-edit-group');let elements=[];
    if(group)elements=[...document.querySelectorAll('[data-edit-group]')].filter(el=>el.getAttribute('data-edit-group')===group);
-   else if(collectionLink(active)){elements=[...collectionLink(active).closest('[data-edit="links"]').querySelectorAll('a')]}
-   else{const classes=[...active.classList].filter(c=>c!=='ie-active-field');elements=[...(active.parentElement?.children||[])].filter(el=>el.tagName===active.tagName&&(classes.length?classes.every(c=>el.classList.contains(c)):el.hasAttribute('data-edit')&&el.getAttribute('data-edit')===active.getAttribute('data-edit')))}
    elements=elements.filter(el=>!el.closest('[data-built-at-editor-runtime]'));return elements.length>1?{group:group||'items',elements}:null;
   },
   selectSimilar:elements=>{finish();mode='element';for(const el of elements){if(!el.isConnected)continue;selected.add(el);el.classList.add('ie-active-field')}active=[...selected].at(-1)||null;$('ie-page').classList.remove('ie-selected');updateSelectionContrast();syncControls()},

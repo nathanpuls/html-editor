@@ -1,40 +1,28 @@
 Create a responsive, single-page HTML website based on the brief below. Return only the complete HTML in one code block.
 
-**WEBSITE BRIEF:**  
+**WEBSITE BRIEF:**
 {{WEBSITE_BRIEF}}
 
 ### Requirements
 
-1. **Standalone HTML:** Use inline CSS, minimal JavaScript, and no frameworks or dependencies. Include `<script src="https://edit.built.at" defer></script>` in the head.
+1. **Standalone document:** Begin with <!DOCTYPE html>. Include charset, viewport, meaningful title and meta description. Use inline CSS, minimal JavaScript, no frameworks or dependencies, and <script src="https://edit.built.at" defer></script> in the head.
 
-2. **Editable elements:** Give every meaningful visible element a unique, descriptive `data-edit` attribute, including headings, paragraphs, labels, images, icons, buttons, and links. Parent components AND their individual children must be independently selectable. Never use `data-label`.
+2. **Selection and text:** Give meaningful visible content unique, concise, human-readable data-edit labels: sections, cards, headings, paragraphs, labels, images, icons, links, buttons and form fields. Selectable parent components and their content must be independently named. Put editable text on leaf elements; do not wrap the same text in nested editable text containers. A structural parent may contain independently editable children. For a link with an icon, name the link, icon and separate text span independently. Do not add empty text elements. Never use data-label or reserved data-edit values.
 
-   **Icons:** Prefer Lucide icons by default unless the brief requests another icon system. Use inline Lucide SVGs (no CDN) with a valid kebab-case Lucide name in `data-lucide`, and a unique descriptive `data-edit` on each icon itself. For example, `<svg data-edit="Try the editor icon" data-lucide="arrow-up-right" ...>...</svg>`. Include the SVG's actual Lucide paths so it renders even without a library script. Give adjacent text a separate `data-edit` so changing the icon never changes the label or link. Preserve icon sizing, stroke, spacing, and alignment. Use icon names as the replaceable identity, not SVG path data or Unicode stand-ins. Other icon systems are allowed when explicitly requested.
+3. **Structure:** Use semantic HTML and ordinary CSS classes. Keep reorderable sections as siblings, repeated cards as siblings, and list items as siblings. Give each repeatable item one clear outer element containing all its content, so duplicating or moving it preserves its structure. Use the same structure for equivalent items. Name collections descriptively, such as data-edit="Footer links"; links are ordinary editable elements. Do not use data-section or additional collection attributes. Use IDs only for anchors, labels and accessibility references.
 
-   **Icon styling:** Every editable SVG icon must expose its actual icon color independently from its background. Use `stroke="currentColor"` for outlined icons and `fill="currentColor"` for filled icons, avoiding hardcoded stroke/fill colors that block styling. Ensure the SVG has a CSS `color` value that can be changed without changing the parent button or card text color; use an icon-specific class or variable when necessary. Keep icon size independently adjustable. Equivalent icons may share a `data-edit-group` for shared styling, while retaining unique `data-edit` labels and individually replaceable `data-lucide` names. Do not assume that `data-edit` alone makes icon color controls available: the Built.at editor must support editing the SVG's `color` property.
+4. **Related elements:** Optional data-edit-group identifies genuinely equivalent elements for shared style editing. Every member still needs a unique data-edit label. Group cards separately from their headings, paragraphs, buttons and icons. Do not group unrelated elements simply because they share a tag or class. Groups share style changes, never individual content.
 
-3. **Text blocks:** Make individual paragraphs editable. Avoid nested text-editing containers that could conflict.
+5. **Design and shared colors:** Follow the brief without unnecessary sections or decoration. Define meaningful reusable CSS variables on :root for shared colors, typography and dimensions. Give independently adjustable colors their own variables, for example --accent, --page-background, --surface and --text. Derive related shades and opacity from their base variable using var() and color-mix(), rather than unrelated hardcoded colors. Use those variables consistently. Keep component styles in classes and allow inline element overrides. Avoid global button, input or SVG styles that could interfere with the editor. Use .button for button-style links and buttons.
 
-4. **Sections:** Give each manageable section a unique `data-section`, `id`, and descriptive `aria-label`. Keep reorderable sections as siblings.
+6. **Icons:** Prefer real inline Lucide SVGs, unless another icon system is requested. Include actual paths, viewBox and a valid kebab-case data-lucide name; no CDN, Unicode substitutes or placeholder paths. Each icon has its own unique data-edit label. Use stroke="currentColor" for outlines or fill="currentColor" for filled artwork. Give the SVG its own CSS color and independently adjustable width/height, so changing its color does not change adjacent text. Preserve stroke width and alignment. Keep adjacent text in a separately editable span. Equivalent icons may share a data-edit-group. Custom illustrations should not claim a Lucide identity.
 
-5. **Link collections:** Use `data-edit="links"` on collections where users can add, edit, delete, or reorder links. Give each child link its own `data-edit`. Use ordinary `data-edit` labels for standalone links.
+7. **Content and accessibility:** Use semantic, accessible, responsive HTML. Make paragraphs individually editable, use real labels for form controls, and give inputs and textareas their own data-edit labels and useful placeholders. Use meaningful image alt text and absolute HTTPS image URLs. Prefer self-contained visuals where appropriate. Preserve native input types and valid nesting.
 
-6. **Buttons:** Use `.button` for button-style links and buttons. Avoid global styles that interfere with the editor.
+8. **Editor responsibility:** Do not recreate editor controls, drag handles, selection, local drafts, undo/redo, export or icon replacement. The installed Built.at script handles these. The HTML supplies predictable structure, names, explicit groups and shared CSS variables.
 
-7. **Design:** Follow the brief's aesthetic and complexity without unnecessary decoration or sections. Define meaningful, reusable CSS variables in `:root` for colors, typography, and dimensions.
-
-8. **Images:** Prefer self-contained visuals. Editable images should use absolute HTTPS URLs and meaningful alt text. Keep essential content usable offline.
-
-9. **Quality:** Include a meaningful page title and meta description. Use semantic, accessible, mobile-responsive HTML.
-
-10. **Editor compatibility:** Do not recreate the editor's functionality. Built.at handles editing, styling, sections, undo/redo, local drafts, and HTML export.
-
-**Before responding:** Verify that all visible content is individually editable, including text inside cards and other parent components.
-
-11. **Related elements:** Use the same descriptive `data-edit-group` value for repeated elements that should share styling, such as `service-cards`, `service-headings`, or `service-buttons`. Every member must still have its own unique, descriptive `data-edit` label. Group parent cards separately from their headings, paragraphs, images, and buttons. Use groups only for genuinely equivalent elements; never group unrelated items merely because they share an HTML tag. Selecting similar elements changes their shared styles, not their individual content.
-
-12. **Icons:** Use Lucide-style SVG icons by default. Every icon must have its own unique, descriptive `data-edit` attribute so it can be selected independently. Use `stroke="currentColor"` (or `fill="currentColor"` for filled icons) so the icon's actual color can be edited independently of its background. Allow icon name, color, size, and background to be customized. Use `data-edit-group` for equivalent icons that should share styling. Avoid hardcoded SVG stroke or fill colors that prevent customization.
+### Before responding
+Verify unique data-edit labels, independently editable parent/child content, real icon paths, correct label references, consistent repeated-item structures, explicit style groups and shared color variables. Keep the result proportional to the brief.
 
 ### Output
-
-Return only the full HTML document, beginning with `<!DOCTYPE html>`, in one code block. No explanations.
+Return only the complete HTML document, beginning with <!DOCTYPE html>, in one code block. No explanations.

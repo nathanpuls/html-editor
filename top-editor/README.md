@@ -1,47 +1,52 @@
-# Built.at top-toolbar editor
+# Built.at top toolbar
 
-Extracted directly from `Pages!B4` (page `ai edit`) in spreadsheet `1gLz_ysFKbUUSq6TciH6YEFqQAOEJICjI31E7mCnnWvY` on November 17, 2026. The Sheet was read only; neither it nor ends.at configuration was changed.
+Install `<script src="https://edit.built.at" defer></script>`. No framework or build tools.
 
-```html
-<script src="https://edit.built.at" defer></script>
-```
+## Shared HTML convention
 
-Use descriptive attributes such as `<h1 data-edit="Main heading">Hello</h1>` and unique `data-section` values for sections. The toolbar starts open. Click to select an item, click it again to edit text. Shift-click, marquee selection, and select-all remain available. Close previews the page; the Edit button or E reopens it.
-
-The original B4 toolbar, selectors, image popup, appearance controls, multiselection and interaction code are retained. Demo-specific selection and export restrictions have been removed. Icons are bundled SVG, and text sessions now participate in undo. Snapshots preserve node identities and structural changes, including nested deletions, every author attribute, and document-head design changes.
-
-| File | Responsibility |
+| Markup | Meaning |
 | --- | --- |
-| editor.js | Single-tag loader; waits for CSS and imports the editor |
-| interface.js | Selection, content editing, images, design control wiring, preview |
-| toolbar.js | Toolbar markup and SVG icons extracted from B4 |
-| design.js | Color conversion and optional Google Font loading |
-| history.js | DOM snapshots and restoration |
-| export.js | Complete current document export and clipboard |
-| editor.css | Original toolbar styling and host layout adjustments |
-| demo.html | Original B4 example webpage with the external loader |
-| sample.html | Separate generic page with multiple stylesheets and author script |
+| `data-edit="Design card"` | Unique, human-readable selection name |
+| `data-edit-group="service-cards"` | Optional explicit group for Select similar |
+| `data-lucide="mail"` | Replaceable identity of an inline Lucide SVG |
+| Semantic nesting | Parent/child selection and valid sibling reordering |
+| Root CSS variables | Explicit page-wide colors; derived shades use var()/color-mix() |
 
-Copy HTML clones the entire current document. It retains author metadata, stylesheets, scripts, document/body attributes, text, images and structural changes. It removes editor UI, loading scripts/styles, selection state, temporary layout variables, and runtime editing attributes. Exported HTML is a finished page; reinstall the one-tag editor when further editing is wanted. Referenced fonts, images and author stylesheets retain their existing resource URLs.
+No reserved link labels, collection attributes or data-section are required. A card and its children can all be selectable; editable text belongs on leaf elements. Use ordinary semantic lists for link collections. Generic Duplicate works on links, cards and whole sections, preserves their children, and remaps internal ID references.
 
-## Hosting
+Groups affect styling only. Unrelated items are never grouped by class, tag or approximate hue. Element formatting creates local overrides; Page settings edits independent root color variables. Derived variables follow their source through CSS, and are not presented as independent colors.
 
-Cloudflare Worker `built-at-editors` serves both editor hosts with correct JavaScript/CSS MIME types, CORS, and no-store headers. Its source is in `../cloudflare/`. Like the existing deployment, it reads allowlisted source files from this GitHub repository. The top-toolbar source is `main/top-editor/`; the side panel is pinned independently to commit `4feade71c37eb8c3a66a8e44bc9c1aa159fb3d70`, with `classic-editor.js` as its entry point. Update that release deliberately when maintaining the side panel. Both editors remain independent; neither imports the other.
+## Editing
 
-The exact hostname routes take precedence over Built.at's existing `*.built.at/*` route. Removing only `edit.built.at/*` restores the previous Built.at route without touching ends.at. The side-panel host was verified before adding the toolbar route.
+Click text to edit at the clicked position. Escape returns to selection; Left/Right enter at the beginning/end; Enter enters at the end. Delete removes a selected element outside text editing. Duplicate selects the copy for immediate editing or deletion. Select parents through the element search or Shift-click. Select similar is available only for explicit groups.
 
-Samples: https://edit.built.at/demo.html, https://edit.built.at/sample.html, https://side-edit.built.at/demo.html. The staging sample at https://built-at-editors.natepuls.workers.dev/top/sample.html loads the production toolbar across origins.
+Drag the selected element's grip to reorder siblings without reparenting. The page scrolls near viewport edges. Formatting controls overflow individually into Actions as actual space decreases; Copy and Close remain available.
 
-Verified in Chrome: both loaders initialize independently; top-toolbar text edit/undo/redo; section delete and undo with nested paragraphs/image; full document export keeps all author styles/script/footer and strips editor code; side-panel content edit, undo, and Copy HTML. No frameworks, package installation or build pipeline required.
+Image/link URLs, alt text, placeholders, page title/favicon and Lucide names apply automatically. Images preload before replacement. Local drafts restore unfinished edits. Revert restores authored originals and supports Undo. Copy exports the current document without editor runtime/UI, preserving authored markup, styles and the installation script.
 
-## Search, menu and drafts
+## Source and shared reference
 
-Click the magnifying glass to open **Search**. It matches visible text, descriptive `data-edit` names, section names, element tags, IDs, accessible labels and image alt text, including text outside marked fields. Choosing a result scrolls to and selects its element. Arrow keys/Enter choose a result; Escape closes the popover.
+- `../new-page/prompt.txt`: canonical prompt used by built.at/editor; keep {{WEBSITE_BRIEF}}.
+- `demo.html`: comprehensive, authored fixture following that prompt.
+- `interface.js`: selection, editing and orchestration.
+- `toolbar.js`: toolbar, menus and inspectors.
+- `design.js`: formatting helpers, overflow, drag and root colors.
+- `history.js`, `export.js`: drafts/history and clean export.
 
-The ellipsis menu contains **Page settings**, **New page**, and **Revert changes…**. Page settings edits the HTML title and favicon as one undoable action. New page opens the existing website creation flow at `https://built.at/editor#website-description` in another tab. A hosting system may override that destination with `data-new-page-url="https://your-host/new"` on the installation script.
+Change the prompt, editor, demo and contract tests together when conventions change. Avoid compatibility branches for obsolete experimental markup.
 
-Drafts save automatically to localStorage and restore on refresh. They are isolated by page URL, ignore editor/preview query flags, and require the original source fingerprint to match. Changed originals discard stale drafts. Revert confirms, restores the original loaded page, clears undo/redo and removes that page's saved draft. A blocked/full localStorage does not break editing or Copy HTML.
+## Demo verification
 
-Image details include alt text; selecting a link or linked image exposes its destination URL. Page settings, image/link attributes, text, styles and section changes are included in history, drafts and clean HTML export. Search/menu/settings controls are always excluded from export.
+Use https://edit.built.at/demo.html as the shared reference:
+1. Edit typography, including inline emphasis; select a parent card separately from its text.
+2. Select similar card headings and change formatting without changing their individual text.
+3. Change Accent in Page settings: solid, soft and transparent variants follow; Secondary remains independent. A local override remains local.
+4. Replace outlined/filled icon colors, Lucide identity and size independently from adjacent labels.
+5. Duplicate/delete links, cards and sections; undo/redo; drag siblings and check ID references.
+6. Edit image URL/alt, link URLs, input/search/textarea placeholders; failed image loads preserve the image.
+7. Test tables, lists, nested containers, details and forms without invalid nesting.
+8. Refresh to restore a draft, revert selected/page, then undo the revert.
+9. Resize/zoom: menus stay on screen and Copy/Close remain accessible.
+10. Copy HTML and reopen it: authored changes remain, editor controls and temporary editing state do not.
 
-Run `node tests/toolbar-drafts.mjs` to verify source matching, refresh restoration, page isolation, clearing and blocked storage.
+Automated structural checks: `python3 tests/markup-contract.py`. Existing Node tests cover duplication/movement, drafts and formatting helpers.

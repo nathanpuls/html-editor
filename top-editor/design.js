@@ -78,7 +78,7 @@ export const canArrange=(source,target)=>!!source&&!!target&&source!==target&&so
 
 const readableName=value=>String(value||'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim().replace(/^./,c=>c.toUpperCase());
 export function outlineName(el){
- const named=el.getAttribute('data-section')||el.getAttribute('data-edit')||el.getAttribute('aria-label')||el.getAttribute('alt');
+ const named=el.getAttribute('data-edit')||el.getAttribute('aria-label')||el.getAttribute('alt');
  if(named){let label=readableName(named).replace(/\s+(?:link\s+)?item$/i,'');if(el.matches?.('a'))label=label.replace(/\s+link$/i,'');if(label.toLowerCase()==='links'&&el.children?.length)return 'Link list';return label.slice(0,60)}
  const kinds={DIV:'Container',MAIN:'Page content',SECTION:'Section',ARTICLE:'Card',NAV:'Navigation',HEADER:'Header',FOOTER:'Footer',UL:'List',OL:'List',LI:'List item',A:'Link',IMG:'Image',SVG:'Icon',SPAN:'Text',P:'Paragraph',H1:'Heading',H2:'Heading',H3:'Heading',BUTTON:'Button',FORM:'Form'};
  const kind=kinds[el.tagName]||'Element';
@@ -150,28 +150,25 @@ export function mountPageDrag({getActive,beforeDrag,change}){
  handle.onpointerup=end;handle.onpointercancel=end;window.addEventListener('scroll',update,true);window.addEventListener('resize',update);return {update,close:()=>{handle.hidden=true;line.hidden=true}};
 }
 
-/* Expose existing page tokens; otherwise group authored accent colors by hue. */
+/* Only authored root color tokens are editable. Derived tokens follow CSS normally. */
 export function mountPageColors(settings,change){
  settings.querySelector('.ie-page-colors')?.remove();
  const box=document.createElement('div');box.className='ie-page-colors';box.innerHTML='<h4>Page colors</h4>';settings.append(box);
- const names=new Set();
- const scan=rules=>{for(const rule of rules){if(rule.style)for(const name of rule.style)if(name.startsWith('--')&&!name.startsWith('--ie-'))names.add(name);if(rule.cssRules)scan(rule.cssRules)}};
- for(const sheet of document.styleSheets)try{scan(sheet.cssRules)}catch{}
- for(const el of [document.documentElement,document.body])for(const name of el.style)if(name.startsWith('--')&&!name.startsWith('--ie-'))names.add(name);
- const root=getComputedStyle(document.documentElement),tokens=[];
- for(const name of names){const value=root.getPropertyValue(name).trim();if(value&&CSS.supports('color',value)&&!value.includes('var('))tokens.push({name,value:hex(value)})}
- const hueDistance=(a,b)=>Math.min(Math.abs(a-b),360-Math.abs(a-b));
- const groups=[];
- const add=(color,item)=>{const hsv=rgbToHSV(rgba(color));if(hsv[1]<.15||rgba(color)[3]===0)return;let group=groups.find(g=>hueDistance(g.hue,hsv[0])<22);if(!group){group={hue:hsv[0],color,items:[]};groups.push(group)}group.items.push({...item,color,hsv})};
- if(tokens.length)for(const token of tokens)add(token.value,{token:token.name});
- else for(const el of [...document.body.querySelectorAll('*')].filter(authorNode)){const style=getComputedStyle(el);for(const property of ['color','background-color','border-top-color','border-right-color','border-bottom-color','border-left-color','stroke','fill']){const value=style.getPropertyValue(property);if(value&&CSS.supports('color',value)&&value!=='none')add(hex(value),{el,property})}}
- groups.sort((a,b)=>b.items.length-a.items.length);
- const neutralTokens=tokens.filter(token=>rgbToHSV(rgba(token.value))[1]<.15).slice(0,6);
- const rows=groups.slice(0,6).map((g,index)=>({label:g.items[0].token?g.items[0].token.replace(/^--/,'').replace(/[-_]/g,' '):index?'Accent '+(index+1):'Accent',color:g.color,apply:value=>{
-  const next=rgbToHSV(rgba(value)),base=rgbToHSV(rgba(g.color));
-  change(()=>{for(const item of g.items){const [h,s,v]=item.hsv,alpha=rgba(item.color)[3],color=colorHex(hsvToRGB([(h+next[0]-base[0]+360)%360,Math.min(1,s*(next[1]/(base[1]||1))),Math.min(1,v*(next[2]/(base[2]||1)))],alpha));if(item.token)document.documentElement.style.setProperty(item.token,color);else if(item.el.isConnected)item.el.style.setProperty(item.property,color,'important')}})
- }}));
- for(const token of neutralTokens)rows.push({label:token.name.replace(/^--/,'').replace(/[-_]/g,' '),color:token.value,apply:value=>change(()=>document.documentElement.style.setProperty(token.name,value))});
- for(const row of rows){const label=document.createElement('label'),swatch=document.createElement('i'),name=document.createElement('span'),input=document.createElement('input');swatch.style.background=row.color;name.textContent=row.label;input.value=row.color;input.setAttribute('aria-label',row.label+' color');input.spellcheck=false;label.append(swatch,name,input);box.append(label);let last=row.color;const apply=value=>{if(hex(value)===hex(last))return;row.apply(value);last=value;swatch.style.background=value};input.onchange=()=>{let value=input.value.trim();if(!value.startsWith('#'))value='#'+value;if(!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value))return;apply(value)};input.oninput=()=>{if(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(input.value)){apply(input.value)}}}
- if(!rows.length){const note=document.createElement('p');note.textContent='Use the formatting controls to set page colors.';box.append(note)}
+ const declarations=new Map();
+ const collect=style=>{for(const name of style)if(name.startsWith('--')&&!name.startsWith('--ie-'))declarations.set(name,style.getPropertyValue(name).trim())};
+ const scan=rules=>{for(const rule of rules){if(rule.selectorText&&document.documentElement.matches(rule.selectorText))collect(rule.style);if(rule.cssRules&&(!rule.conditionText||!rule.media||matchMedia(rule.conditionText).matches))scan(rule.cssRules)}};
+ for(const sheet of document.styleSheets)try{if(!sheet.disabled)scan(sheet.cssRules)}catch{}
+ // Keep original dependencies even after a local draft adds root overrides.
+ const derived=new Set([...declarations].filter(([,value])=>value.includes('var(')).map(([name])=>name));
+ collect(document.documentElement.style);
+ const root=getComputedStyle(document.documentElement);
+ for(const [name,authored] of declarations){
+  const value=root.getPropertyValue(name).trim();if(derived.has(name)||authored.includes('var(')||!CSS.supports('color',value))continue;
+  const label=document.createElement('label'),swatch=document.createElement('i'),text=document.createElement('span'),input=document.createElement('input');
+  text.textContent=name.slice(2).replace(/[-_]/g,' ');input.value=hex(value);input.setAttribute('aria-label',text.textContent+' color');input.spellcheck=false;swatch.style.background=value;
+  label.append(swatch,text,input);box.append(label);let last=input.value;
+  const apply=()=>{let next=input.value.trim();if(!next.startsWith('#'))next='#'+next;if(!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(next)||hex(next)===hex(last))return;change(()=>document.documentElement.style.setProperty(name,next));last=next;swatch.style.background=next};
+  input.onchange=apply;input.oninput=()=>{if(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(input.value))apply()};
+ }
+ const note=document.createElement('p');note.textContent=box.children.length>1?'Shared CSS colors. Linked shades and transparency follow automatically; element formatting stays local.':'Define shared colors as CSS variables on :root to edit them here.';box.append(note);
 }
