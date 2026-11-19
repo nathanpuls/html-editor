@@ -38,7 +38,8 @@ input.closest=()=>control;control.querySelector=()=>handle;control.children=[inp
 globalThis.document=new Element();document.body=body;document.createElement=()=>new Element();
 globalThis.innerWidth=1000;globalThis.innerHeight=800;
 let applied=[];input.addEventListener('ie-number-input',()=>applied.push(Number(input.value)));
-mountNumber(input,1,500,72);
+const mountedNumber=mountNumber(input,1,500,72);
+control.dispatchEvent(new Event("pointerenter"));assert.equal(body.children[0].hidden,true,"Hover must not open the slider");
 input.dispatchEvent(new Event('focus'));input.value='';input.dispatchEvent(new Event('input'));
 assert.equal(input.value,'');assert.deepEqual(applied,[]);
 input.value='2';input.dispatchEvent(new Event('input'));
@@ -52,6 +53,6 @@ assert.equal(input.value,'28');
 const pointer=(type,x)=>{const e=new Event(type,{cancelable:true});Object.assign(e,{button:0,pointerId:1,clientX:x});handle.dispatchEvent(e)};
 pointer('pointerdown',100);assert.equal(body.children[0].hidden,false,'Slider appears before pointer release');
 pointer('pointermove',140);assert.equal(Number(input.value),46);assert.equal(handle.capture,1);
-pointer('pointerup',140);assert.equal(body.children[0].hidden,true);assert.equal(handle.capture,null);
+pointer('pointerup',140);assert.equal(body.children[0].hidden,false,"Click opens the slider until dismissed, exposing Reset");assert.equal(handle.capture,null);mountedNumber.close();assert.equal(body.children[0].hidden,true);
 for(const [k,v] of Object.entries(saved))if(v===undefined)delete globalThis[k];else globalThis[k]=v;
 console.log('PASS popup focus stability, free numeric typing, empty/cancel handling, and one-motion drag');

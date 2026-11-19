@@ -25,19 +25,30 @@ export function hsvToRGB([h,s,v],alpha=1){
  const googleFonts=["Inter","Manrope","Roboto","Open Sans","Lato","Montserrat","Poppins","Nunito","Nunito Sans","DM Sans","Outfit","Raleway","Work Sans","Source Sans 3","Plus Jakarta Sans","Rubik","Quicksand","Ubuntu","Oswald","Roboto Slab","Merriweather","Playfair Display","Lora","Libre Baskerville","Cormorant Garamond","Bebas Neue","Anton","Space Grotesk","Space Mono","Fira Code"];
 export const ensureGoogleFont=value=>{const family=googleFonts.find(f=>value.startsWith(f+','));if(!family)return;const id='ie-google-font-'+family.toLowerCase().replace(/[^a-z0-9]+/g,'-');if(document.getElementById(id))return;const link=document.createElement('link');link.id=id;link.rel='stylesheet';link.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(family).replace(/%20/g,'+')+':wght@400;500;600;700;800&display=swap';document.head.append(link)};
 
+/* Small property-specific reset shared by the formatting panels. */
+function makeResetButton(run){
+ const button=document.createElement('button');button.type='button';button.className='ie-control-reset';button.textContent='Reset';button.setAttribute('aria-label','Reset');button.onclick=run;return button;
+}
+export function restoreStyleProperties(target,originalStyle,properties){
+ const baseline=document.createElement('span').style;baseline.cssText=originalStyle||'';
+ for(const property of properties){const value=baseline.getPropertyValue(property);if(value)target.style.setProperty(property,value,baseline.getPropertyPriority(property));else target.style.removeProperty(property)}
+ if(!target.getAttribute('style')?.trim())target.removeAttribute('style');
+}
+
 /* One shared live picker for text, SVG paint, backgrounds and borders. */
-export function mountColorPicker(bar){
+export function mountColorPicker(bar,{reset}={}){
  const panel=document.createElement('div');panel.id='ie-color-popover';panel.className='ie-popover';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Color picker');
  panel.innerHTML='<div class="ie-color-area" role="slider" tabindex="0" aria-label="Color area" aria-valuemin="0" aria-valuemax="100"><span class="ie-color-cursor"></span></div><label class="ie-picker-row"><span>Hue</span><input class="ie-hue" type="range" min="0" max="359" step="1" aria-label="Hue"></label><label class="ie-picker-row"><span>Opacity</span><input class="ie-alpha" type="range" min="0" max="100" step="1" aria-label="Opacity"><output class="ie-alpha-value">100%</output></label><label class="ie-hex-row"><span>HEX</span><input class="ie-hex" type="text" spellcheck="false" autocomplete="off" aria-label="HEX" maxlength="9"></label>';
  const borderSwitch=document.createElement('label');borderSwitch.className='ie-border-switch';borderSwitch.innerHTML='<input type="checkbox" aria-label="Border enabled">Border enabled';borderSwitch.hidden=true;panel.append(borderSwitch);const borderToggle=borderSwitch.querySelector('input');borderToggle.onchange=()=>{const original=document.getElementById('ie-border-none');original.checked=borderToggle.checked;original.dispatchEvent(new Event('change',{bubbles:true}))};
  document.body.append(panel);
  const area=panel.querySelector('.ie-color-area'),cursor=panel.querySelector('.ie-color-cursor'),hue=panel.querySelector('.ie-hue'),opacity=panel.querySelector('.ie-alpha'),output=panel.querySelector('output'),field=panel.querySelector('.ie-hex');
- let trigger=null,hsv=[0,0,1],alpha=1;
+ let trigger=null,hsv=[0,0,1],alpha=1,alphaTouched=false;
+ const resetButton=makeResetButton(()=>{const key={"ie-color":"color","ie-bg":"backgroundColor","ie-border":"borderColor"}[trigger?.id];close();if(key)reset?.(key)});panel.append(resetButton);
  const end=()=>trigger?.dispatchEvent(new Event('change',{bubbles:true}));
  const close=()=>{end();panel.hidden=true;trigger?.setAttribute('aria-expanded','false');trigger=null};
  const draw=()=>{const rgb=hsvToRGB(hsv,alpha),solid=colorHex(hsvToRGB(hsv,1));area.style.backgroundColor='hsl('+hsv[0]+' 100% 50%)';cursor.style.left=(hsv[1]*100)+'%';cursor.style.top=((1-hsv[2])*100)+'%';hue.value=Math.round(hsv[0]);opacity.value=Math.round(alpha*100);output.textContent=Math.round(alpha*100)+'%';opacity.style.setProperty('--ie-alpha-color',solid);field.value=colorHex(rgb).toUpperCase();field.removeAttribute('aria-invalid');area.setAttribute('aria-valuenow',Math.round(hsv[1]*100));area.setAttribute('aria-valuetext','Saturation '+Math.round(hsv[1]*100)+'%, brightness '+Math.round(hsv[2]*100)+'%')};
- const update=()=>{draw();if(trigger){trigger.value=colorHex(hsvToRGB(hsv,alpha));trigger.dispatchEvent(new Event('input',{bubbles:true}))}};
- for(const id of ['ie-color','ie-bg','ie-border']){const button=document.getElementById(id);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.onclick=()=>{if(trigger===button&&!panel.hidden){close();return}const anchor=button.getBoundingClientRect();close();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));trigger=button;borderSwitch.hidden=id!=='ie-border';borderToggle.checked=document.getElementById('ie-border-none').checked;const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];draw();panel.hidden=false;button.setAttribute('aria-expanded','true');const r=anchor;panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+8))+'px';area.focus({preventScroll:true})}}
+ const update=()=>{if(alpha===0&&!alphaTouched)alpha=1;draw();if(trigger){trigger.value=colorHex(hsvToRGB(hsv,alpha));trigger.dispatchEvent(new Event('input',{bubbles:true}))}};
+ for(const id of ['ie-color','ie-bg','ie-border']){const button=document.getElementById(id);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.onclick=()=>{if(trigger===button&&!panel.hidden){close();return}const anchor=button.getBoundingClientRect();close();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));trigger=button;borderSwitch.hidden=id!=='ie-border';borderToggle.checked=document.getElementById('ie-border-none').checked;const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=false;draw();panel.hidden=false;button.setAttribute('aria-expanded','true');const r=anchor;panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+8))+'px';area.focus({preventScroll:true})}}
  const point=e=>{const r=area.getBoundingClientRect();hsv[1]=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));hsv[2]=1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));update()};
  area.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();area.focus();area.setPointerCapture(e.pointerId);point(e)});
  area.addEventListener('pointermove',e=>{if(area.hasPointerCapture(e.pointerId))point(e)});
@@ -45,9 +56,9 @@ export function mountColorPicker(bar){
  area.addEventListener('pointercancel',end);
  area.addEventListener('keydown',e=>{const step=e.shiftKey?.1:.01;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();hsv[1]=Math.max(0,Math.min(1,hsv[1]+(e.key==='ArrowRight'?step:e.key==='ArrowLeft'?-step:0)));hsv[2]=Math.max(0,Math.min(1,hsv[2]+(e.key==='ArrowUp'?step:e.key==='ArrowDown'?-step:0)));update()}});
  area.addEventListener('keyup',e=>{if(e.key.startsWith('Arrow'))end()});
- hue.oninput=()=>{hsv[0]=Number(hue.value);update()};opacity.oninput=()=>{alpha=Number(opacity.value)/100;update()};
+ hue.oninput=()=>{hsv[0]=Number(hue.value);update()};opacity.oninput=()=>{alphaTouched=true;alpha=Number(opacity.value)/100;update()};
  hue.onchange=opacity.onchange=end;
- field.oninput=()=>{let value=field.value.trim();if(!value.startsWith('#'))value='#'+value;if(!/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)){field.setAttribute('aria-invalid','true');return}const color=rgba(value);hsv=rgbToHSV(color);if([4,8].includes(value.length-1))alpha=color[3];const selection=field.selectionStart;update();field.setSelectionRange(selection,selection)};
+ field.oninput=()=>{let value=field.value.trim();if(!value.startsWith('#'))value='#'+value;if(!/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)){field.setAttribute('aria-invalid','true');return}const color=rgba(value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=true;const selection=field.selectionStart;update();field.setSelectionRange(selection,selection)};
  field.onchange=()=>{draw();end()};field.addEventListener('focus',()=>field.select());
  panel.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();const button=trigger;close();button?.focus()}},true);
  document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!trigger?.contains(e.target))close()},true);
@@ -89,7 +100,7 @@ export function outlineName(el){
 
 /* Compact inputs use one click for entry and a small motion threshold for scrubbing. */
 /* Visible, keyboard-accessible font menu; the hidden select is only the value model. */
-export function mountFontPicker(select,button){
+export function mountFontPicker(select,button,{reset}={}){
  const panel=document.createElement('div');panel.id='ie-font-popover';panel.className='ie-popover';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('role','listbox');panel.setAttribute('aria-label','Fonts');document.body.append(panel);
  button.setAttribute('aria-haspopup','listbox');button.setAttribute('aria-expanded','false');button.setAttribute('aria-controls',panel.id);
  const close=(focus=false)=>{panel.hidden=true;button.setAttribute('aria-expanded','false');if(focus&&button.getClientRects().length)button.focus({preventScroll:true})};
@@ -102,6 +113,7 @@ export function mountFontPicker(select,button){
    item.onclick=()=>{select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}));button.dataset.ieTooltip='Font: '+option.textContent;close(true)};
    panel.append(item);
   }
+  panel.append(makeResetButton(()=>{close(true);reset?.('fontFamily')}));
   panel.hidden=false;button.setAttribute('aria-expanded','true');
   panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,anchor.left))+'px';
   panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,anchor.bottom+8))+'px';
@@ -124,25 +136,23 @@ export function mountFontPicker(select,button){
 }
 
 /* Type without rewriting incomplete input; drag from a separate handle in one gesture. */
-export function mountNumber(input,min,max,sliderMax=max){
+export function mountNumber(input,min,max,sliderMax=max,{reset}={}){
  const control=input.closest('.ie-format'),handle=control.querySelector('.ie-number-handle');
  const panel=document.createElement('div');panel.className='ie-number-slider';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;
- const range=document.createElement('input');range.type='range';range.min=min;range.max=sliderMax;range.step=1;range.setAttribute('aria-label',input.getAttribute('aria-label')+' slider');panel.append(range);document.body.append(panel);
+ const range=document.createElement('input');range.type='range';range.min=min;range.max=sliderMax;range.step=1;range.setAttribute('aria-label',input.getAttribute('aria-label')+' slider');panel.append(range,makeResetButton(()=>{input.blur();reset?.(input.id==='ie-size'?'size':'borderRadius');applied=current();draw();close()}));document.body.append(panel);
  input.setAttribute('aria-valuemin',min);input.setAttribute('aria-valuemax',max);handle.setAttribute('aria-controls',panel.id=input.id+'-slider');
- let gesture=null,editing=false,startValue=Number(input.value)||min,applied=startValue,hideTimer=null;
+ let gesture=null,editing=false,startValue=Number(input.value)||min,applied=startValue;
  const clamp=value=>Math.max(min,Math.min(max,Math.round(value)));
  const current=()=>{const n=Number(input.value);return input.value.trim()!==''&&Number.isFinite(n)?clamp(n):startValue};
  const draw=()=>{const n=current();range.max=Math.max(sliderMax,n);range.value=n;range.style.setProperty('--ie-range-fill',((n-min)/(Number(range.max)-min)*100)+'%');input.setAttribute('aria-valuenow',n)};
  const emit=value=>{const next=clamp(value),changed=next!==applied;input.value=next;draw();if(changed){applied=next;input.dispatchEvent(new Event('ie-number-input',{bubbles:true}))}};
  const end=()=>input.dispatchEvent(new Event('change',{bubbles:true}));
- const close=()=>{clearTimeout(hideTimer);if(gesture)return;panel.hidden=true};
+ const close=()=>{if(gesture)return;panel.hidden=true};
  const show=()=>{
-  if(input.disabled||editing)return;clearTimeout(hideTimer);draw();
+  if(input.disabled||editing)return;draw();
   if(panel.hidden){document.dispatchEvent(new CustomEvent('ie-number-preview',{detail:panel}));panel.hidden=false}
   const r=handle.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left+r.width/2-panel.offsetWidth/2))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+3))+'px';
  };
- const leave=()=>{clearTimeout(hideTimer);hideTimer=setTimeout(close,120)};
- control.addEventListener('pointerenter',show);control.addEventListener('pointerleave',leave);panel.addEventListener('pointerenter',()=>clearTimeout(hideTimer));panel.addEventListener('pointerleave',leave);
  input.addEventListener('focus',()=>{editing=true;startValue=applied=current();close();input.select()});
  input.addEventListener('click',()=>input.select());
  input.addEventListener('blur',()=>{if(!editing)return;editing=false;const n=Number(input.value);emit(input.value.trim()===''||!Number.isFinite(n)?startValue:n);end()});
@@ -157,9 +167,10 @@ export function mountNumber(input,min,max,sliderMax=max){
   applied=current();gesture={id:e.pointerId,x:e.clientX,value:current(),span:Number(range.max)-min,width:range.getBoundingClientRect().width};handle.setPointerCapture(e.pointerId);
  });
  handle.addEventListener('pointermove',e=>{if(gesture?.id===e.pointerId)emit(gesture.value+(e.clientX-gesture.x)/gesture.width*gesture.span)});
- const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end();close()};
+ const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end()};
  handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);handle.addEventListener('lostpointercapture',stop);
- range.addEventListener('focus',()=>{applied=current()});range.addEventListener('pointerdown',()=>{applied=current();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));clearTimeout(hideTimer)});
+ handle.addEventListener('click',e=>{if(e.detail===0){show();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));range.focus()}});
+ range.addEventListener('focus',()=>{applied=current()});range.addEventListener('pointerdown',()=>{applied=current();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));/* Slider remains open until dismissed. */});
  range.addEventListener('input',()=>emit(Number(range.value)));range.addEventListener('change',end);
  panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();handle.focus()}});
  document.addEventListener('pointerdown',e=>{if(!control.contains(e.target)&&!panel.contains(e.target))close()},true);
@@ -193,14 +204,15 @@ export function contrastingInk(color){
  return .2126*linear(background[0])+.7152*linear(background[1])+.0722*linear(background[2])>.179?'#000000':'#ffffff';
 }
 /* Sibling-only movement preserves HTML parent-child validity. */
-export function mountPageDrag({getActive,beforeDrag,change}){
- const handle=document.createElement('button');handle.id='ie-page-drag';handle.type='button';handle.dataset.builtAtEditorRuntime='';handle.setAttribute('aria-label','Drag selected element');handle.title='Drag to reorder';
- handle.innerHTML="<svg aria-hidden=\"true\" data-lucide=\"grip-vertical\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <circle cx=\"9\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"5\" r=\"1\" /> <circle cx=\"9\" cy=\"19\" r=\"1\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <circle cx=\"15\" cy=\"19\" r=\"1\" /> </svg> ";
- const line=document.createElement('div');line.id='ie-insertion';line.dataset.builtAtEditorRuntime='';line.hidden=true;handle.hidden=true;document.body.append(handle,line);
- let state=null,frame=null;
+export function mountPageDrag({getActive,beforeDrag,change,onHover}){
+ const edges=document.createElement('div');edges.id='ie-drag-edges';edges.dataset.builtAtEditorRuntime='';edges.hidden=true;
+ for(const side of ['top','right','bottom','left']){const edge=document.createElement('div');edge.className='ie-drag-edge ie-drag-'+side;edges.append(edge)}
+ const line=document.createElement('div');line.id='ie-insertion';line.dataset.builtAtEditorRuntime='';line.hidden=true;document.body.append(edges,line);
+ let state=null,frame=null,hovered=null;
  const update=()=>{
-  const el=getActive();if(!el?.isConnected){handle.hidden=true;return}
-  const r=el.getBoundingClientRect();handle.hidden=false;handle.style.left=Math.max(4,Math.min(innerWidth-30,r.left-29))+'px';handle.style.top=Math.max(80,Math.min(innerHeight-30,r.top))+'px';
+  const el=state?.el||hovered||getActive();if(!el?.isConnected||!el.getClientRects().length){edges.hidden=true;return}
+  const r=el.getBoundingClientRect();edges.hidden=false;
+  Object.assign(edges.style,{left:r.left-3+'px',top:r.top-3+'px',width:r.width+6+'px',height:r.height+6+'px'});
  };
  const aim=()=>{
   if(!state)return;const siblings=[...state.el.parentElement.children].filter(el=>el!==state.el&&authorNode(el)&&el.getClientRects().length);
@@ -212,10 +224,30 @@ export function mountPageDrag({getActive,beforeDrag,change}){
   line.hidden=false;Object.assign(line.style,horizontal?{left:(state.before?r.left:r.right)+'px',top:r.top+'px',width:'3px',height:r.height+'px'}:{left:r.left+'px',top:(state.before?r.top:r.bottom)+'px',width:r.width+'px',height:'3px'});
  };
  const scroll=()=>{if(!state)return;const top=document.getElementById('ie-toolbar').getBoundingClientRect().bottom+35,delta=!state.moved?0:state.y<top?-Math.min(22,(top-state.y)/3):state.y>innerHeight-60?Math.min(22,(state.y-innerHeight+60)/3):0;if(delta){window.scrollBy(0,delta);aim()}frame=requestAnimationFrame(scroll)};
- handle.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();const el=getActive();if(!el)return;beforeDrag();state={el,id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false};handle.setPointerCapture(e.pointerId);frame=requestAnimationFrame(scroll)};
- handle.onpointermove=e=>{if(!state)return;state.x=e.clientX;state.y=e.clientY;if(Math.hypot(state.x-state.startX,state.y-state.startY)>5){state.moved=true;aim()}};
- const end=e=>{if(!state)return;const old=state;state=null;cancelAnimationFrame(frame);line.hidden=true;if(handle.hasPointerCapture(old.id))handle.releasePointerCapture(old.id);if(e.type!=='pointercancel'&&old.moved&&canArrange(old.el,old.target))change(()=>old.before?old.target.before(old.el):old.target.after(old.el));update()};
- handle.onpointerup=end;handle.onpointercancel=end;window.addEventListener('scroll',update,true);window.addEventListener('resize',update);return {update,close:()=>{handle.hidden=true;line.hidden=true}};
+ // Borders are the hit area; the element interior remains available for text editing.
+ document.addEventListener('pointermove',e=>{
+  if(state||e.target.closest?.('[data-built-at-editor-runtime]'))return;
+  const candidates=[];let node=e.target.closest?.('[data-edit]');
+  while(node){if(authorNode(node)&&node.parentElement){const r=node.getBoundingClientRect();if(e.clientX>=r.left-4&&e.clientX<=r.right+4&&e.clientY>=r.top-4&&e.clientY<=r.bottom+4&&Math.min(Math.abs(e.clientX-r.left),Math.abs(e.clientX-r.right),Math.abs(e.clientY-r.top),Math.abs(e.clientY-r.bottom))<=5)candidates.push(node)}node=node.parentElement?.closest('[data-edit]')}
+  hovered=onHover?.()===false?null:candidates[0]||null;update();
+ },true);
+ edges.addEventListener('pointerleave',e=>{if(!state&&!edges.contains(e.relatedTarget)){hovered=null;update()}});
+ edges.onpointerdown=e=>{
+  if(e.button!==0)return;const el=hovered||getActive();if(!el)return;
+  e.preventDefault();e.stopPropagation();beforeDrag(el);hovered=null;
+  state={el,id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false};
+  edges.classList.add('ie-grabbing');edges.setPointerCapture(e.pointerId);frame=requestAnimationFrame(scroll);
+ };
+ edges.onpointermove=e=>{if(!state)return;state.x=e.clientX;state.y=e.clientY;if(Math.hypot(state.x-state.startX,state.y-state.startY)>5){state.moved=true;aim()}};
+ const end=e=>{
+  if(!state)return;const old=state;state=null;cancelAnimationFrame(frame);line.hidden=true;edges.classList.remove('ie-grabbing');
+  if(edges.hasPointerCapture(old.id))edges.releasePointerCapture(old.id);
+  if(!['pointercancel','lostpointercapture'].includes(e.type)&&old.moved&&canArrange(old.el,old.target))change(()=>old.before?old.target.before(old.el):old.target.after(old.el),old.el);
+  update();
+ };
+ edges.onpointerup=end;edges.onpointercancel=end;edges.onlostpointercapture=end;
+ window.addEventListener('scroll',update,true);window.addEventListener('resize',update);
+ return {update,close:()=>{hovered=null;edges.hidden=true;line.hidden=true}};
 }
 
 /* Only authored root color tokens are editable. Derived tokens follow CSS normally. */

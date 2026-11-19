@@ -44,8 +44,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-controls';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors} from './design.js?v=20261119-controls';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-reset';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-reset';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
@@ -55,6 +55,7 @@ export function startEditor(){
  // Capture the loaded document before editor setup or any saved draft is applied.
  const original=snapshot();
  const originalRecords=new Map(original.map(record=>[record.node,record]));
+ const originalStyles=new WeakMap(original.filter(record=>record.attributes).map(record=>[record.node,record.attributes.find(([name])=>name==='style')?.[1]||'']));
  const authorAttributes=captureAuthorAttributes();
  const sourceHTML=exportHTML(authorAttributes);
 
@@ -177,11 +178,25 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
   if(!sheet){sheet=document.createElement('style');sheet.id='ie-page-text-style';document.head.append(sheet)}
   sheet.textContent='body :not(#ie-toolbar):not(#ie-toolbar *):not([data-built-at-editor-runtime]):not([data-built-at-editor-runtime] *){color:var(--ie-page-text-color)!important}';
  }else {for(const target of matchingElements(el)){if(key==='iconSize'){target.style.setProperty('width',value,'important');target.style.setProperty('height',target.matches('img')?'auto':value,'important')}else if(key==='borderColor'){target.style.removeProperty('border-style');target.style.setProperty('border-color',value,'important');const cs=getComputedStyle(target);if(parseFloat(cs.borderTopWidth)===0||cs.borderTopStyle==='none'){target.style.setProperty('border-width','1px','important');target.style.setProperty('border-style','solid','important')}}else if(key==='color'&&mode==='element'){target.style.setProperty('color',value,'important');if(target.matches('svg,svg *'))for(const part of [target,...target.querySelectorAll('*')])for(const paint of ['stroke','fill']){const cs=getComputedStyle(part);if(cs[paint]&&cs[paint]!=='none')part.style.setProperty(paint,'currentColor','important')}}else if(key==='fontFamily')target.style.setProperty('font-family',value,'important');else target.style.setProperty(key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase()),value,'important')}}if(key==='backgroundColor')updateSelectionContrast()};
+ const resetFormatting=key=>{
+  if(mode==='element'&&!active)return;const target=current(),page=mode==='page';
+  colorPicker?.close();colorSession=null;undo.push(snapshot());redo.length=0;
+  const targets=page&&key==='fontFamily'?[document.body,...document.body.querySelectorAll('*')].filter(el=>!el.closest('[data-built-at-editor-runtime]')):matchingElements(target);
+  const borderProperties=['top','right','bottom','left'].flatMap(side=>['color','style','width'].map(part=>'border-'+side+'-'+part));
+  for(const el of targets){
+   const properties=key==='size'?(el.matches('svg,img')?['width','height']:['font-size']):key==='borderColor'?borderProperties:key==='borderRadius'?['border-top-left-radius','border-top-right-radius','border-bottom-left-radius','border-bottom-right-radius']:[{fontFamily:'font-family',color:'color',backgroundColor:'background-color'}[key]];
+   restoreStyleProperties(el,originalStyles.get(el),properties);
+   if(key==='color'&&el.matches('svg,svg *'))for(const part of [el,...el.querySelectorAll('*')])restoreStyleProperties(part,originalStyles.get(part),['stroke','fill']);
+  }
+  if(page&&key==='fontFamily')document.getElementById('ie-page-font-style')?.remove();
+  if(page&&key==='color'){document.getElementById('ie-page-text-style')?.remove();restoreStyleProperties(document.body,originalStyles.get(document.body),['--ie-page-text-color'])}
+  updateSelectionContrast();syncControls();drafts.save();
+ };
  $('ie-font').onchange=e=>{ensureGoogleFont(e.target.value);styleChange('fontFamily',e.target.value)};
  $('ie-size').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<1)return;$('ie-size-value').textContent=n+'px';styleChange(current().matches('svg,img')?'iconSize':'fontSize',n+'px',true)});$('ie-size').onchange=()=>{colorSession=null};
  $('ie-color').oninput=e=>styleChange('color',e.target.value,true);$('ie-color').onchange=()=>{colorSession=null};
  $('ie-bg').oninput=e=>styleChange('backgroundColor',e.target.value,true);$('ie-bg').onchange=()=>{colorSession=null};$('ie-border').oninput=e=>{$('ie-border-none').dataset.none='false';$('ie-border-none').checked=true;updateColorSwatches();styleChange('borderColor',e.target.value,true)};$('ie-border').onchange=()=>{colorSession=null};$('ie-border-none').onchange=e=>{colorSession=null;undo.push(snapshot());redo.length=0;for(const el of matchingElements(current())){if(!e.target.checked)el.style.setProperty('border-style','none','important');else{el.style.setProperty('border-style','solid','important');if(parseFloat(getComputedStyle(el).borderTopWidth)===0)el.style.setProperty('border-width','1px','important')}}e.target.dataset.none=e.target.checked?'false':'true';updateColorSwatches()};$('ie-radius').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<0)return;$('ie-radius-value').textContent=n+'px';styleChange('borderRadius',n+'px',true)});$('ie-radius').onchange=()=>{colorSession=null};
- mountFontPicker($('ie-font'),$('ie-font-trigger'));mountNumber($('ie-size'),1,500,72);mountNumber($('ie-radius'),0,1000,100);
+ mountFontPicker($('ie-font'),$('ie-font-trigger'),{reset:resetFormatting});mountNumber($('ie-size'),1,500,72,{reset:resetFormatting});mountNumber($('ie-radius'),0,1000,100,{reset:resetFormatting});
   $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}syncControls()};
  let textEditing=false;
  const canEditText=el=>el&&!!el.textContent.trim()&&!el.querySelector('[data-edit]')&&!el.matches('header,footer,section,article,aside,nav,img,svg,svg *,video,canvas,input,textarea,select,hr')&&!imageTarget(el);
@@ -294,9 +309,9 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
    restore([...records.values()]);setMode('page');drafts.save();
   };
  bar.querySelector('#ie-revert-selected').onclick=()=>{if(canRevertSelection())revertSelected()};
- const duplicateSelected=()=>{if(!active||selected.size!==1)return;const target=active;finish();undo.push(snapshot());redo.length=0;const clone=cloneEditable(target);target.after(clone);captureAuthorAttributes(authorAttributes);select(clone);clone.blur?.();drafts.save()};
+ const duplicateSelected=()=>{if(!active||selected.size!==1)return;const target=active;finish();undo.push(snapshot());redo.length=0;const clone=cloneEditable(target);const sourceNodes=[target,...target.querySelectorAll('*')],cloneNodes=[clone,...clone.querySelectorAll('*')];cloneNodes.forEach((node,index)=>originalStyles.set(node,originalStyles.get(sourceNodes[index])||''));target.after(clone);captureAuthorAttributes(authorAttributes);select(clone);clone.blur?.();drafts.save()};
  $('ie-duplicate').onclick=duplicateSelected;
- pageDrag=mountPageDrag({getActive:()=>!preview&&selected.size===1?active:null,beforeDrag:()=>{if(active&&textEditing){active.contentEditable='false';textEditing=false}},change:fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()}});
+ pageDrag=mountPageDrag({getActive:()=>!preview&&selected.size===1?active:null,onHover:()=>!preview,beforeDrag:el=>{if(active&&textEditing){active.contentEditable='false';textEditing=false}if(active!==el)select(el)},change:(fn,el)=>{finish();undo.push(snapshot());redo.length=0;fn();select(el);drafts.save()}});
  tools=mountTools({bar,select,elementName,pageColors:settings=>mountPageColors(settings,fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()}),
   ensureEditor:()=>{preview=false;applyPreview()},
   shortcutActions:()=>[
@@ -322,7 +337,7 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
- colorPicker=mountColorPicker(bar);
+ colorPicker=mountColorPicker(bar,{reset:resetFormatting});
  mountOverflow(bar,tools);
 
  // Selection frames stay rectangular and never alter the author's border or shadow.
