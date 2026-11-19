@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {canArrange} from '../top-editor/design.js';
+const parent={},otherParent={};
+const node=(parentElement,runtime=false)=>({parentElement,closest:()=>runtime?{}:null,matches:()=>false,contains:()=>false});
+const first=node(parent),second=node(parent),nested=node(otherParent),runtime=node(parent,true);
+assert.equal(canArrange(first,second),true);
+assert.equal(canArrange(first,nested),false);
+assert.equal(canArrange(first,first),false);
+assert.equal(canArrange(first,runtime),false);
+assert.equal(canArrange(null,second),false);
+console.log('PASS sibling reordering, hierarchy protection and runtime exclusion');
