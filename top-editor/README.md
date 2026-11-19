@@ -20,7 +20,7 @@ Groups affect styling only. Unrelated items are never grouped by class, tag or a
 
 Click text to edit at the clicked position. Escape returns to selection; Left/Right enter at the beginning/end; Enter enters at the end. Delete removes a selected element outside text editing. Duplicate selects the copy for immediate editing or deletion. Select parents through the element search or Shift-click. Select similar is available only for explicit groups.
 
-Drag the selected element's grip to reorder siblings without reparenting. The page scrolls near viewport edges. Formatting controls overflow individually into Actions as actual space decreases; Copy and Close remain available.
+Drag the selected element's grip to reorder siblings without reparenting. The page scrolls near viewport edges. Click a numeric value to type freely, then press Enter or leave the field to commit. Hover Size or Radius to reveal its slider over the label; hold the move-horizontal handle and drag in one gesture for live adjustments. Font opens a visible, keyboard-accessible menu with the current font selected. Formatting controls overflow individually into Actions as actual space decreases; Copy and Close remain available.
 
 Image/link URLs, alt text, placeholders, page title/favicon and Lucide names apply automatically. Images preload before replacement. Local drafts restore unfinished edits. Revert restores authored originals and supports Undo. Copy exports the current document without editor runtime/UI, preserving authored markup and styles. The editor installation script is omitted from exported HTML.
 
@@ -38,7 +38,7 @@ Change the prompt, editor, demo and contract tests together when conventions cha
 ## Demo verification
 
 Use https://edit.built.at/demo.html as the shared reference:
-1. Edit typography, including inline emphasis; select a parent card separately from its text.
+1. Edit typography, including inline emphasis; select a parent card separately from its text. Choose fonts through the visible menu, including keyboard navigation and overflow. Type multi-digit Size/Radius values without early clamping; test empty input, Escape, arrows, hover preview, captured drag and Undo.
 2. Select similar card headings and change formatting without changing their individual text.
 3. Change Accent in Page settings: solid, soft and transparent variants follow; Secondary remains independent. A local override remains local.
 4. Replace outlined/filled icon colors, Lucide identity and size independently from adjacent labels.

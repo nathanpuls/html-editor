@@ -88,16 +88,84 @@ export function outlineName(el){
 
 
 /* Compact inputs use one click for entry and a small motion threshold for scrubbing. */
-export function mountNumber(input,min,max){
- let gesture=null;
- const commit=()=>{const n=Math.max(min,Math.min(max,Math.round(Number(input.value))));if(!Number.isFinite(n))return;input.value=n;input.setAttribute('aria-valuenow',n);input.dispatchEvent(new Event('input',{bubbles:true}))};
- input.setAttribute('aria-valuemin',min);input.setAttribute('aria-valuemax',max);
- input.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();gesture={id:e.pointerId,x:e.clientX,value:Number(input.value)||0,dragged:false};input.setPointerCapture(e.pointerId)});
- input.addEventListener('pointermove',e=>{if(!gesture||gesture.id!==e.pointerId)return;const dx=e.clientX-gesture.x;if(!gesture.dragged&&Math.abs(dx)<5)return;gesture.dragged=true;input.value=Math.max(min,Math.min(max,gesture.value+Math.round(dx/2)));commit()});
- input.addEventListener('pointerup',e=>{if(!gesture)return;const dragged=gesture.dragged;gesture=null;input.releasePointerCapture(e.pointerId);if(dragged)input.dispatchEvent(new Event('change',{bubbles:true}));else{input.focus();input.select()}});
- input.addEventListener('pointercancel',()=>{gesture=null;input.dispatchEvent(new Event('change',{bubbles:true}))});
- input.addEventListener('keydown',e=>{if(['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key)){e.preventDefault();e.stopPropagation();input.value=(Number(input.value)||0)+(e.key==='ArrowUp'||e.key==='ArrowRight'?1:-1)*(e.shiftKey?10:1);commit()}if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();e.stopPropagation();input.blur()}});
- input.addEventListener('blur',()=>{commit();input.dispatchEvent(new Event('change',{bubbles:true}))});
+/* Visible, keyboard-accessible font menu; the hidden select is only the value model. */
+export function mountFontPicker(select,button){
+ const panel=document.createElement('div');panel.id='ie-font-popover';panel.className='ie-popover';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('role','listbox');panel.setAttribute('aria-label','Fonts');document.body.append(panel);
+ button.setAttribute('aria-haspopup','listbox');button.setAttribute('aria-expanded','false');button.setAttribute('aria-controls',panel.id);
+ const close=(focus=false)=>{panel.hidden=true;button.setAttribute('aria-expanded','false');if(focus&&button.getClientRects().length)button.focus({preventScroll:true})};
+ const open=()=>{
+  if(select.disabled)return;const anchor=button.getBoundingClientRect();
+  document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));
+  panel.replaceChildren();
+  for(const option of select.options){
+   const item=document.createElement('button');item.type='button';item.setAttribute('role','option');item.setAttribute('aria-selected',String(option.selected));item.textContent=option.textContent;item.style.fontFamily=option.value||'system-ui,sans-serif';item.tabIndex=option.selected?0:-1;
+   item.onclick=()=>{select.value=option.value;select.dispatchEvent(new Event('change',{bubbles:true}));button.dataset.ieTooltip='Font: '+option.textContent;close(true)};
+   panel.append(item);
+  }
+  panel.hidden=false;button.setAttribute('aria-expanded','true');
+  panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,anchor.left))+'px';
+  panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,anchor.bottom+8))+'px';
+  const chosen=panel.querySelector('[aria-selected="true"]')||panel.firstElementChild;chosen?.focus({preventScroll:true});if(chosen)panel.scrollTop=Math.max(0,chosen.offsetTop-panel.clientHeight/2);
+ };
+ button.onclick=()=>panel.hidden?open():close(true);
+ panel.addEventListener('keydown',e=>{
+  const items=[...panel.children],index=items.indexOf(document.activeElement);let next=null;
+  if(e.key==='ArrowDown')next=items[(index+1)%items.length];
+  if(e.key==='ArrowUp')next=items[(index-1+items.length)%items.length];
+  if(e.key==='Home')next=items[0];if(e.key==='End')next=items.at(-1);
+  if(next){e.preventDefault();e.stopImmediatePropagation();next.focus();return}
+  if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close(true)}
+  if(e.key==='Tab')close();
+ });
+ document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!button.contains(e.target))close()},true);
+ document.addEventListener('ie-open-panel',e=>{if(e.detail!==panel)close()});
+ window.addEventListener('resize',()=>close());window.addEventListener('scroll',e=>{if(!panel.contains(e.target))close()},true);
+ return {close};
+}
+
+/* Type without rewriting incomplete input; drag from a separate handle in one gesture. */
+export function mountNumber(input,min,max,sliderMax=max){
+ const control=input.closest('.ie-format'),handle=control.querySelector('.ie-number-handle');
+ const panel=document.createElement('div');panel.className='ie-number-slider';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;
+ const range=document.createElement('input');range.type='range';range.min=min;range.max=sliderMax;range.step=1;range.setAttribute('aria-label',input.getAttribute('aria-label')+' slider');panel.append(range);document.body.append(panel);
+ input.setAttribute('aria-valuemin',min);input.setAttribute('aria-valuemax',max);handle.setAttribute('aria-controls',panel.id=input.id+'-slider');
+ let gesture=null,editing=false,startValue=Number(input.value)||min,applied=startValue,hideTimer=null;
+ const clamp=value=>Math.max(min,Math.min(max,Math.round(value)));
+ const current=()=>{const n=Number(input.value);return input.value.trim()!==''&&Number.isFinite(n)?clamp(n):startValue};
+ const draw=()=>{const n=current();range.max=Math.max(sliderMax,n);range.value=n;range.style.setProperty('--ie-range-fill',((n-min)/(Number(range.max)-min)*100)+'%');input.setAttribute('aria-valuenow',n)};
+ const emit=value=>{const next=clamp(value),changed=next!==applied;input.value=next;draw();if(changed){applied=next;input.dispatchEvent(new Event('ie-number-input',{bubbles:true}))}};
+ const end=()=>input.dispatchEvent(new Event('change',{bubbles:true}));
+ const close=()=>{clearTimeout(hideTimer);if(gesture)return;panel.hidden=true};
+ const show=()=>{
+  if(input.disabled||editing)return;clearTimeout(hideTimer);draw();
+  if(panel.hidden){document.dispatchEvent(new CustomEvent('ie-number-preview',{detail:panel}));panel.hidden=false}
+  const r=handle.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left+r.width/2-panel.offsetWidth/2))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+3))+'px';
+ };
+ const leave=()=>{clearTimeout(hideTimer);hideTimer=setTimeout(close,120)};
+ control.addEventListener('pointerenter',show);control.addEventListener('pointerleave',leave);panel.addEventListener('pointerenter',()=>clearTimeout(hideTimer));panel.addEventListener('pointerleave',leave);
+ input.addEventListener('focus',()=>{editing=true;startValue=applied=current();close();input.select()});
+ input.addEventListener('click',()=>input.select());
+ input.addEventListener('blur',()=>{if(!editing)return;editing=false;const n=Number(input.value);emit(input.value.trim()===''||!Number.isFinite(n)?startValue:n);end()});
+ input.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();e.stopPropagation();emit(current()+(e.key==='ArrowUp'?1:-1)*(e.shiftKey?10:1));end()}
+  if(e.key==='Enter'){e.preventDefault();e.stopPropagation();input.blur()}
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();input.value=startValue;input.blur();close()}
+ });
+ handle.addEventListener('pointerdown',e=>{
+  if(e.button!==0||input.disabled)return;e.preventDefault();e.stopPropagation();input.blur();editing=false;show();
+  document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));
+  applied=current();gesture={id:e.pointerId,x:e.clientX,value:current(),span:Number(range.max)-min,width:range.getBoundingClientRect().width};handle.setPointerCapture(e.pointerId);
+ });
+ handle.addEventListener('pointermove',e=>{if(gesture?.id===e.pointerId)emit(gesture.value+(e.clientX-gesture.x)/gesture.width*gesture.span)});
+ const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end();close()};
+ handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);handle.addEventListener('lostpointercapture',stop);
+ range.addEventListener('focus',()=>{applied=current()});range.addEventListener('pointerdown',()=>{applied=current();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));clearTimeout(hideTimer)});
+ range.addEventListener('input',()=>emit(Number(range.value)));range.addEventListener('change',end);
+ panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();handle.focus()}});
+ document.addEventListener('pointerdown',e=>{if(!control.contains(e.target)&&!panel.contains(e.target))close()},true);
+ document.addEventListener('ie-open-panel',e=>{if(e.detail!==panel)close()});document.addEventListener('ie-number-preview',e=>{if(e.detail!==panel)close()});
+ window.addEventListener('resize',close);window.addEventListener('scroll',close,true);
+ return {close};
 }
 /* Measure the actual content, moving the original controls rather than clones. */
 export function mountOverflow(bar,tools){
@@ -116,7 +184,7 @@ export function mountOverflow(bar,tools){
  };
  const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;layout()})};
  new ResizeObserver(schedule).observe(bar);
- new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'&&r.target.matches('.ie-format')))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
  window.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);schedule();return {layout:schedule};
 }
 export function contrastingInk(color){
