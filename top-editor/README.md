@@ -22,7 +22,7 @@ Click text to edit at the clicked position. Escape returns to selection; Left/Ri
 
 Drag the selected element's grip to reorder siblings without reparenting. The page scrolls near viewport edges. Formatting controls overflow individually into Actions as actual space decreases; Copy and Close remain available.
 
-Image/link URLs, alt text, placeholders, page title/favicon and Lucide names apply automatically. Images preload before replacement. Local drafts restore unfinished edits. Revert restores authored originals and supports Undo. Copy exports the current document without editor runtime/UI, preserving authored markup, styles and the installation script.
+Image/link URLs, alt text, placeholders, page title/favicon and Lucide names apply automatically. Images preload before replacement. Local drafts restore unfinished edits. Revert restores authored originals and supports Undo. Copy exports the current document without editor runtime/UI, preserving authored markup and styles. The editor installation script is omitted from exported HTML.
 
 ## Source and shared reference
 
