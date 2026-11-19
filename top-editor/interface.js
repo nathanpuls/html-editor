@@ -44,8 +44,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-reset';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-reset';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-page-colors';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-page-colors';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
@@ -312,7 +312,8 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
  const duplicateSelected=()=>{if(!active||selected.size!==1)return;const target=active;finish();undo.push(snapshot());redo.length=0;const clone=cloneEditable(target);const sourceNodes=[target,...target.querySelectorAll('*')],cloneNodes=[clone,...clone.querySelectorAll('*')];cloneNodes.forEach((node,index)=>originalStyles.set(node,originalStyles.get(sourceNodes[index])||''));target.after(clone);captureAuthorAttributes(authorAttributes);select(clone);clone.blur?.();drafts.save()};
  $('ie-duplicate').onclick=duplicateSelected;
  pageDrag=mountPageDrag({getActive:()=>!preview&&selected.size===1?active:null,onHover:()=>!preview,beforeDrag:el=>{if(active&&textEditing){active.contentEditable='false';textEditing=false}if(active!==el)select(el)},change:(fn,el)=>{finish();undo.push(snapshot());redo.length=0;fn();select(el);drafts.save()}});
- tools=mountTools({bar,select,elementName,pageColors:settings=>mountPageColors(settings,fn=>{finish();undo.push(snapshot());redo.length=0;fn();drafts.save()}),
+ let pageColorSession=null;
+ tools=mountTools({bar,select,elementName,pageColors:settings=>{pageColorSession=null;mountPageColors(settings,(fn,name,end=false)=>{if(end){pageColorSession=null;return}if(pageColorSession!==name){finish();undo.push(snapshot());redo.length=0;pageColorSession=name}fn();drafts.save()})},
   ensureEditor:()=>{preview=false;applyPreview()},
   shortcutActions:()=>[
    {label:'Undo',key:'undo',enabled:!preview&&undo.length>0,run:()=>$('ie-undo').click()},

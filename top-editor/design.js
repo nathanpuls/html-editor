@@ -48,7 +48,18 @@ export function mountColorPicker(bar,{reset}={}){
  const close=()=>{end();panel.hidden=true;trigger?.setAttribute('aria-expanded','false');trigger=null};
  const draw=()=>{const rgb=hsvToRGB(hsv,alpha),solid=colorHex(hsvToRGB(hsv,1));area.style.backgroundColor='hsl('+hsv[0]+' 100% 50%)';cursor.style.left=(hsv[1]*100)+'%';cursor.style.top=((1-hsv[2])*100)+'%';hue.value=Math.round(hsv[0]);opacity.value=Math.round(alpha*100);output.textContent=Math.round(alpha*100)+'%';opacity.style.setProperty('--ie-alpha-color',solid);field.value=colorHex(rgb).toUpperCase();field.removeAttribute('aria-invalid');area.setAttribute('aria-valuenow',Math.round(hsv[1]*100));area.setAttribute('aria-valuetext','Saturation '+Math.round(hsv[1]*100)+'%, brightness '+Math.round(hsv[2]*100)+'%')};
  const update=()=>{if(alpha===0&&!alphaTouched)alpha=1;draw();if(trigger){trigger.value=colorHex(hsvToRGB(hsv,alpha));trigger.dispatchEvent(new Event('input',{bubbles:true}))}};
- for(const id of ['ie-color','ie-bg','ie-border']){const button=document.getElementById(id);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.onclick=()=>{if(trigger===button&&!panel.hidden){close();return}const anchor=button.getBoundingClientRect();close();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));trigger=button;borderSwitch.hidden=id!=='ie-border';borderToggle.checked=document.getElementById('ie-border-none').checked;const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=false;draw();panel.hidden=false;button.setAttribute('aria-expanded','true');const r=anchor;panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+8))+'px';area.focus({preventScroll:true})}}
+ const open=(button,pageColor=false)=>{
+  if(trigger===button&&!panel.hidden){close();return}
+  const anchor=button.getBoundingClientRect();close();panel.dataset.ieKeepSettings=String(pageColor);
+  document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));trigger=button;
+  resetButton.hidden=pageColor;borderSwitch.hidden=pageColor||button.id!=='ie-border';borderToggle.checked=document.getElementById('ie-border-none').checked;
+  const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=false;draw();panel.hidden=false;button.setAttribute('aria-expanded','true');
+  let left=anchor.left,top=anchor.bottom+8;
+  if(pageColor){left=anchor.left-panel.offsetWidth-10;if(left<8)left=anchor.right+10;top=anchor.top}
+  panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,left))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,top))+'px';area.focus({preventScroll:true});
+ };
+ for(const id of ['ie-color','ie-bg','ie-border']){const button=document.getElementById(id);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.onclick=()=>open(button)}
+ document.addEventListener('ie-pick-page-color',e=>open(e.detail,true));
  const point=e=>{const r=area.getBoundingClientRect();hsv[1]=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));hsv[2]=1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));update()};
  area.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();area.focus();area.setPointerCapture(e.pointerId);point(e)});
  area.addEventListener('pointermove',e=>{if(area.hasPointerCapture(e.pointerId))point(e)});
@@ -195,7 +206,7 @@ export function mountOverflow(bar,tools){
  };
  const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;layout()})};
  new ResizeObserver(schedule).observe(bar);
- new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'&&r.target.matches('.ie-format')))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'&&(r.target.matches('.ie-format')||r.target.id==='ie-select-similar')))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
  window.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);schedule();return {layout:schedule};
 }
 export function contrastingInk(color){
@@ -264,11 +275,12 @@ export function mountPageColors(settings,change){
  const root=getComputedStyle(document.documentElement);
  for(const [name,authored] of declarations){
   const value=root.getPropertyValue(name).trim();if(derived.has(name)||authored.includes('var(')||!CSS.supports('color',value))continue;
-  const label=document.createElement('label'),swatch=document.createElement('i'),text=document.createElement('span'),input=document.createElement('input');
-  text.textContent=name.slice(2).replace(/[-_]/g,' ');input.value=hex(value);input.setAttribute('aria-label',text.textContent+' color');input.spellcheck=false;swatch.style.background=value;
+  const label=document.createElement('label'),swatch=document.createElement('button'),text=document.createElement('span'),input=document.createElement('input');
+  text.textContent=name.slice(2).replace(/[-_]/g,' ');input.value=hex(value);input.setAttribute('aria-label',text.textContent+' color');input.spellcheck=false;swatch.style.background=value;swatch.type='button';swatch.className='ie-page-color-swatch';swatch.value=hex(value);swatch.setAttribute('aria-label','Choose '+text.textContent+' color');swatch.setAttribute('aria-haspopup','dialog');swatch.setAttribute('aria-expanded','false');swatch.onclick=e=>{e.preventDefault();document.dispatchEvent(new CustomEvent('ie-pick-page-color',{detail:swatch}))};
   label.append(swatch,text,input);box.append(label);let last=input.value;
-  const apply=()=>{let next=input.value.trim();if(!next.startsWith('#'))next='#'+next;if(!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(next)||hex(next)===hex(last))return;change(()=>document.documentElement.style.setProperty(name,next));last=next;swatch.style.background=next};
-  input.onchange=apply;input.oninput=()=>{if(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(input.value))apply()};
+  const apply=()=>{let next=input.value.trim();if(!next.startsWith('#'))next='#'+next;if(!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(next)||hex(next)===hex(last))return;change(()=>document.documentElement.style.setProperty(name,next),name);last=next;swatch.value=hex(next);swatch.style.background=next};
+  swatch.oninput=()=>{input.value=swatch.value;apply()};swatch.onchange=()=>change(null,name,true);
+  input.onchange=()=>{apply();change(null,name,true)};input.oninput=()=>{if(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(input.value))apply()};
  }
  const note=document.createElement('p');note.textContent=box.children.length>1?'Shared CSS colors. Linked shades and transparency follow automatically; element formatting stays local.':'Define shared colors as CSS variables on :root to edit them here.';box.append(note);
 }

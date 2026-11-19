@@ -126,7 +126,7 @@ export function mountTools({bar,select,elementName,change,revert,revertSelection
  settings.querySelector('form').onsubmit=e=>{e.preventDefault();close()};
  fixed['ie-revert-action'].onclick=()=>{close();revert()};
  fixed['ie-revert-element'].onclick=()=>{close();revertSelection()};
- document.addEventListener('pointerdown',e=>{if(![search,menu,settings,searchButton,menuButton].some(el=>el.contains(e.target)))close()},true);
+ document.addEventListener('pointerdown',e=>{if(![search,menu,settings,searchButton,menuButton].some(el=>el.contains(e.target))&&!e.target.closest?.('#ie-color-popover[data-ie-keep-settings="true"]'))close()},true);
  document.addEventListener('keydown',e=>{
   if(e.defaultPrevented||e.isComposing)return;
   const key=e.key.toLowerCase(),mod=e.metaKey||e.ctrlKey,typing=e.target.isContentEditable||e.target.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]');
@@ -151,7 +151,7 @@ export function mountTools({bar,select,elementName,change,revert,revertSelection
  document.addEventListener('pointerout',e=>{if(tipAnchor&&!tipAnchor.contains(e.relatedTarget))hideTip()});
  document.addEventListener('focusin',e=>{const anchor=e.target.closest?.('[data-ie-tooltip]');if(anchor&&inEditor(anchor))showTip(anchor)});
  document.addEventListener('focusout',hideTip);document.addEventListener('pointerdown',hideTip,true);document.addEventListener('keydown',hideTip,true);window.addEventListener('scroll',hideTip,true);
- document.addEventListener('ie-open-panel',e=>{if(![search,menu,settings].includes(e.detail))close()});
+ document.addEventListener('ie-open-panel',e=>{if(e.detail?.dataset.ieKeepSettings==='true'){search.hidden=menu.hidden=true;return}if(![search,menu,settings].includes(e.detail))close()});
  window.addEventListener('resize',()=>{hideTip();close()});return {close,formatOverflow,actionOverflow};
 
 }

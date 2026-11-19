@@ -14,11 +14,11 @@ Install `<script src="https://edit.built.at" defer></script>`. No framework or b
 
 No reserved link labels, collection attributes or data-section are required. A card and its children can all be selectable; editable text belongs on leaf elements. Use ordinary semantic lists for link collections. Generic Duplicate works on links, cards and whole sections, preserves their children, and remaps internal ID references.
 
-Groups affect styling only. Unrelated items are never grouped by class, tag or approximate hue. Element formatting creates local overrides; Page settings edits independent root color variables. Derived variables follow their source through CSS, and are not presented as independent colors.
+Groups affect styling only. Unrelated items are never grouped by class, tag or approximate hue. Element formatting creates local overrides; Page settings edits independent root color variables: click a swatch for the shared area/hue/opacity/HEX picker, or enter HEX directly. Picker drags form one undoable change. Derived variables follow their source through CSS, and are not presented as independent colors.
 
 ## Editing
 
-Click text to edit at the clicked position. Escape returns to selection; Left/Right enter at the beginning/end; Enter enters at the end. Delete removes a selected element outside text editing. Duplicate selects the copy for immediate editing or deletion. Select parents through the element search or Shift-click. Select similar is available only for explicit groups.
+Click text to edit at the clicked position. Escape returns to selection; Left/Right enter at the beginning/end; Enter enters at the end. Delete removes a selected element outside text editing. Duplicate selects the copy for immediate editing or deletion. Select parents through the element search or Shift-click. Select similar appears beside the element selector when an explicit group has multiple members; it is also available in the search dropdown.
 
 Drag an element's border with the grab cursor to reorder siblings without reparenting. There is no separate grip icon; the interior remains available for text editing. The page scrolls near viewport edges. Click a numeric value to type freely, then press Enter or leave the field to commit. Press the move-horizontal handle on Size or Radius to open its slider over the label, then drag in the same gesture for live adjustments. Hover does not open it. The slider stays open after release so its Reset action remains accessible. Font opens a visible, keyboard-accessible menu with the current font selected. Formatting controls overflow individually into Actions as actual space decreases; Copy and Close remain available.
 

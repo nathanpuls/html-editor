@@ -42,7 +42,7 @@
 #ie-copy.ie-copied>svg[data-lucide=copy]{display:none}
 #ie-copy.ie-copied .ie-copy-check{display:block}
 #ie-toolbar #ie-close{margin-left:5px;border-left:1px solid #eee;border-radius:0}
-#ie-toolbar #ie-select-similar{display:none!important}
+#ie-toolbar #ie-select-similar{flex:none;padding:7px 9px;height:34px;border:1px solid #e2e2e2;border-radius:7px;background:#f4f4f4;font:12px system-ui,sans-serif}
 #ie-format-overflow:empty,#ie-action-overflow:empty{display:none}
 #ie-format-overflow{flex-wrap:wrap;padding:12px 0;gap:8px;border-bottom:1px solid #eee;margin-bottom:6px}
 #ie-action-overflow{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #eee}
@@ -129,3 +129,7 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 .ie-drag-left,.ie-drag-right{top:5px;bottom:5px;width:8px}
 .ie-drag-left{left:-3px}.ie-drag-right{right:-3px}
 .ie-grabbing,.ie-grabbing .ie-drag-edge{cursor:grabbing}
+
+.ie-page-colors .ie-page-color-swatch{width:28px;height:28px;flex:none;padding:0;border:1px solid #ddd;border-radius:7px;cursor:pointer}
+.ie-page-colors label>span{flex:1;min-width:0}
+.ie-page-colors label>input{flex:0 1 100px;margin:0!important;min-width:60px}
