@@ -299,3 +299,15 @@ body:has(#ie-mobile-editor:not([hidden])){overflow:hidden!important}
 #ie-mobile-editor textarea{resize:vertical}
 #ie-mobile-editor small{display:block;font-size:12px;color:#986353}
 #ie-mobile-resume{position:fixed;right:16px;bottom:16px;z-index:2147483605;padding:10px 18px;border:1px solid #ddd;border-radius:24px;background:#fff;color:#222;font:14px system-ui,sans-serif;box-shadow:0 2px 10px #0001}
+
+#ie-mobile-editor .ie-mobile-search{position:relative;flex:none;margin:12px 18px 4px}
+#ie-mobile-editor .ie-mobile-search>svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:#777;pointer-events:none}
+#ie-mobile-editor .ie-mobile-search input{padding:10px 40px 10px 38px;appearance:none;-webkit-appearance:none}
+#ie-mobile-editor .ie-mobile-search input::-webkit-search-cancel-button,#ie-mobile-editor .ie-mobile-search input::-webkit-search-decoration{display:none;-webkit-appearance:none}
+#ie-mobile-editor .ie-mobile-search button{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:6px;margin:0;border:0;background:transparent;color:#222}
+#ie-mobile-editor .ie-mobile-search button svg{width:17px;height:17px}
+#ie-mobile-editor [hidden]{display:none!important}
+#ie-mobile-editor input,#ie-mobile-editor textarea{border-radius:12px}
+#ie-mobile-editor .ie-mobile-redo:disabled{color:#bbb}
+#ie-mobile-resume{display:flex;align-items:center;justify-content:center;width:46px;height:46px;padding:12px;border-radius:50%}
+#ie-mobile-resume svg{display:block;width:20px;height:20px}
