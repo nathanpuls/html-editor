@@ -1,5 +1,3 @@
-import {createHistory,createDraftStore,applyDocument} from './history.js';
-import {captureAuthorAttributes,exportHTML} from './export.js';
 /* Color and font helpers from the experimental editor. */
 export function rgba(color){
  const value=String(color).trim();
@@ -31,6 +29,7 @@ export const ensureGoogleFont=value=>{const family=googleFonts.find(f=>value.sta
 export function mountColorPicker(bar){
  const panel=document.createElement('div');panel.id='ie-color-popover';panel.className='ie-popover';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Color picker');
  panel.innerHTML='<div class="ie-color-area" role="slider" tabindex="0" aria-label="Color area" aria-valuemin="0" aria-valuemax="100"><span class="ie-color-cursor"></span></div><label class="ie-picker-row"><span>Hue</span><input class="ie-hue" type="range" min="0" max="359" step="1" aria-label="Hue"></label><label class="ie-picker-row"><span>Opacity</span><input class="ie-alpha" type="range" min="0" max="100" step="1" aria-label="Opacity"><output class="ie-alpha-value">100%</output></label><label class="ie-hex-row"><span>HEX</span><input class="ie-hex" type="text" spellcheck="false" autocomplete="off" aria-label="HEX" maxlength="9"></label>';
+ const borderSwitch=document.createElement('label');borderSwitch.className='ie-border-switch';borderSwitch.innerHTML='<input type="checkbox" aria-label="Border enabled">Border enabled';borderSwitch.hidden=true;panel.append(borderSwitch);const borderToggle=borderSwitch.querySelector('input');borderToggle.onchange=()=>{const original=document.getElementById('ie-border-none');original.checked=borderToggle.checked;original.dispatchEvent(new Event('change',{bubbles:true}))};
  document.body.append(panel);
  const area=panel.querySelector('.ie-color-area'),cursor=panel.querySelector('.ie-color-cursor'),hue=panel.querySelector('.ie-hue'),opacity=panel.querySelector('.ie-alpha'),output=panel.querySelector('output'),field=panel.querySelector('.ie-hex');
  let trigger=null,hsv=[0,0,1],alpha=1;
@@ -38,7 +37,7 @@ export function mountColorPicker(bar){
  const close=()=>{end();panel.hidden=true;trigger?.setAttribute('aria-expanded','false');trigger=null};
  const draw=()=>{const rgb=hsvToRGB(hsv,alpha),solid=colorHex(hsvToRGB(hsv,1));area.style.backgroundColor='hsl('+hsv[0]+' 100% 50%)';cursor.style.left=(hsv[1]*100)+'%';cursor.style.top=((1-hsv[2])*100)+'%';hue.value=Math.round(hsv[0]);opacity.value=Math.round(alpha*100);output.textContent=Math.round(alpha*100)+'%';opacity.style.setProperty('--ie-alpha-color',solid);field.value=colorHex(rgb).toUpperCase();field.removeAttribute('aria-invalid');area.setAttribute('aria-valuenow',Math.round(hsv[1]*100));area.setAttribute('aria-valuetext','Saturation '+Math.round(hsv[1]*100)+'%, brightness '+Math.round(hsv[2]*100)+'%')};
  const update=()=>{draw();if(trigger){trigger.value=colorHex(hsvToRGB(hsv,alpha));trigger.dispatchEvent(new Event('input',{bubbles:true}))}};
- for(const id of ['ie-color','ie-bg','ie-border']){const button=bar.querySelector('#'+id);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.onclick=()=>{if(trigger===button&&!panel.hidden){close();return}close();trigger=button;const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];draw();panel.hidden=false;button.setAttribute('aria-expanded','true');const r=button.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+8))+'px';area.focus({preventScroll:true})}}
+ for(const id of ['ie-color','ie-bg','ie-border']){const button=document.getElementById(id);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');button.onclick=()=>{if(trigger===button&&!panel.hidden){close();return}const anchor=button.getBoundingClientRect();close();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));trigger=button;borderSwitch.hidden=id!=='ie-border';borderToggle.checked=document.getElementById('ie-border-none').checked;const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];draw();panel.hidden=false;button.setAttribute('aria-expanded','true');const r=anchor;panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+8))+'px';area.focus({preventScroll:true})}}
  const point=e=>{const r=area.getBoundingClientRect();hsv[1]=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));hsv[2]=1-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));update()};
  area.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();area.focus();area.setPointerCapture(e.pointerId);point(e)});
  area.addEventListener('pointermove',e=>{if(area.hasPointerCapture(e.pointerId))point(e)});
@@ -52,7 +51,8 @@ export function mountColorPicker(bar){
  field.onchange=()=>{draw();end()};field.addEventListener('focus',()=>field.select());
  panel.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();const button=trigger;close();button?.focus()}},true);
  document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!trigger?.contains(e.target))close()},true);
- window.addEventListener('resize',close);window.addEventListener('scroll',close,true);
+ document.addEventListener('ie-open-panel',e=>{if(e.detail!==panel)close()});
+ window.addEventListener('resize',close);
  return {close};
 }
 
@@ -79,107 +79,99 @@ export const canArrange=(source,target)=>!!source&&!!target&&source!==target&&so
 const readableName=value=>String(value||'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim().replace(/^./,c=>c.toUpperCase());
 export function outlineName(el){
  const named=el.getAttribute('data-section')||el.getAttribute('data-edit')||el.getAttribute('aria-label')||el.getAttribute('alt');
- if(named)return readableName(named).slice(0,60);
+ if(named){let label=readableName(named).replace(/\s+(?:link\s+)?item$/i,'');if(el.matches?.('a'))label=label.replace(/\s+link$/i,'');if(label.toLowerCase()==='links'&&el.children?.length)return 'Link list';return label.slice(0,60)}
  const kinds={DIV:'Container',MAIN:'Page content',SECTION:'Section',ARTICLE:'Card',NAV:'Navigation',HEADER:'Header',FOOTER:'Footer',UL:'List',OL:'List',LI:'List item',A:'Link',IMG:'Image',SVG:'Icon',SPAN:'Text',P:'Paragraph',H1:'Heading',H2:'Heading',H3:'Heading',BUTTON:'Button',FORM:'Form'};
  const kind=kinds[el.tagName]||'Element';
  const heading=el.querySelector('h1,h2,h3,h4'),text=(heading?.textContent||(!el.children.length?el.textContent:'')||'').replace(/\s+/g,' ').trim();
  return kind+(text?' · '+text.slice(0,42):'');
 }
 
-export function mountArrange({elementName,change}){
- const panel=document.createElement('aside');panel.id='ie-arrange';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('aria-label','Arrange elements');
- panel.innerHTML='<header><strong>Arrange</strong><button type="button" aria-label="Close Arrange" title="Close">'+"<svg data-lucide=\"x\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" /> </svg> "+'</button></header><p>Drag items within their container. Expand an item to arrange its contents.</p><div class="ie-outline"></div><p class="ie-arrange-status" role="status"></p>';
- document.body.append(panel);const list=panel.querySelector('.ie-outline'),status=panel.querySelector('[role=status]'),expanded=new WeakMap();let dragged=null,queued=false,pointerDrag=null;const rowElements=new WeakMap();
- const close=()=>{panel.hidden=true;dragged=null;pointerDrag=null};panel.querySelector('button').onclick=close;
- const children=el=>el.matches('svg')?[]:[...el.children].filter(authorNode);
- const render=()=>{
-  if(panel.hidden||dragged)return;list.replaceChildren();
-  const visit=(el,level)=>{
-   const kids=children(el),wrapper=document.createElement(kids.length?'details':'div');wrapper.className='ie-outline-item';
-   const row=document.createElement(kids.length?'summary':'div');row.className='ie-outline-row';rowElements.set(row,el);
-   const handle=document.createElement('button');handle.type='button';handle.className='ie-drag-handle';handle.draggable=false;handle.innerHTML="<svg data-lucide=\"grip-vertical\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <circle cx=\"9\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"5\" r=\"1\" /> <circle cx=\"9\" cy=\"19\" r=\"1\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <circle cx=\"15\" cy=\"19\" r=\"1\" /> </svg> ";handle.setAttribute('aria-label','Drag '+outlineName(el));handle.title='Drag to reorder';handle.onclick=e=>e.preventDefault();
-   const name=document.createElement('span');name.textContent=outlineName(el);row.append(handle,name);if(kids.length){const caret=document.createElement('span');caret.className='ie-outline-caret';caret.innerHTML="<svg data-lucide=\"chevron-right\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"m9 18 6-6-6-6\" /> </svg> ";row.append(caret)}wrapper.append(row);
-   if(kids.length){wrapper.open=expanded.has(el)?expanded.get(el):level<1;wrapper.addEventListener('toggle',()=>expanded.set(el,wrapper.open));const nested=document.createElement('div');nested.className='ie-outline-children';kids.forEach(child=>nested.append(visit(child,level+1)));wrapper.append(nested)}
-   handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();handle.setPointerCapture(e.pointerId);pointerDrag={el,row,handle,id:e.pointerId,x:e.clientX,y:e.clientY,target:null,before:true};});
-   return wrapper;
-  };
-  children(document.body).forEach(el=>list.append(visit(el,0)));
+
+/* Compact inputs use one click for entry and a small motion threshold for scrubbing. */
+export function mountNumber(input,min,max){
+ let gesture=null;
+ const commit=()=>{const n=Math.max(min,Math.min(max,Math.round(Number(input.value))));if(!Number.isFinite(n))return;input.value=n;input.setAttribute('aria-valuenow',n);input.dispatchEvent(new Event('input',{bubbles:true}))};
+ input.setAttribute('aria-valuemin',min);input.setAttribute('aria-valuemax',max);
+ input.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();gesture={id:e.pointerId,x:e.clientX,value:Number(input.value)||0,dragged:false};input.setPointerCapture(e.pointerId)});
+ input.addEventListener('pointermove',e=>{if(!gesture||gesture.id!==e.pointerId)return;const dx=e.clientX-gesture.x;if(!gesture.dragged&&Math.abs(dx)<5)return;gesture.dragged=true;input.value=Math.max(min,Math.min(max,gesture.value+Math.round(dx/2)));commit()});
+ input.addEventListener('pointerup',e=>{if(!gesture)return;const dragged=gesture.dragged;gesture=null;input.releasePointerCapture(e.pointerId);if(dragged)input.dispatchEvent(new Event('change',{bubbles:true}));else{input.focus();input.select()}});
+ input.addEventListener('pointercancel',()=>{gesture=null;input.dispatchEvent(new Event('change',{bubbles:true}))});
+ input.addEventListener('keydown',e=>{if(['ArrowUp','ArrowRight','ArrowDown','ArrowLeft'].includes(e.key)){e.preventDefault();e.stopPropagation();input.value=(Number(input.value)||0)+(e.key==='ArrowUp'||e.key==='ArrowRight'?1:-1)*(e.shiftKey?10:1);commit()}if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();e.stopPropagation();input.blur()}});
+ input.addEventListener('blur',()=>{commit();input.dispatchEvent(new Event('change',{bubbles:true}))});
+}
+/* Measure the actual content, moving the original controls rather than clones. */
+export function mountOverflow(bar,tools){
+ const row=document.getElementById('ie-format-row'),formats=[...row.children],actions=['ie-duplicate','ie-revert-selected','ie-delete','ie-undo','ie-redo'].map(id=>document.getElementById(id));
+ let queued=false;
+ const layout=()=>{
+  if(!bar.getClientRects().length)return;
+  bar.classList.remove('ie-micro');for(const el of formats)row.append(el);
+  const menu=document.getElementById('ie-menu');
+  for(const el of actions)menu.before(el);
+  const crowded=()=>bar.scrollWidth>bar.clientWidth;
+  for(const name of ['Radius','Border','Background','Text Color','Font','Size']){
+   if(!crowded())break;const el=formats.find(el=>el.dataset.format===name);if(!el.hidden)tools.formatOverflow.append(el);
+  }
+  for(const el of actions){if(!crowded())break;tools.actionOverflow.append(el)}for(const el of formats)if(el.parentElement===tools.formatOverflow)tools.formatOverflow.append(el);if(crowded())bar.classList.add('ie-micro');
  };
- const clearDrop=()=>panel.querySelectorAll('.ie-drop-before,.ie-drop-after').forEach(row=>row.classList.remove('ie-drop-before','ie-drop-after'));
- panel.addEventListener('pointermove',e=>{
-  if(!pointerDrag||e.pointerId!==pointerDrag.id)return;
-  if(!dragged&&Math.hypot(e.clientX-pointerDrag.x,e.clientY-pointerDrag.y)<5)return;
-  dragged=pointerDrag.el;pointerDrag.row.classList.add('ie-drag-source');e.preventDefault();clearDrop();
-  const row=document.elementFromPoint(e.clientX,e.clientY)?.closest('.ie-outline-row'),target=row&&rowElements.get(row);pointerDrag.target=null;
-  if(canArrange(dragged,target)){pointerDrag.target=target;pointerDrag.before=e.clientY<row.getBoundingClientRect().top+row.offsetHeight/2;row.classList.add(pointerDrag.before?'ie-drop-before':'ie-drop-after')}
-  const rect=list.getBoundingClientRect();if(e.clientY<rect.top+25)list.scrollTop-=12;else if(e.clientY>rect.bottom-25)list.scrollTop+=12;
- });
- const endPointer=e=>{if(!pointerDrag||e.pointerId!==pointerDrag.id)return;const state=pointerDrag;pointerDrag=null;dragged=null;clearDrop();if(state.handle.hasPointerCapture(e.pointerId))state.handle.releasePointerCapture(e.pointerId);if(e.type!=='pointercancel'&&state.target&&canArrange(state.el,state.target)){change(()=>state.before?state.target.before(state.el):state.target.after(state.el));status.textContent='Moved '+(state.el.getAttribute('data-edit')||state.el.tagName.toLowerCase())}render()};
- panel.addEventListener('pointerup',endPointer);panel.addEventListener('pointercancel',endPointer);
- const observer=new MutationObserver(records=>{if(panel.hidden||queued||!records.some(r=>authorNode(r.target.nodeType===1?r.target:r.target.parentElement)))return;queued=true;requestAnimationFrame(()=>{queued=false;render()})});observer.observe(document.body,{childList:true,subtree:true,attributes:true,characterData:true});
- panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close()}});
- return {open:()=>{panel.hidden=false;render()},close};
+ const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;layout()})};
+ new ResizeObserver(schedule).observe(bar);
+ new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ window.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);schedule();return {layout:schedule};
+}
+export function contrastingInk(color){
+ const [r,g,b,a]=rgba(color),background=[r,g,b].map(n=>n*a+255*(1-a));
+ const linear=n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4};
+ return .2126*linear(background[0])+.7152*linear(background[1])+.0722*linear(background[2])>.179?'#000000':'#ffffff';
+}
+/* Sibling-only movement preserves HTML parent-child validity. */
+export function mountPageDrag({getActive,beforeDrag,change}){
+ const handle=document.createElement('button');handle.id='ie-page-drag';handle.type='button';handle.dataset.builtAtEditorRuntime='';handle.setAttribute('aria-label','Drag selected element');handle.title='Drag to reorder';
+ handle.innerHTML="<svg aria-hidden=\"true\" data-lucide=\"grip-vertical\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <circle cx=\"9\" cy=\"12\" r=\"1\" /> <circle cx=\"9\" cy=\"5\" r=\"1\" /> <circle cx=\"9\" cy=\"19\" r=\"1\" /> <circle cx=\"15\" cy=\"12\" r=\"1\" /> <circle cx=\"15\" cy=\"5\" r=\"1\" /> <circle cx=\"15\" cy=\"19\" r=\"1\" /> </svg> ";
+ const line=document.createElement('div');line.id='ie-insertion';line.dataset.builtAtEditorRuntime='';line.hidden=true;handle.hidden=true;document.body.append(handle,line);
+ let state=null,frame=null;
+ const update=()=>{
+  const el=getActive();if(!el?.isConnected){handle.hidden=true;return}
+  const r=el.getBoundingClientRect();handle.hidden=false;handle.style.left=Math.max(4,Math.min(innerWidth-30,r.left-29))+'px';handle.style.top=Math.max(80,Math.min(innerHeight-30,r.top))+'px';
+ };
+ const aim=()=>{
+  if(!state)return;const siblings=[...state.el.parentElement.children].filter(el=>el!==state.el&&authorNode(el)&&el.getClientRects().length);
+  const hit=siblings.find(el=>{const r=el.getBoundingClientRect();return state.y>=r.top&&state.y<=r.bottom&&state.x>=r.left-40&&state.x<=r.right+40});
+  const target=hit||siblings.reduce((best,el)=>{const r=el.getBoundingClientRect(),distance=Math.abs(state.y-(r.top+r.height/2));return !best||distance<best.distance?{el,distance}:best},null)?.el;
+  state.target=target;if(!target){line.hidden=true;return}
+  const r=target.getBoundingClientRect(),style=getComputedStyle(target.parentElement),horizontal=style.display.includes('flex')&&style.flexDirection==='row';
+  state.before=horizontal?state.x<r.left+r.width/2:state.y<r.top+r.height/2;
+  line.hidden=false;Object.assign(line.style,horizontal?{left:(state.before?r.left:r.right)+'px',top:r.top+'px',width:'3px',height:r.height+'px'}:{left:r.left+'px',top:(state.before?r.top:r.bottom)+'px',width:r.width+'px',height:'3px'});
+ };
+ const scroll=()=>{if(!state)return;const top=document.getElementById('ie-toolbar').getBoundingClientRect().bottom+35,delta=!state.moved?0:state.y<top?-Math.min(22,(top-state.y)/3):state.y>innerHeight-60?Math.min(22,(state.y-innerHeight+60)/3):0;if(delta){window.scrollBy(0,delta);aim()}frame=requestAnimationFrame(scroll)};
+ handle.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();e.stopPropagation();const el=getActive();if(!el)return;beforeDrag();state={el,id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:false};handle.setPointerCapture(e.pointerId);frame=requestAnimationFrame(scroll)};
+ handle.onpointermove=e=>{if(!state)return;state.x=e.clientX;state.y=e.clientY;if(Math.hypot(state.x-state.startX,state.y-state.startY)>5){state.moved=true;aim()}};
+ const end=e=>{if(!state)return;const old=state;state=null;cancelAnimationFrame(frame);line.hidden=true;if(handle.hasPointerCapture(old.id))handle.releasePointerCapture(old.id);if(e.type!=='pointercancel'&&old.moved&&canArrange(old.el,old.target))change(()=>old.before?old.target.before(old.el):old.target.after(old.el));update()};
+ handle.onpointerup=end;handle.onpointercancel=end;window.addEventListener('scroll',update,true);window.addEventListener('resize',update);return {update,close:()=>{handle.hidden=true;line.hidden=true}};
 }
 
-/* A separate content-only mobile editor. No desktop controls are mounted. */
-export function startMobileEditor({authorAttributes,sourceHTML}){
- const panel=document.createElement('div');panel.id='ie-mobile-editor';panel.dataset.builtAtEditorRuntime='';panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Edit content');panel.setAttribute('aria-modal','true');
- panel.innerHTML='<header><strong>Edit content</strong><div><button type="button" class="ie-mobile-undo" aria-label="Undo" disabled>'+"<svg data-lucide=\"undo-2\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"M9 14 4 9l5-5\" /> <path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\" /> </svg> "+'</button><button type="button" class="ie-mobile-close" aria-label="Close">'+"<svg data-lucide=\"x\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" /> </svg> "+'</button></div></header><form></form>';
- const resume=document.createElement('button');resume.id='ie-mobile-resume';resume.dataset.builtAtEditorRuntime='';resume.type='button';resume.innerHTML="<svg data-lucide=\"pencil\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" /> </svg> ";resume.setAttribute('aria-label','Open editor');resume.hidden=true;
- const searchWrap=document.createElement('div');searchWrap.className='ie-mobile-search';searchWrap.innerHTML="<svg data-lucide=\"search\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"m21 21-4.34-4.34\" /> <circle cx=\"11\" cy=\"11\" r=\"8\" /> </svg> <input type=\"search\" placeholder=\"Search\" aria-label=\"Search\" autocomplete=\"off\"><button type=\"button\" aria-label=\"Clear search\" hidden><svg data-lucide=\"x\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" /> </svg> </button>";panel.querySelector('header').after(searchWrap);
- const redoButton=document.createElement('button');redoButton.type='button';redoButton.className='ie-mobile-redo';redoButton.setAttribute('aria-label','Redo');redoButton.innerHTML="<svg data-lucide=\"redo-2\" aria-hidden=\"true\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" > <path d=\"m15 14 5-5-5-5\" /> <path d=\"M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13\" /> </svg> ";panel.querySelector('.ie-mobile-undo').after(redoButton);
- document.body.append(panel,resume);
- const {snapshot,restore}=createHistory(()=>[panel,resume]),undo=[],redo=[],form=panel.querySelector('form'),undoButton=panel.querySelector('.ie-mobile-undo');
- let session=null,sequence=0;const pending=new Map(),versions=new WeakMap();
- const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);captureAuthorAttributes(authorAttributes)});
- const sync=()=>{undoButton.disabled=!undo.length;redoButton.disabled=!redo.length};
- const commit=(input,fn)=>{if(session!==input){undo.push(snapshot());session=input}redo.length=0;fn();sync();drafts.save()};
- const textNodes=el=>{const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode()){const node=walker.currentNode;if(node.data.trim()&&(node.parentElement.closest('[data-edit]')===el&&(!node.parentElement.closest('a')||node.parentElement.closest('a')===el||!el.contains(node.parentElement.closest('a')))||el.matches('a')&&!el.hasAttribute('data-edit')&&node.parentElement.closest('[data-edit]')===el.closest('[data-edit="links"]'))&&!node.parentElement.closest('svg,script,style,input,textarea,select'))nodes.push(node)}return nodes};
- const valid=(value,image=false)=>{if(!value||/\s/.test(value))return false;try{const url=new URL(value,document.baseURI);return image?['http:','https:','blob:'].includes(url.protocol)||value.startsWith('data:image/'):['http:','https:','mailto:','tel:'].includes(url.protocol)}catch{return false}};
- const flush=()=>{for(const [input,task] of pending){clearTimeout(task.timer);pending.delete(input);task.run()}};
- const cancel=()=>{for(const task of pending.values())clearTimeout(task.timer);pending.clear();sequence++};
- const search=searchWrap.querySelector('input'),clearSearch=searchWrap.querySelector('button');
- const normalize=value=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase();
- const filter=()=>{
-  const words=normalize(search.value).trim().split(/\s+/).filter(Boolean);clearSearch.hidden=!search.value;
-  for(const section of form.querySelectorAll('fieldset')){let count=0;const group=section.querySelector('legend').textContent;for(const label of section.querySelectorAll('label')){const input=label.querySelector('input,textarea');const text=normalize(group+' '+label.querySelector('span').textContent+' '+input.value);label.hidden=!words.every(word=>text.includes(word));if(!label.hidden)count++}section.hidden=!count}
- };
- search.oninput=filter;clearSearch.onclick=()=>{search.value='';filter();search.focus()};
- const render=()=>{
-  form.replaceChildren();const sections=new Map();
-  const sectionFor=el=>{const section=el.closest('[data-section],section,article,header,footer,nav'),key=section||document.body;if(!sections.has(key)){const fieldset=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=section?.getAttribute('data-section')||section?.getAttribute('data-edit')||section?.querySelector('h1,h2,h3')?.textContent.trim()||'Page';fieldset.append(legend);sections.set(key,fieldset);form.append(fieldset)}return sections.get(key)};
-  const field=(el,label,value,kind,write)=>{
-   const wrap=document.createElement('label'),caption=document.createElement('span'),input=document.createElement(kind==='text'?'textarea':'input'),status=document.createElement('small');caption.textContent=label;input.value=value;input.setAttribute('aria-label',label);input.dataset.mobileField=kind;
-   if(kind==='text'){input.rows=Math.min(6,Math.max(2,Math.ceil(value.length/42)))}else{input.type='text';input.inputMode='url';input.autocapitalize='off';input.spellcheck=false;input.addEventListener('focus',()=>input.select());input.addEventListener('click',()=>input.select())}
-   status.setAttribute('role','status');wrap.append(caption,input,status);sectionFor(el).append(wrap);
-   const apply=()=>{
-    if(!el.isConnected)return;const next=kind==='text'?input.value:input.value.trim();
-    if(kind==='image'){
-     const token={sequence,number:(versions.get(input)?.number||0)+1};versions.set(input,token);if(!valid(next,true)){status.textContent=next?'Enter an image URL.':'';return}if(next===write())return;
-     const previous=write(),probe=new Image();probe.onload=()=>{if(sequence!==token.sequence||versions.get(input)!==token||!el.isConnected||write()!==previous)return;commit(input,()=>write(next));status.textContent=''};probe.onerror=()=>{if(sequence===token.sequence&&versions.get(input)===token)status.textContent='Image could not load. Previous image kept.'};probe.src=next;return;
-    }
-    if(kind==='url'&&!valid(next)){status.textContent=next?'Enter a valid URL.':'';return}
-    if(next!==write())commit(input,()=>write(next));status.textContent='';
-   };
-   input.addEventListener('input',e=>{if(kind==='image')versions.delete(input);const old=pending.get(input);if(old)clearTimeout(old.timer);if(kind==='text'||e.inputType==='insertFromPaste')apply();else{const task={run:apply};task.timer=setTimeout(()=>{pending.delete(input);apply()},350);pending.set(input,task)}});
-   input.addEventListener('blur',()=>{const task=pending.get(input);if(task){clearTimeout(task.timer);pending.delete(input);task.run()}session=null});
-   input.addEventListener('keydown',e=>{if(e.key==='Enter'&&kind!=='text'){e.preventDefault();flush();input.blur()}});
-  };
-  for(const el of [...document.querySelectorAll('[data-edit],[data-edit="links"] a,img')].filter(authorNode)){
-   const label=el.getAttribute('data-edit')||el.getAttribute('aria-label')||el.getAttribute('alt')||el.textContent.trim().slice(0,50)||el.tagName.toLowerCase();
-   const nodes=textNodes(el);if(nodes.length){const read=()=>nodes.map(node=>node.data).join(' ').trim();field(el,label,read(),'text',value=>{if(value===undefined)return read();nodes[0].data=value;for(const node of nodes.slice(1))node.data=''})}
-   if(el.matches('a'))field(el,label+' — URL',el.getAttribute('href')||'','url',value=>value===undefined?el.getAttribute('href')||'':el.setAttribute('href',value));
-   if(el.matches('img'))field(el,label+' — Image URL',el.getAttribute('src')||'','image',value=>{if(value===undefined)return el.getAttribute('src')||'';el.src=value;el.removeAttribute('srcset');el.removeAttribute('sizes');el.closest('picture')?.querySelectorAll('source').forEach(source=>source.removeAttribute('srcset'))});
-   else{const background=getComputedStyle(el).backgroundImage;if(background.startsWith('url(')){const read=()=>getComputedStyle(el).backgroundImage.slice(4,-1).replace(/^["']|["']$/g,'');field(el,label+' — Image URL',read(),'image',value=>{if(value===undefined)return read();el.style.backgroundImage='url('+JSON.stringify(value)+')'})}}
-  }
-  filter();
-  if(!form.querySelector('input,textarea')){const empty=document.createElement('p');empty.textContent='No editable content on this page.';form.append(empty)}
- };
- const close=()=>{flush();session=null;drafts.save();panel.hidden=true;resume.hidden=false};
- panel.querySelector('.ie-mobile-close').onclick=close;resume.onclick=()=>{panel.hidden=false;resume.hidden=true;render()};
- undoButton.onclick=()=>{cancel();session=null;if(!undo.length)return;redo.push(snapshot());restore(undo.pop());document.body.classList.remove('ie-enabled');captureAuthorAttributes(authorAttributes);render();sync();drafts.save()};
- redoButton.onclick=()=>{cancel();session=null;if(!redo.length)return;undo.push(snapshot());restore(redo.pop());document.body.classList.remove('ie-enabled');captureAuthorAttributes(authorAttributes);render();sync();drafts.save()};
- form.onsubmit=e=>e.preventDefault();panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();close()}});
- window.addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flush()});
- drafts.restore();drafts.watch();render();sync();
+/* Expose existing page tokens; otherwise group authored accent colors by hue. */
+export function mountPageColors(settings,change){
+ settings.querySelector('.ie-page-colors')?.remove();
+ const box=document.createElement('div');box.className='ie-page-colors';box.innerHTML='<h4>Page colors</h4>';settings.append(box);
+ const names=new Set();
+ const scan=rules=>{for(const rule of rules){if(rule.style)for(const name of rule.style)if(name.startsWith('--')&&!name.startsWith('--ie-'))names.add(name);if(rule.cssRules)scan(rule.cssRules)}};
+ for(const sheet of document.styleSheets)try{scan(sheet.cssRules)}catch{}
+ for(const el of [document.documentElement,document.body])for(const name of el.style)if(name.startsWith('--')&&!name.startsWith('--ie-'))names.add(name);
+ const root=getComputedStyle(document.documentElement),tokens=[];
+ for(const name of names){const value=root.getPropertyValue(name).trim();if(value&&CSS.supports('color',value)&&!value.includes('var('))tokens.push({name,value:hex(value)})}
+ const hueDistance=(a,b)=>Math.min(Math.abs(a-b),360-Math.abs(a-b));
+ const groups=[];
+ const add=(color,item)=>{const hsv=rgbToHSV(rgba(color));if(hsv[1]<.15||rgba(color)[3]===0)return;let group=groups.find(g=>hueDistance(g.hue,hsv[0])<22);if(!group){group={hue:hsv[0],color,items:[]};groups.push(group)}group.items.push({...item,color,hsv})};
+ if(tokens.length)for(const token of tokens)add(token.value,{token:token.name});
+ else for(const el of [...document.body.querySelectorAll('*')].filter(authorNode)){const style=getComputedStyle(el);for(const property of ['color','background-color','border-top-color','border-right-color','border-bottom-color','border-left-color','stroke','fill']){const value=style.getPropertyValue(property);if(value&&CSS.supports('color',value)&&value!=='none')add(hex(value),{el,property})}}
+ groups.sort((a,b)=>b.items.length-a.items.length);
+ const neutralTokens=tokens.filter(token=>rgbToHSV(rgba(token.value))[1]<.15).slice(0,6);
+ const rows=groups.slice(0,6).map((g,index)=>({label:g.items[0].token?g.items[0].token.replace(/^--/,'').replace(/[-_]/g,' '):index?'Accent '+(index+1):'Accent',color:g.color,apply:value=>{
+  const next=rgbToHSV(rgba(value)),base=rgbToHSV(rgba(g.color));
+  change(()=>{for(const item of g.items){const [h,s,v]=item.hsv,alpha=rgba(item.color)[3],color=colorHex(hsvToRGB([(h+next[0]-base[0]+360)%360,Math.min(1,s*(next[1]/(base[1]||1))),Math.min(1,v*(next[2]/(base[2]||1)))],alpha));if(item.token)document.documentElement.style.setProperty(item.token,color);else if(item.el.isConnected)item.el.style.setProperty(item.property,color,'important')}})
+ }}));
+ for(const token of neutralTokens)rows.push({label:token.name.replace(/^--/,'').replace(/[-_]/g,' '),color:token.value,apply:value=>change(()=>document.documentElement.style.setProperty(token.name,value))});
+ for(const row of rows){const label=document.createElement('label'),swatch=document.createElement('i'),name=document.createElement('span'),input=document.createElement('input');swatch.style.background=row.color;name.textContent=row.label;input.value=row.color;input.setAttribute('aria-label',row.label+' color');input.spellcheck=false;label.append(swatch,name,input);box.append(label);let last=row.color;const apply=value=>{if(hex(value)===hex(last))return;row.apply(value);last=value;swatch.style.background=value};input.onchange=()=>{let value=input.value.trim();if(!value.startsWith('#'))value='#'+value;if(!/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value))return;apply(value)};input.oninput=()=>{if(/^#[0-9a-f]{6}(?:[0-9a-f]{2})?$/i.test(input.value)){apply(input.value)}}}
+ if(!rows.length){const note=document.createElement('p');note.textContent='Use the formatting controls to set page colors.';box.append(note)}
 }
