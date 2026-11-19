@@ -147,10 +147,10 @@ export function mountFontPicker(select,button,{reset}={}){
 }
 
 /* Type without rewriting incomplete input; drag from a separate handle in one gesture. */
-export function mountNumber(input,min,max,sliderMax=max,{reset}={}){
+export function mountNumber(input,min,max,sliderMax=max,{reset,closeOnRelease=false}={}){
  const control=input.closest('.ie-format'),handle=control.querySelector('.ie-number-handle');
  const panel=document.createElement('div');panel.className='ie-number-slider';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;
- const range=document.createElement('input');range.type='range';range.min=min;range.max=sliderMax;range.step=1;range.setAttribute('aria-label',input.getAttribute('aria-label')+' slider');panel.append(range,makeResetButton(()=>{input.blur();reset?.(input.id==='ie-size'?'size':'borderRadius');applied=current();draw();close()}));document.body.append(panel);
+ const range=document.createElement('input');range.type='range';range.min=min;range.max=sliderMax;range.step=1;range.setAttribute('aria-label',input.getAttribute('aria-label')+' slider');panel.append(range,makeResetButton(()=>{input.blur();reset?.(input.id==='ie-size'?'size':input.id==='ie-padding'?'padding':'borderRadius');applied=current();draw();close()}));document.body.append(panel);
  input.setAttribute('aria-valuemin',min);input.setAttribute('aria-valuemax',max);handle.setAttribute('aria-controls',panel.id=input.id+'-slider');
  let gesture=null,editing=false,startValue=Number(input.value)||min,applied=startValue;
  const clamp=value=>Math.max(min,Math.min(max,Math.round(value)));
@@ -178,7 +178,7 @@ export function mountNumber(input,min,max,sliderMax=max,{reset}={}){
   applied=current();gesture={id:e.pointerId,x:e.clientX,value:current(),span:Number(range.max)-min,width:range.getBoundingClientRect().width};handle.setPointerCapture(e.pointerId);
  });
  handle.addEventListener('pointermove',e=>{if(gesture?.id===e.pointerId)emit(gesture.value+(e.clientX-gesture.x)/gesture.width*gesture.span)});
- const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end()};
+ const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end();if(closeOnRelease)close()};
  handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);handle.addEventListener('lostpointercapture',stop);
  handle.addEventListener('click',e=>{if(e.detail===0){show();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));range.focus()}});
  range.addEventListener('focus',()=>{applied=current()});range.addEventListener('pointerdown',()=>{applied=current();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));/* Slider remains open until dismissed. */});
@@ -199,7 +199,7 @@ export function mountOverflow(bar,tools){
   const menu=document.getElementById('ie-menu');
   for(const el of actions)menu.before(el);
   const crowded=()=>bar.scrollWidth>bar.clientWidth;
-  for(const name of ['Radius','Border','Background','Text Color','Font','Size']){
+  for(const name of ['Padding','Radius','Border','Background','Text Color','Italic','Bold','Font','Size']){
    if(!crowded())break;const el=formats.find(el=>el.dataset.format===name);if(!el.hidden)tools.formatOverflow.append(el);
   }
   for(const el of actions){if(!crowded())break;tools.actionOverflow.append(el)}for(const el of formats)if(el.parentElement===tools.formatOverflow)tools.formatOverflow.append(el);if(crowded())bar.classList.add('ie-micro');

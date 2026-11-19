@@ -44,8 +44,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-page-colors';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-page-colors';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-padding';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-padding';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
@@ -157,12 +157,12 @@ export function startEditor(){
 const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el.textContent.trim()||el.matches('input,textarea,select,button'));
 $('ie-font').disabled=!enabled||!targets.length||!targets.every(textCapable);$('ie-size').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,img'));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));
-['ie-bg','ie-radius','ie-border','ie-border-none'].forEach(id=>$(id).disabled=!enabled||!targets.length);
-for(const control of document.querySelectorAll('.ie-format')){const input=control.querySelector('#ie-font,#ie-size,#ie-color,#ie-bg,#ie-border,#ie-radius');control.hidden=!!input?.disabled}const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.size>1?selected.size+' selected':elementName(active);refreshElementList();$('ie-label').title=name;$('ie-label').classList.toggle('ie-selected',mode==='element'&&!!active);if(!enabled)return;const c=getComputedStyle(current());const paint=current().matches('svg,svg *')?[current(),...current().querySelectorAll('*')].map(node=>getComputedStyle(node)).find(style=>style.stroke!=='none'||style.fill!=='none'):null;if(![...$('ie-font').options].some(o=>o.value===c.fontFamily))$('ie-font').add(new Option(c.fontFamily.split(',')[0].replaceAll('"',''),c.fontFamily));$('ie-font').value=c.fontFamily;$('ie-size').value=Math.round(parseFloat(current().matches('svg,img')?c.width:c.fontSize))||16;$('ie-size').setAttribute('aria-valuenow',$('ie-size').value);$('ie-color').value=mode==='page'?(document.body.style.getPropertyValue('--ie-page-text-color')||hex(c.color)):(paint?hex(paint.stroke!=='none'?paint.stroke:paint.fill):(current().style.color?hex(current().style.color):hex(c.color)));$('ie-bg').value=hex(c.backgroundColor);$('ie-radius').value=Math.round(parseFloat(c.borderTopLeftRadius))||0;$('ie-radius').setAttribute('aria-valuenow',$('ie-radius').value);$('ie-size-value').textContent=$('ie-size').value+'px';$('ie-radius-value').textContent=$('ie-radius').value+'px';$('ie-border').value=hex(c.borderTopColor);$('ie-border-none').dataset.none=(c.borderTopStyle==='none'||parseFloat(c.borderTopWidth)===0)?'true':'false';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';updateColorSwatches();const fontLabel=$('ie-font').selectedOptions[0]?.textContent||c.fontFamily;$('ie-font-trigger').dataset.ieTooltip='Font: '+(fontLabel==='Default'?c.fontFamily:fontLabel);};
+['ie-bg','ie-radius','ie-border','ie-border-none','ie-padding'].forEach(id=>$(id).disabled=!enabled||!targets.length);
+updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){const input=control.querySelector('#ie-font,#ie-size,#ie-color,#ie-bg,#ie-border,#ie-radius,#ie-padding');control.hidden=!!input?.disabled}const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.size>1?selected.size+' selected':elementName(active);refreshElementList();$('ie-label').title=name;$('ie-label').classList.toggle('ie-selected',mode==='element'&&!!active);if(!enabled)return;const c=getComputedStyle(current());$('ie-padding').value=Math.round(parseFloat(c.paddingLeft))||0;$('ie-padding').setAttribute('aria-valuenow',$('ie-padding').value);const paint=current().matches('svg,svg *')?[current(),...current().querySelectorAll('*')].map(node=>getComputedStyle(node)).find(style=>style.stroke!=='none'||style.fill!=='none'):null;if(![...$('ie-font').options].some(o=>o.value===c.fontFamily))$('ie-font').add(new Option(c.fontFamily.split(',')[0].replaceAll('"',''),c.fontFamily));$('ie-font').value=c.fontFamily;$('ie-size').value=Math.round(parseFloat(current().matches('svg,img')?c.width:c.fontSize))||16;$('ie-size').setAttribute('aria-valuenow',$('ie-size').value);$('ie-color').value=mode==='page'?(document.body.style.getPropertyValue('--ie-page-text-color')||hex(c.color)):(paint?hex(paint.stroke!=='none'?paint.stroke:paint.fill):(current().style.color?hex(current().style.color):hex(c.color)));$('ie-bg').value=hex(c.backgroundColor);$('ie-radius').value=Math.round(parseFloat(c.borderTopLeftRadius))||0;$('ie-radius').setAttribute('aria-valuenow',$('ie-radius').value);$('ie-size-value').textContent=$('ie-size').value+'px';$('ie-radius-value').textContent=$('ie-radius').value+'px';$('ie-border').value=hex(c.borderTopColor);$('ie-border-none').dataset.none=(c.borderTopStyle==='none'||parseFloat(c.borderTopWidth)===0)?'true':'false';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';updateColorSwatches();const fontLabel=$('ie-font').selectedOptions[0]?.textContent||c.fontFamily;$('ie-font-trigger').dataset.ieTooltip='Font: '+(fontLabel==='Default'?c.fontFamily:fontLabel);};
  const updateColorSwatches=()=>{for(const id of ['ie-color','ie-bg','ie-border']){const button=$(id);button.style.background=button.value;button.style.color=contrastingInk(button.value)}$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true'};['ie-color','ie-bg','ie-border'].forEach(id=>$(id).addEventListener('input',updateColorSwatches));
  let colorSession=null;
  const matchingElements=el=>mode==='element'&&selected.size>1?[...selected].filter(x=>x.isConnected):[el];
- const styleChange=(key,value,live=false)=>{if(mode==='element'&&!active)return;const el=current();if(live){if(!colorSession||colorSession.el!==el||colorSession.key!==key){undo.push(snapshot());redo.length=0;colorSession={el,key}}}else{colorSession=null;undo.push(snapshot());redo.length=0}if(mode==='page'&&key==='fontFamily'){
+ const styleChange=(key,value,live=false)=>{if(mode==='element'&&!active)return;const el=current();if(live){if(!colorSession||colorSession.el!==el||colorSession.key!==key){undo.push(snapshot());redo.length=0;colorSession={el,key}}}else{colorSession=null;undo.push(snapshot());redo.length=0}if(mode==='page'&&key==='padding'){document.body.style.setProperty('padding',value);document.body.style.setProperty('--ie-original-padding-top',value)}else if(mode==='page'&&key==='fontFamily'){
   const targets=[document.body,...document.body.querySelectorAll('*')].filter(target=>!target.closest('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-codex-agent-overlay-root]'));
   for(const target of targets){if(value)target.style.setProperty('font-family',value,'important');else target.style.removeProperty('font-family')}
   let sheet=document.getElementById('ie-page-font-style');
@@ -184,14 +184,54 @@ for(const control of document.querySelectorAll('.ie-format')){const input=contro
   const targets=page&&key==='fontFamily'?[document.body,...document.body.querySelectorAll('*')].filter(el=>!el.closest('[data-built-at-editor-runtime]')):matchingElements(target);
   const borderProperties=['top','right','bottom','left'].flatMap(side=>['color','style','width'].map(part=>'border-'+side+'-'+part));
   for(const el of targets){
-   const properties=key==='size'?(el.matches('svg,img')?['width','height']:['font-size']):key==='borderColor'?borderProperties:key==='borderRadius'?['border-top-left-radius','border-top-right-radius','border-bottom-left-radius','border-bottom-right-radius']:[{fontFamily:'font-family',color:'color',backgroundColor:'background-color'}[key]];
+   const properties=key==='size'?(el.matches('svg,img')?['width','height']:['font-size']):key==='borderColor'?borderProperties:key==='padding'?['padding-top','padding-right','padding-bottom','padding-left']:key==='borderRadius'?['border-top-left-radius','border-top-right-radius','border-bottom-left-radius','border-bottom-right-radius']:[{fontFamily:'font-family',color:'color',backgroundColor:'background-color'}[key]];
    restoreStyleProperties(el,originalStyles.get(el),properties);
    if(key==='color'&&el.matches('svg,svg *'))for(const part of [el,...el.querySelectorAll('*')])restoreStyleProperties(part,originalStyles.get(part),['stroke','fill']);
   }
+  if(page&&key==='padding'){const baseline=document.createElement('span').style;baseline.cssText=originalStyles.get(document.body)||'';document.body.style.setProperty('--ie-original-padding-top',baseline.paddingTop||'0px')}
   if(page&&key==='fontFamily')document.getElementById('ie-page-font-style')?.remove();
   if(page&&key==='color'){document.getElementById('ie-page-text-style')?.remove();restoreStyleProperties(document.body,originalStyles.get(document.body),['--ie-page-text-color'])}
   updateSelectionContrast();syncControls();drafts.save();
  };
+
+ // Formatting applies to every text run in the selected elements.
+ const emphasisControls=[];
+ for(const [name,key,on,off,path] of [
+ ['Bold','fontWeight','700','400','<path d="M6 12h9a4 4 0 0 1 0 8H6z"/><path d="M6 4h8a4 4 0 0 1 0 8H6z"/>'],
+ ['Italic','fontStyle','italic','normal','<path d="M19 4h-9M14 20H5M15 4 9 20"/>']
+ ]){
+  const wrap=document.createElement('div');wrap.className='ie-format';wrap.dataset.format=name;
+  const button=document.createElement('button');button.type='button';button.className='ie-circle';button.id='ie-'+name.toLowerCase();button.setAttribute('aria-label',name);button.title=name;button.setAttribute('aria-pressed','false');
+  button.innerHTML='<svg data-lucide="'+name.toLowerCase()+'" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
+  const label=document.createElement('span');label.className='ie-format-label';label.textContent=name;wrap.append(button,label);document.querySelector('[data-format="Size"]').after(wrap);
+  const isOn=el=>key==='fontWeight'?Number(getComputedStyle(el)[key])>=600:getComputedStyle(el)[key]==='italic';
+  button.addEventListener('pointerdown',e=>e.preventDefault());
+  button.onclick=()=>{
+   const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);if(!targets.length)return;
+   const next=targets.every(isOn)?off:on;
+   colorSession=null;undo.push(snapshot());redo.length=0;
+   for(const target of targets)for(const node of [target,...target.querySelectorAll('*')]){
+    if(node.closest('[data-built-at-editor-runtime]')||node.matches('svg,svg *,script,style,img,input,textarea,select'))continue;
+    if(node.textContent.trim())node.style.setProperty(key==='fontWeight'?'font-weight':'font-style',next,'important');
+   }
+   updateEmphasis();drafts.save();
+  };
+  emphasisControls.push({wrap,button,isOn});
+ }
+ function updateEmphasis(){
+  for(const {wrap,button,isOn} of emphasisControls){
+   const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
+   wrap.hidden=document.getElementById('ie-font').disabled;button.disabled=wrap.hidden;
+   const pressed=targets.length>0&&targets.every(isOn);button.setAttribute('aria-pressed',String(pressed));button.style.background=pressed?'#ddd':'#f4f4f4';
+  }
+ }
+
+ const paddingWrap=document.createElement('div');paddingWrap.className='ie-format';paddingWrap.dataset.format='Padding';
+ paddingWrap.innerHTML='<div class="ie-circle ie-number-circle"><input class="ie-number" id="ie-padding" type="text" inputmode="numeric" role="spinbutton" aria-label="Padding" value="0" autocomplete="off"><button class="ie-number-handle" type="button" id="ie-padding-handle" aria-label="Drag to adjust padding"><svg data-lucide="move-horizontal" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4M6 8l-4 4 4 4M2 12h20"/></svg></button></div><span class="ie-format-label">Padding</span>';
+ document.getElementById('ie-format-row').append(paddingWrap);
+ document.getElementById('ie-padding').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<0)return;styleChange('padding',n+'px',true)});
+ document.getElementById('ie-padding').onchange=()=>{colorSession=null};
+ mountNumber(document.getElementById('ie-padding'),0,1000,100,{reset:resetFormatting,closeOnRelease:true});
  $('ie-font').onchange=e=>{ensureGoogleFont(e.target.value);styleChange('fontFamily',e.target.value)};
  $('ie-size').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<1)return;$('ie-size-value').textContent=n+'px';styleChange(current().matches('svg,img')?'iconSize':'fontSize',n+'px',true)});$('ie-size').onchange=()=>{colorSession=null};
  $('ie-color').oninput=e=>styleChange('color',e.target.value,true);$('ie-color').onchange=()=>{colorSession=null};

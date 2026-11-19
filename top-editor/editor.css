@@ -83,7 +83,7 @@ input[type=search]::-webkit-search-cancel-button{display:none}
 
 #ie-insertion[hidden]{display:none}
 #ie-insertion{position:fixed;z-index:2147483599;background:#6b9ac4;pointer-events:none}
-body.ie-enabled{padding-top:var(--ie-toolbar-height,76px)!important}
+body.ie-enabled{padding-top:calc(var(--ie-toolbar-height,76px) + var(--ie-original-padding-top,0px))!important}
 body.ie-preview{padding-top:var(--ie-original-padding-top,0px)!important}
 body.ie-preview #ie-toolbar,body.ie-preview #ie-drag-edges,body.ie-preview .ie-selection-frame,body.ie-preview .ie-popover{display:none!important}
 body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
