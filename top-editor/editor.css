@@ -138,3 +138,16 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 #ie-color-popover .ie-background-image-form>div{display:flex;gap:5px;margin-top:5px}
 #ie-color-popover .ie-background-image-form button{font:inherit;color:#222;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:4px 6px;cursor:pointer}
 #ie-color-popover .ie-background-image-form output{color:#a12b2b}
+
+#ie-format-row [data-format="Color"]{position:relative}
+#ie-format-row [data-format="Color"]:has(+ [data-format="Fill"]:not([hidden]))::after{content:"";position:absolute;right:-4px;top:6px;height:32px;border-right:1px solid #ddd}
+#ie-icon-picker{width:min(760px,calc(100vw - 16px));left:50%;transform:translateX(-50%);top:76px;padding:16px}
+#ie-icon-picker header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+#ie-icon-picker header button,#ie-icon-picker .ie-icon-more{background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:4px 10px}
+#ie-icon-picker input:focus-visible,#ie-icon-picker button:focus-visible{outline:2px solid #2463eb;outline-offset:1px}
+#ie-icon-picker [role=status]{margin:8px 0;color:#555}
+#ie-icon-picker .ie-icon-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:6px}
+#ie-icon-picker .ie-icon-grid button{min-width:0;display:grid;justify-items:center;gap:5px;padding:8px 4px;border:1px solid #e5e5e5;border-radius:7px;background:#fff;font-size:11px;overflow-wrap:anywhere}
+#ie-icon-picker .ie-icon-grid button:is(:hover,[aria-pressed=true]){background:#eef3ff;border-color:#aabcf0}
+#ie-icon-picker .ie-icon-grid svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#ie-icon-picker .ie-icon-more{margin-top:10px}

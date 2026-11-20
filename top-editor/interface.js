@@ -71,6 +71,7 @@ export function startEditor(){
  const undo=historyStack(),redo=historyStack();let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
  const bar=document.getElementById('ie-toolbar')||document.createElement('div');bar.id='ie-toolbar';bar.dataset.ready='true';bar.dataset.builtAtEditorRuntime='';
  bar.innerHTML=toolbarHTML;
+ bar.querySelector('#ie-icon-picker-trigger').onclick=()=>iconPicker.hidden?openIconPicker():closeIconPicker(true);
  bar.querySelector('#ie-delete').before(bar.querySelector('#ie-undo'),bar.querySelector('#ie-redo'));
  bar.querySelector('#ie-redo').after(bar.querySelector('#ie-revert-selected'));
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
@@ -83,10 +84,102 @@ export function startEditor(){
  const imageValue=el=>{if(el.tagName==='IMG')return el.getAttribute('src')||'';const bg=getComputedStyle(el).backgroundImage;return bg.startsWith('url(')?bg.slice(4,-1).replace(/^["']|["']$/g,''):''};
  let popupTarget=null;
  const showImagePopup=el=>{document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:imagePopup}));popupTarget=el;imagePopup.querySelector('#ie-url-status').hidden=true;imagePopup.hidden=false;const image=imageTarget(el),link=el.closest('a');for(const id of ['ie-placeholder']){const input=imagePopup.querySelector('#'+id),visible=el.matches('input,textarea');input.hidden=!visible;input.previousElementSibling.hidden=!visible;input.value=el.getAttribute('placeholder')||''}const icon=imagePopup.querySelector('#ie-icon-name'),svg=el.matches('svg')?el:el.querySelector('svg');icon.hidden=!svg;icon.previousElementSibling.hidden=!svg;icon.value=svg?.getAttribute('data-lucide')||el.getAttribute('data-lucide')||'';imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-imagePopup.offsetHeight-10,Math.max(bar.getBoundingClientRect().bottom+8,r.bottom+10)))+'px'};
+ const iconPicker=document.createElement('div');
+ iconPicker.id='ie-icon-picker';iconPicker.className='ie-popover';iconPicker.dataset.builtAtEditorRuntime='';iconPicker.hidden=true;
+ iconPicker.setAttribute('role','dialog');iconPicker.setAttribute('aria-label','Choose Lucide icon');
+ iconPicker.innerHTML='<header><strong>Choose icon</strong><button type="button" aria-label="Close icon picker">×</button></header><input type="search" aria-label="Search Lucide icons" placeholder="Search Lucide icons"><p role="status"></p><div class="ie-icon-grid"></div><button class="ie-icon-more" type="button" hidden>Show more</button>';
+ document.body.append(iconPicker);
+ const iconSearch=iconPicker.querySelector('input'),iconGrid=iconPicker.querySelector('.ie-icon-grid');
+ const iconStatus=iconPicker.querySelector('[role=status]'),iconMore=iconPicker.querySelector('.ie-icon-more');
+ let iconCatalog,iconTarget=null,iconLimit=70;
+ const closeIconPicker=(focus=false)=>{
+  iconPicker.hidden=true;iconTarget=null;
+  $('ie-icon-picker-trigger').setAttribute('aria-expanded','false');
+  if(focus)$('ie-icon-picker-trigger').focus();
+ };
+ const loadIconCatalog=()=>{
+  const cdn='https://cdn.jsdelivr.net/npm/lucide-static@1.76.0/';
+  const read=async(file,format)=>{const response=await fetch(cdn+file);if(!response.ok)throw Error();return response[format]()};
+  return iconCatalog??=Promise.all([read('sprite.svg','text'),read('tags.json','json').catch(()=>({}))]).then(([sprite,tags])=>{
+   const parsed=new DOMParser().parseFromString(sprite,'image/svg+xml');
+   const icons=[...parsed.querySelectorAll('symbol[id]')].map(source=>{
+    const name=source.id.replace(/^lucide-/,'');
+    const entry=tags[name];
+    const keywords=Array.isArray(entry)?entry:entry?.tags||[];
+    return {name,source,search:[name,...keywords].join(' ').toLowerCase().replaceAll('-',' ')};
+   });
+   if(!icons.length)throw Error();
+   const defaults='house heart star globe mail link camera music headphones play user users calendar clock map-pin bookmark coffee sun moon cloud settings search shopping-cart briefcase book-open phone message-circle bell zap sparkles gift image check arrow-right external-link download'.split(' ');
+   const rank=name=>{const index=defaults.indexOf(name);return index<0?defaults.length:index};
+   return icons.sort((a,b)=>rank(a.name)-rank(b.name)||a.name.localeCompare(b.name));
+  }).catch(error=>{iconCatalog=null;throw error});
+ };
+ const drawIcons=async()=>{
+  const target=iconTarget;
+  try{
+   const icons=await loadIconCatalog();
+   if(!target||target!==iconTarget)return;
+   const query=iconSearch.value.toLowerCase().trim().replaceAll('-',' ');
+   const terms=query.split(/\s+/).filter(Boolean);
+   const matches=icons.filter(icon=>terms.every(term=>icon.search.includes(term)));
+   if(query)matches.sort((a,b)=>Number(b.name.replaceAll('-',' ')===query)-Number(a.name.replaceAll('-',' ')===query));
+   iconStatus.textContent=matches.length?matches.length.toLocaleString()+' icons':'No matching icons.';
+   iconMore.hidden=matches.length<=iconLimit;
+   iconGrid.replaceChildren(...matches.slice(0,iconLimit).map(({name,source})=>{
+    const button=document.createElement('button');button.type='button';button.title=name;
+    button.setAttribute('aria-pressed',String(target.getAttribute('data-lucide')===name));
+    const glyph=document.createElementNS(svgNS,'svg');
+    glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('aria-hidden','true');
+    glyph.append(...copyIconShapes(source));
+    const label=document.createElement('span');label.textContent=name;button.append(glyph,label);
+    button.onclick=()=>{if(target!==iconTarget||!target.isConnected)return;++imageRevision;replaceIcon(target,name,source);closeIconPicker(true)};
+    return button;
+   }));
+  }catch{if(target===iconTarget)iconStatus.textContent='Could not load Lucide icons. Close and reopen to retry.'}
+ };
+ const openIconPicker=()=>{
+  iconTarget=iconFor(active);if(!iconTarget)return;
+  document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:iconPicker}));
+  iconPicker.hidden=false;$('ie-icon-picker-trigger').setAttribute('aria-expanded','true');
+  iconSearch.value='';iconLimit=70;iconGrid.replaceChildren();iconMore.hidden=true;
+  iconStatus.textContent='Loading Lucide icons…';iconSearch.focus();drawIcons();
+ };
+ iconSearch.oninput=()=>{iconLimit=70;drawIcons()};
+ iconMore.onclick=()=>{iconLimit+=70;drawIcons()};
+ iconPicker.querySelector('header button').onclick=()=>closeIconPicker(true);
+ iconPicker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeIconPicker(true)}});
+ document.addEventListener('ie-open-panel',e=>{if(e.detail!==iconPicker)closeIconPicker()});
+ document.addEventListener('pointerdown',e=>{if(!iconPicker.hidden&&!e.target.closest('#ie-icon-picker,#ie-icon-picker-trigger'))closeIconPicker()},true);
  const pendingFields=new Map();let imageRevision=0;
  const urlStatus=message=>{const status=imagePopup.querySelector('#ie-url-status');status.textContent=message;status.hidden=!message};
  const validURL=(value,image=false)=>{if(!value||/\s/.test(value))return false;try{const url=new URL(value,document.baseURI);return image?['http:','https:','blob:'].includes(url.protocol)||/^data:image\//i.test(value):['http:','https:','mailto:','tel:'].includes(url.protocol)}catch{return false}};
  const recordChange=fn=>{undo.push(snapshot());redo.length=0;fn();drafts.save()};
+ const iconFor=el=>el?.matches('svg')?el:el?.querySelector('svg');
+ const svgNS='http://www.w3.org/2000/svg';
+ const copyIconShapes=source=>[...source.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse')].map(shape=>{
+  const node=document.createElementNS(svgNS,shape.localName);
+  for(const attr of shape.attributes)if(['d','cx','cy','r','rx','ry','x','y','x1','x2','y1','y2','width','height','points'].includes(attr.name))node.setAttribute(attr.name,attr.value);
+  return node;
+ });
+ const replaceIcon=(svg,name,source)=>{
+  const shapes=copyIconShapes(source);
+  if(!shapes.length)throw Error('Icon has no shapes.');
+  const paint=[svg,...svg.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse')].map(node=>getComputedStyle(node));
+  const stroke=paint.find(style=>style.stroke!=='none')?.stroke;
+  const fill=paint.find(style=>style.fill!=='none')?.fill;
+  const useCurrentColor=(stroke||fill)===paint[0].color;
+  colorSession=null;
+  recordChange(()=>{
+   svg.replaceChildren(...shapes);
+   svg.setAttribute('data-lucide',name);
+   svg.setAttribute('viewBox','0 0 24 24');
+   svg.style.setProperty('fill','none','important');
+   svg.style.setProperty('stroke',useCurrentColor?'currentColor':stroke||fill||'currentColor','important');
+   if(!svg.hasAttribute('stroke-width')&&!svg.style.strokeWidth)svg.setAttribute('stroke-width','2');
+   svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+  });
+  syncControls();
+ };
  const applyField=({input,el,value,revision})=>{
   if(!el?.isConnected)return;
   if(input.id==='ie-placeholder'){if(el.getAttribute('placeholder')!==value)recordChange(()=>el.setAttribute('placeholder',value));return}
@@ -94,8 +187,7 @@ export function startEditor(){
    if(!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value))return;const svg=el.matches('svg')?el:el.querySelector('svg');if(!svg||svg.getAttribute('data-lucide')===value)return;
    fetch('https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/'+value+'.svg').then(response=>{if(!response.ok)throw Error();return response.text()}).then(source=>{
     if(revision!==imageRevision||!svg.isConnected)return;const parsed=new DOMParser().parseFromString(source,'image/svg+xml').documentElement;if(parsed.localName!=='svg'||parsed.querySelector('parsererror'))throw Error();
-    const shapes=[...parsed.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse')].map(shape=>{const node=document.createElementNS('http://www.w3.org/2000/svg',shape.localName);for(const attr of [...shape.attributes])if(['d','cx','cy','r','rx','ry','x','y','x1','x2','y1','y2','width','height','points'].includes(attr.name))node.setAttribute(attr.name,attr.value);return node});
-    if(!shapes.length)throw Error();recordChange(()=>{svg.replaceChildren(...shapes);svg.setAttribute('data-lucide',value);svg.style.removeProperty('fill');svg.style.removeProperty('stroke');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round')});urlStatus('');
+    replaceIcon(svg,value,parsed);urlStatus('');
    }).catch(()=>{if(revision===imageRevision)urlStatus('Icon not found. Previous icon kept.')});return;
   }
   if(input.id==='ie-link-url'){const link=el.closest('a');if(link&&validURL(value)&&link.getAttribute('href')!==value)recordChange(()=>link.setAttribute('href',value));return}
@@ -153,7 +245,7 @@ export function startEditor(){
  const elementName=el=>el?outlineName(el):'Page';
  let elementOptions=[];
  const refreshElementList=()=>{const list=$('ie-label');const elements=editableElements();elementOptions=elements;list.replaceChildren(new Option('Select Item',''));elements.forEach((el,i)=>list.add(new Option(elementName(el),String(i))));list.value=active?String(elements.indexOf(active)):'';if(list.value==='-1')list.value=''};
-  const syncControls=()=>{syncHistoryButtons();$('ie-duplicate').disabled=mode!=='element'||selected.size!==1;syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
+  const syncControls=()=>{$('ie-icon-picker-trigger').closest('.ie-format').hidden=mode!=='element'||selected.size!==1||!iconFor(active);syncHistoryButtons();$('ie-duplicate').disabled=mode!=='element'||selected.size!==1;syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
 const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el.textContent.trim()||el.matches('input,textarea,select,button'));
 $('ie-font').disabled=!enabled||!targets.length||!targets.every(textCapable);$('ie-size').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,img'));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));
@@ -281,7 +373,7 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   }else placeCaret(el,point);
   return true;
  };
- const finish=()=>{textEditing=false;hideImagePopup();for(const el of selected){if(el.hasAttribute('data-edit'))el.contentEditable='false';el.classList.remove('ie-active-field');el.style.removeProperty('--ie-selection-outline')}selected.clear();active=null;if(mode==='element')$('ie-label').textContent='Select an element';syncControls()};
+ const finish=()=>{closeIconPicker();textEditing=false;hideImagePopup();for(const el of selected){if(el.hasAttribute('data-edit'))el.contentEditable='false';el.classList.remove('ie-active-field');el.style.removeProperty('--ie-selection-outline')}selected.clear();active=null;if(mode==='element')$('ie-label').textContent='Select an element';syncControls()};
  const setMode=m=>{colorSession=null;mode=m;if(m==='page')finish();$('ie-page').classList.toggle('ie-selected',m==='page');$('ie-label').textContent=m==='page'?'Page':(active?.getAttribute('data-edit')||'Select an element');syncControls()};
  $('ie-page').onclick=()=>setMode('page');
  $('ie-label').addEventListener('change',e=>{const el=elementOptions[Number(e.target.value)];if(el){select(el);el.scrollIntoView({block:'nearest',behavior:'smooth'})}});
