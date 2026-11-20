@@ -164,10 +164,10 @@ export function startEditor(){
  const replaceIcon=(svg,name,source)=>{
   const shapes=copyIconShapes(source);
   if(!shapes.length)throw Error('Icon has no shapes.');
-  const paint=[svg,...svg.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse')].map(node=>getComputedStyle(node));
+  const paint=[...svg.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse'),svg].map(node=>getComputedStyle(node));
   const stroke=paint.find(style=>style.stroke!=='none')?.stroke;
   const fill=paint.find(style=>style.fill!=='none')?.fill;
-  const useCurrentColor=(stroke||fill)===paint[0].color;
+  const useCurrentColor=(stroke||fill)===paint.at(-1).color;
   colorSession=null;
   recordChange(()=>{
    svg.replaceChildren(...shapes);
