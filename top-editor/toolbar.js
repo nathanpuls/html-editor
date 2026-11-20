@@ -149,8 +149,9 @@ export function mountTools({bar,select,elementName,change,revert,revertSelection
  const showTip=anchor=>{hideTip();tipAnchor=anchor;describedBefore=anchor.getAttribute('aria-describedby');tipTimer=setTimeout(()=>{if(!anchor.isConnected)return;const border=anchor.matches('.ie-border-toggle,#ie-border-none');tip.textContent=border?(bar.querySelector('#ie-border-none').checked?'Remove border':'Add border'):anchor.dataset.ieTooltip;if(!tip.textContent)return;tip.hidden=false;anchor.setAttribute('aria-describedby',[describedBefore,'ie-tooltip'].filter(Boolean).join(' '));const r=anchor.getBoundingClientRect(),rect=tip.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(innerWidth-rect.width-8,r.left+r.width/2-rect.width/2))+'px';tip.style.top=(r.top-rect.height-7>=8?r.top-rect.height-7:r.bottom+7)+'px'},250)};
  document.addEventListener('pointerover',e=>{const anchor=e.target.closest?.('[data-ie-tooltip]');if(anchor&&anchor!==tipAnchor&&inEditor(anchor))showTip(anchor)});
  document.addEventListener('pointerout',e=>{if(tipAnchor&&!tipAnchor.contains(e.relatedTarget))hideTip()});
- document.addEventListener('focusin',e=>{const anchor=e.target.closest?.('[data-ie-tooltip]');if(anchor&&inEditor(anchor))showTip(anchor)});
+ document.addEventListener('focusin',e=>{const anchor=e.target.closest?.('[data-ie-tooltip]');if(anchor?.matches(':focus-visible')&&inEditor(anchor))showTip(anchor)});
  bar.querySelector('#ie-copy').addEventListener('click',hideTip);
+ document.addEventListener('ie-hide-tooltip',hideTip);
  window.addEventListener('blur',hideTip);
  window.addEventListener('pagehide',hideTip);
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hideTip()});
