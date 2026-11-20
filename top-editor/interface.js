@@ -71,19 +71,20 @@ export function startEditor(){
  const undo=historyStack(),redo=historyStack();let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
  const bar=document.getElementById('ie-toolbar')||document.createElement('div');bar.id='ie-toolbar';bar.dataset.ready='true';bar.dataset.builtAtEditorRuntime='';
  bar.innerHTML=toolbarHTML;
- bar.querySelector('#ie-icon-picker-trigger').onclick=()=>iconPicker.hidden?openIconPicker():closeIconPicker(true);
  bar.querySelector('#ie-delete').before(bar.querySelector('#ie-undo'),bar.querySelector('#ie-redo'));
  bar.querySelector('#ie-redo').after(bar.querySelector('#ie-revert-selected'));
  document.body.prepend(bar);document.body.classList.add('ie-enabled');
 
  const imagePopup=document.createElement('div');imagePopup.id='ie-image-popup';imagePopup.dataset.builtAtEditorRuntime='';imagePopup.hidden=true;
- imagePopup.innerHTML='<label for="ie-image-url">Image URL</label><input id="ie-image-url" type="url" placeholder="Paste image URL"><label for="ie-image-alt" id="ie-image-alt-label">Alt text</label><input id="ie-image-alt" type="text"><label for="ie-link-url" id="ie-link-url-label">Link URL</label><input id="ie-link-url" type="text"><label for="ie-placeholder">Placeholder</label><input id="ie-placeholder" type="text"><label for="ie-icon-name">Lucide icon</label><input id="ie-icon-name" type="text" placeholder="arrow-up-right"><p id="ie-url-status" role="status" aria-live="polite" hidden></p>';
+ imagePopup.innerHTML='<label for="ie-image-url">Image URL</label><input id="ie-image-url" type="url" placeholder="Paste image URL"><label for="ie-image-alt" id="ie-image-alt-label">Alt text</label><input id="ie-image-alt" type="text"><label for="ie-link-url" id="ie-link-url-label">Link URL</label><input id="ie-link-url" type="text"><label for="ie-placeholder">Placeholder</label><input id="ie-placeholder" type="text"><label for="ie-icon-name">Lucide icon</label><input id="ie-icon-name" type="text" placeholder="arrow-up-right"><button id="ie-icon-picker-trigger" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="ie-icon-picker" hidden>Choose icon</button><p id="ie-url-status" role="status" aria-live="polite" hidden></p>';
  document.body.append(imagePopup);
  const imageInput=imagePopup.querySelector('input');
+ const iconTrigger=imagePopup.querySelector('#ie-icon-picker-trigger');
+ iconTrigger.onclick=()=>openIconPicker();
  const imageTarget=el=>el?.tagName==='IMG'||el?.matches('.hero-art,[role="img"]')||!!el&&getComputedStyle(el).backgroundImage!=='none';
  const imageValue=el=>{if(el.tagName==='IMG')return el.getAttribute('src')||'';const bg=getComputedStyle(el).backgroundImage;return bg.startsWith('url(')?bg.slice(4,-1).replace(/^["']|["']$/g,''):''};
  let popupTarget=null;
- const showImagePopup=el=>{document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:imagePopup}));popupTarget=el;imagePopup.querySelector('#ie-url-status').hidden=true;imagePopup.hidden=false;const image=imageTarget(el),link=el.closest('a');for(const id of ['ie-placeholder']){const input=imagePopup.querySelector('#'+id),visible=el.matches('input,textarea');input.hidden=!visible;input.previousElementSibling.hidden=!visible;input.value=el.getAttribute('placeholder')||''}const icon=imagePopup.querySelector('#ie-icon-name'),svg=el.matches('svg')?el:el.querySelector('svg');icon.hidden=!svg;icon.previousElementSibling.hidden=!svg;icon.value=svg?.getAttribute('data-lucide')||el.getAttribute('data-lucide')||'';imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-imagePopup.offsetHeight-10,Math.max(bar.getBoundingClientRect().bottom+8,r.bottom+10)))+'px'};
+ const showImagePopup=el=>{document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:imagePopup}));popupTarget=el;imagePopup.querySelector('#ie-url-status').hidden=true;imagePopup.hidden=false;const image=imageTarget(el),link=el.closest('a');for(const id of ['ie-placeholder']){const input=imagePopup.querySelector('#'+id),visible=el.matches('input,textarea');input.hidden=!visible;input.previousElementSibling.hidden=!visible;input.value=el.getAttribute('placeholder')||''}const icon=imagePopup.querySelector('#ie-icon-name'),svg=el.matches('svg')?el:el.querySelector('svg');iconTrigger.hidden=!svg;icon.hidden=!svg;icon.previousElementSibling.hidden=!svg;icon.value=svg?.getAttribute('data-lucide')||el.getAttribute('data-lucide')||'';imageInput.hidden=!image;imagePopup.querySelector('label[for=ie-image-url]').hidden=!image;imageInput.value=image?imageValue(el):'';for(const id of ['ie-image-alt','ie-image-alt-label'])imagePopup.querySelector('#'+id).hidden=el.tagName!=='IMG';imagePopup.querySelector('#ie-image-alt').value=el.getAttribute('alt')||'';for(const id of ['ie-link-url','ie-link-url-label'])imagePopup.querySelector('#'+id).hidden=!link;imagePopup.querySelector('#ie-link-url').value=link?.getAttribute('href')||'';const r=el.getBoundingClientRect();imagePopup.style.left=Math.max(10,Math.min(innerWidth-310,r.left))+'px';imagePopup.style.top=Math.max(10,Math.min(innerHeight-imagePopup.offsetHeight-10,Math.max(bar.getBoundingClientRect().bottom+8,r.bottom+10)))+'px'};
  const iconPicker=document.createElement('div');
  iconPicker.id='ie-icon-picker';iconPicker.className='ie-popover';iconPicker.dataset.builtAtEditorRuntime='';iconPicker.hidden=true;
  iconPicker.setAttribute('role','dialog');iconPicker.setAttribute('aria-label','Choose Lucide icon');
@@ -94,8 +95,8 @@ export function startEditor(){
  let iconCatalog,iconTarget=null,iconLimit=70;
  const closeIconPicker=(focus=false)=>{
   iconPicker.hidden=true;iconTarget=null;
-  $('ie-icon-picker-trigger').setAttribute('aria-expanded','false');
-  if(focus)$('ie-icon-picker-trigger').focus();
+  iconTrigger.setAttribute('aria-expanded','false');
+  if(focus&&popupTarget?.isConnected){showImagePopup(popupTarget);iconTrigger.focus()}
  };
  const loadIconCatalog=()=>{
   const cdn='https://cdn.jsdelivr.net/npm/lucide-static@1.76.0/';
@@ -138,9 +139,9 @@ export function startEditor(){
   }catch{if(target===iconTarget)iconStatus.textContent='Could not load Lucide icons. Close and reopen to retry.'}
  };
  const openIconPicker=()=>{
-  iconTarget=iconFor(active);if(!iconTarget)return;
+  iconTarget=iconFor(popupTarget);if(!iconTarget)return;
   document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:iconPicker}));
-  iconPicker.hidden=false;$('ie-icon-picker-trigger').setAttribute('aria-expanded','true');
+  iconPicker.hidden=false;iconTrigger.setAttribute('aria-expanded','true');
   iconSearch.value='';iconLimit=70;iconGrid.replaceChildren();iconMore.hidden=true;
   iconStatus.textContent='Loading Lucide icons…';iconSearch.focus();drawIcons();
  };
@@ -245,7 +246,7 @@ export function startEditor(){
  const elementName=el=>el?outlineName(el):'Page';
  let elementOptions=[];
  const refreshElementList=()=>{const list=$('ie-label');const elements=editableElements();elementOptions=elements;list.replaceChildren(new Option('Select Item',''));elements.forEach((el,i)=>list.add(new Option(elementName(el),String(i))));list.value=active?String(elements.indexOf(active)):'';if(list.value==='-1')list.value=''};
-  const syncControls=()=>{$('ie-icon-picker-trigger').closest('.ie-format').hidden=mode!=='element'||selected.size!==1||!iconFor(active);syncHistoryButtons();$('ie-duplicate').disabled=mode!=='element'||selected.size!==1;syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
+  const syncControls=()=>{syncHistoryButtons();$('ie-duplicate').disabled=mode!=='element'||selected.size!==1;syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
 const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el.textContent.trim()||el.matches('input,textarea,select,button'));
 $('ie-font').disabled=!enabled||!targets.length||!targets.every(textCapable);$('ie-size').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,img'));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));

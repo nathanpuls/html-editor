@@ -141,7 +141,7 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 
 #ie-format-row [data-format="Color"]{position:relative}
 #ie-format-row [data-format="Color"]:has(+ [data-format="Fill"]:not([hidden]))::after{content:"";position:absolute;right:-4px;top:6px;height:32px;border-right:1px solid #ddd}
-#ie-icon-picker{width:min(760px,calc(100vw - 16px));left:50%;transform:translateX(-50%);top:76px;padding:16px}
+#ie-icon-picker{width:min(760px,calc(100vw - 16px));left:50%;top:50%;transform:translate(-50%,-50%);padding:16px}
 #ie-icon-picker header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 #ie-icon-picker header button,#ie-icon-picker .ie-icon-more{background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:4px 10px}
 #ie-icon-picker input:focus-visible,#ie-icon-picker button:focus-visible{outline:2px solid #2463eb;outline-offset:1px}
@@ -151,3 +151,6 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 #ie-icon-picker .ie-icon-grid button:is(:hover,[aria-pressed=true]){background:#eef3ff;border-color:#aabcf0}
 #ie-icon-picker .ie-icon-grid svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #ie-icon-picker .ie-icon-more{margin-top:10px}
+
+#ie-icon-picker-trigger{display:block;width:100%;margin-top:9px;padding:7px 10px;border:1px solid #ddd;border-radius:7px;background:#f5f5f5;color:#222;font:inherit;cursor:pointer}
+#ie-icon-picker-trigger:hover{background:#ececec}
