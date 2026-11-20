@@ -162,6 +162,29 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  const updateColorSwatches=()=>{for(const id of ['ie-color','ie-bg','ie-border']){const button=$(id);button.style.background=button.value;button.style.color=contrastingInk(button.value)}$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true'};['ie-color','ie-bg','ie-border'].forEach(id=>$(id).addEventListener('input',updateColorSwatches));
  let colorSession=null;
  const matchingElements=el=>mode==='element'&&selected.size>1?[...selected].filter(x=>x.isConnected):[el];
+ const backgroundImageURL=()=>{
+  const image=getComputedStyle(current()).backgroundImage;
+  return /^url\("(.*)"\)$/.exec(image)?.[1]||'';
+ };
+ const setBackgroundImage=value=>{
+  if(mode==='element'&&!active)return false;
+  if(value&&!validURL(value,true))return false;
+  const targets=matchingElements(current());
+  const image=value?'url('+JSON.stringify(new URL(value,document.baseURI).href)+')':'none';
+  if(!targets.some(target=>value||getComputedStyle(target).backgroundImage!=='none'))return true;
+  colorSession=null;
+  recordChange(()=>{
+   for(const target of targets){
+    target.style.setProperty('background-image',image,'important');
+    const framing={'background-size':'cover','background-position':'center','background-repeat':'no-repeat'};
+    if(value){
+     for(const [property,setting] of Object.entries(framing))target.style.setProperty(property,setting,'important');
+    }else restoreStyleProperties(target,originalStyles.get(target),Object.keys(framing));
+   }
+  });
+  updateSelectionContrast();
+  return true;
+ };
  const styleChange=(key,value,live=false)=>{if(mode==='element'&&!active)return;const el=current();if(live){if(!colorSession||colorSession.el!==el||colorSession.key!==key){undo.push(snapshot());redo.length=0;colorSession={el,key}}}else{colorSession=null;undo.push(snapshot());redo.length=0}if(mode==='page'&&key==='padding'){document.body.style.setProperty('padding',value);document.body.style.setProperty('--ie-original-padding-top',value)}else if(mode==='page'&&key==='fontFamily'){
   const targets=[document.body,...document.body.querySelectorAll('*')].filter(target=>!target.closest('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume,[data-codex-agent-overlay-root]'));
   for(const target of targets){if(value)target.style.setProperty('font-family',value,'important');else target.style.removeProperty('font-family')}
@@ -239,7 +262,7 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  mountFontPicker($('ie-font'),$('ie-font-trigger'),{reset:resetFormatting});mountNumber($('ie-size'),1,500,72,{reset:resetFormatting});mountNumber($('ie-radius'),0,1000,100,{reset:resetFormatting});
   $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}syncControls()};
  let textEditing=false;
- const canEditText=el=>el&&!!el.textContent.trim()&&!el.querySelector('[data-edit]')&&!el.matches('header,footer,section,article,aside,nav,img,svg,svg *,video,canvas,input,textarea,select,hr')&&!imageTarget(el);
+ const canEditText=el=>el&&!!el.textContent.trim()&&!el.querySelector('[data-edit]')&&!el.matches('header,footer,section,article,aside,nav,img,svg,svg *,video,canvas,input,textarea,select,hr')&&!el.matches('.hero-art,[role="img"]');
  const placeCaret=(el,point)=>{
   const selection=document.getSelection();let range=null;
   if(point){if(document.caretPositionFromPoint){const caret=document.caretPositionFromPoint(point.x,point.y);if(caret&&el.contains(caret.offsetNode)){range=document.createRange();range.setStart(caret.offsetNode,caret.offset);range.collapse(true)}}else if(document.caretRangeFromPoint){const hit=document.caretRangeFromPoint(point.x,point.y);if(hit&&el.contains(hit.startContainer))range=hit}}
@@ -379,7 +402,7 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  drafts.restore();drafts.watch();
- colorPicker=mountColorPicker(bar,{reset:resetFormatting});
+ colorPicker=mountColorPicker(bar,{reset:resetFormatting,backgroundImageURL,setBackgroundImage});
  mountOverflow(bar,tools);
 
  // Selection frames stay rectangular and never alter the author's border or shadow.

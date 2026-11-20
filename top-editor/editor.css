@@ -133,3 +133,8 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 .ie-page-colors .ie-page-color-swatch{width:28px;height:28px;flex:none;padding:0;border:1px solid #ddd;border-radius:7px;cursor:pointer}
 .ie-page-colors label>span{flex:1;min-width:0}
 .ie-page-colors label>input{flex:0 1 100px;margin:0!important;min-width:60px}
+
+#ie-color-popover .ie-background-image-form{margin-top:12px;font:12px system-ui,sans-serif}
+#ie-color-popover .ie-background-image-form>div{display:flex;gap:5px;margin-top:5px}
+#ie-color-popover .ie-background-image-form button{font:inherit;color:#222;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:4px 6px;cursor:pointer}
+#ie-color-popover .ie-background-image-form output{color:#a12b2b}

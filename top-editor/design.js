@@ -36,7 +36,7 @@ export function restoreStyleProperties(target,originalStyle,properties){
 }
 
 /* One shared live picker for text, SVG paint, backgrounds and borders. */
-export function mountColorPicker(bar,{reset}={}){
+export function mountColorPicker(bar,{reset,backgroundImageURL,setBackgroundImage}={}){
  const panel=document.createElement('div');panel.id='ie-color-popover';panel.className='ie-popover';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Color picker');
  panel.innerHTML='<div class="ie-color-area" role="slider" tabindex="0" aria-label="Color area" aria-valuemin="0" aria-valuemax="100"><span class="ie-color-cursor"></span></div><label class="ie-picker-row"><span>Hue</span><input class="ie-hue" type="range" min="0" max="359" step="1" aria-label="Hue"></label><label class="ie-picker-row"><span>Opacity</span><input class="ie-alpha" type="range" min="0" max="100" step="1" aria-label="Opacity"><output class="ie-alpha-value">100%</output></label><label class="ie-hex-row"><span>HEX</span><input class="ie-hex" type="text" spellcheck="false" autocomplete="off" aria-label="HEX" maxlength="9"></label>';
  const borderSwitch=document.createElement('label');borderSwitch.className='ie-border-switch';borderSwitch.innerHTML='<input type="checkbox" aria-label="Border enabled">Border enabled';borderSwitch.hidden=true;panel.append(borderSwitch);const borderToggle=borderSwitch.querySelector('input');borderToggle.onchange=()=>{const original=document.getElementById('ie-border-none');original.checked=borderToggle.checked;original.dispatchEvent(new Event('change',{bubbles:true}))};
@@ -44,6 +44,19 @@ export function mountColorPicker(bar,{reset}={}){
  const area=panel.querySelector('.ie-color-area'),cursor=panel.querySelector('.ie-color-cursor'),hue=panel.querySelector('.ie-hue'),opacity=panel.querySelector('.ie-alpha'),output=panel.querySelector('output'),field=panel.querySelector('.ie-hex');
  let trigger=null,hsv=[0,0,1],alpha=1,alphaTouched=false;
  const resetButton=makeResetButton(()=>{const key={"ie-color":"color","ie-bg":"backgroundColor","ie-border":"borderColor"}[trigger?.id];close();if(key)reset?.(key)});panel.append(resetButton);
+ const backgroundForm=document.createElement('form');
+ backgroundForm.className='ie-background-image-form';backgroundForm.hidden=true;
+ backgroundForm.innerHTML='<label for="ie-background-image-url">Image URL</label><div><input id="ie-background-image-url" class="ie-hex" type="text" inputmode="url" placeholder="https://…" autocomplete="off" spellcheck="false"><button type="submit">Apply</button><button type="button">Clear</button></div><output role="status"></output>';
+ panel.append(backgroundForm);
+ const backgroundField=backgroundForm.querySelector('input'),backgroundStatus=backgroundForm.querySelector('output');
+ const applyBackground=()=>{
+  const valid=setBackgroundImage?.(backgroundField.value.trim());
+  if(valid)backgroundField.removeAttribute('aria-invalid');
+  else backgroundField.setAttribute('aria-invalid','true');
+  backgroundStatus.textContent=valid?'':'Enter a valid image URL.';
+ };
+ backgroundForm.onsubmit=e=>{e.preventDefault();applyBackground()};
+ backgroundForm.querySelector('[type="button"]').onclick=()=>{backgroundField.value='';applyBackground()};
  const end=()=>trigger?.dispatchEvent(new Event('change',{bubbles:true}));
  const close=()=>{end();panel.hidden=true;trigger?.setAttribute('aria-expanded','false');trigger=null};
  const draw=()=>{const rgb=hsvToRGB(hsv,alpha),solid=colorHex(hsvToRGB(hsv,1));area.style.backgroundColor='hsl('+hsv[0]+' 100% 50%)';cursor.style.left=(hsv[1]*100)+'%';cursor.style.top=((1-hsv[2])*100)+'%';hue.value=Math.round(hsv[0]);opacity.value=Math.round(alpha*100);output.textContent=Math.round(alpha*100)+'%';opacity.style.setProperty('--ie-alpha-color',solid);field.value=colorHex(rgb).toUpperCase();field.removeAttribute('aria-invalid');area.setAttribute('aria-valuenow',Math.round(hsv[1]*100));area.setAttribute('aria-valuetext','Saturation '+Math.round(hsv[1]*100)+'%, brightness '+Math.round(hsv[2]*100)+'%')};
@@ -53,6 +66,12 @@ export function mountColorPicker(bar,{reset}={}){
   const anchor=button.getBoundingClientRect();close();panel.dataset.ieKeepSettings=String(pageColor);
   document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));trigger=button;
   resetButton.hidden=pageColor;borderSwitch.hidden=pageColor||button.id!=='ie-border';borderToggle.checked=document.getElementById('ie-border-none').checked;
+  backgroundForm.hidden=pageColor||button.id!=='ie-bg';
+  if(!backgroundForm.hidden){
+   backgroundField.value=backgroundImageURL?.()||'';
+   backgroundField.removeAttribute('aria-invalid');backgroundStatus.textContent='';
+  }
+  panel.setAttribute('aria-label',backgroundForm.hidden?'Color picker':'Background');
   const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=false;draw();panel.hidden=false;button.setAttribute('aria-expanded','true');
   let left=anchor.left,top=anchor.bottom+8;
   if(pageColor){left=anchor.left-panel.offsetWidth-10;if(left<8)left=anchor.right+10;top=anchor.top}
@@ -71,7 +90,7 @@ export function mountColorPicker(bar,{reset}={}){
  hue.onchange=opacity.onchange=end;
  field.oninput=()=>{let value=field.value.trim();if(!value.startsWith('#'))value='#'+value;if(!/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)){field.setAttribute('aria-invalid','true');return}const color=rgba(value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=true;const selection=field.selectionStart;update();field.setSelectionRange(selection,selection)};
  field.onchange=()=>{draw();end()};field.addEventListener('focus',()=>field.select());
- panel.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();const button=trigger;close();button?.focus()}},true);
+ panel.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(e.key==='Enter'&&e.target===backgroundField){applyBackground();return}if(e.key==='Enter'&&backgroundForm.contains(e.target)&&e.target.tagName==='BUTTON'){e.target.click();return}const button=trigger;close();button?.focus()}},true);
  document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!trigger?.contains(e.target))close()},true);
  document.addEventListener('ie-open-panel',e=>{if(e.detail!==panel)close()});
  window.addEventListener('resize',close);
