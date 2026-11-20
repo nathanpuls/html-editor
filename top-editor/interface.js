@@ -44,8 +44,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-icon-options';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-selection';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-batch-icons';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-batch-icons';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
@@ -80,6 +80,11 @@ export function startEditor(){
  document.body.append(imagePopup);
  const imageInput=imagePopup.querySelector('input');
  const iconTrigger=imagePopup.querySelector('#ie-icon-picker-trigger');
+ const batchIconTrigger=document.createElement('button');
+ batchIconTrigger.type='button';batchIconTrigger.id='ie-batch-icon';batchIconTrigger.textContent='Choose icon';batchIconTrigger.hidden=true;
+ batchIconTrigger.setAttribute('aria-haspopup','dialog');batchIconTrigger.setAttribute('aria-controls','ie-icon-picker');batchIconTrigger.setAttribute('aria-expanded','false');
+ bar.querySelector('#ie-format-row').after(batchIconTrigger);
+ batchIconTrigger.onclick=()=>openIconPicker(batchIconTrigger);
  iconTrigger.onclick=()=>openIconPicker();
  const imageTarget=el=>el?.tagName==='IMG'||el?.matches('.hero-art,[role="img"]')||!!el&&getComputedStyle(el).backgroundImage!=='none';
  const imageValue=el=>{if(el.tagName==='IMG')return el.getAttribute('src')||'';const bg=getComputedStyle(el).backgroundImage;return bg.startsWith('url(')?bg.slice(4,-1).replace(/^["']|["']$/g,''):''};
@@ -92,11 +97,13 @@ export function startEditor(){
  document.body.append(iconPicker);
  const iconSearch=iconPicker.querySelector('input'),iconGrid=iconPicker.querySelector('.ie-icon-grid');
  const iconStatus=iconPicker.querySelector('[role=status]'),iconMore=iconPicker.querySelector('.ie-icon-more');
- let iconCatalog,iconTarget=null,iconLimit=70;
+ let iconCatalog,iconTarget=null,iconLimit=70,pickerTrigger=null;
  const closeIconPicker=(focus=false)=>{
-  iconPicker.hidden=true;iconTarget=null;
-  iconTrigger.setAttribute('aria-expanded','false');
-  if(focus&&popupTarget?.isConnected){showImagePopup(popupTarget);iconTrigger.focus()}
+  const trigger=pickerTrigger;
+  iconPicker.hidden=true;iconTarget=null;pickerTrigger=null;
+  trigger?.setAttribute('aria-expanded','false');
+  if(focus&&trigger===iconTrigger&&popupTarget?.isConnected)showImagePopup(popupTarget);
+  if(focus)trigger?.focus();
  };
  const loadIconCatalog=()=>{
   const cdn='https://cdn.jsdelivr.net/npm/lucide-static@1.76.0/';
@@ -127,21 +134,23 @@ export function startEditor(){
    iconStatus.textContent=matches.length?matches.length.toLocaleString()+' icons':'No matching icons.';
    iconMore.hidden=matches.length<=iconLimit;
    iconGrid.replaceChildren(...matches.slice(0,iconLimit).map(({name,source})=>{
-    const button=document.createElement('button');button.type='button';button.title=name;
-    button.setAttribute('aria-pressed',String(target.getAttribute('data-lucide')===name));
+    const button=document.createElement('button');button.type='button';
+    button.setAttribute('aria-pressed',String(target.every(svg=>svg.getAttribute('data-lucide')===name)));
     const glyph=document.createElementNS(svgNS,'svg');
     glyph.setAttribute('viewBox','0 0 24 24');glyph.setAttribute('aria-hidden','true');
     glyph.append(...copyIconShapes(source));
     const label=document.createElement('span');label.textContent=name;button.append(glyph,label);
-    button.onclick=()=>{if(target!==iconTarget||!target.isConnected)return;++imageRevision;replaceIcon(target,name,source);closeIconPicker(true)};
+    button.onclick=()=>{if(target!==iconTarget||!target.every(svg=>svg.isConnected))return;++imageRevision;replaceIcons(target,name,source);closeIconPicker(true)};
     return button;
    }));
   }catch{if(target===iconTarget)iconStatus.textContent='Could not load Lucide icons. Close and reopen to retry.'}
  };
- const openIconPicker=()=>{
-  iconTarget=iconFor(popupTarget);if(!iconTarget)return;
+ const openIconPicker=(trigger=iconTrigger)=>{
+  const icons=trigger===batchIconTrigger?selectedIcons():[iconFor(popupTarget)].filter(Boolean);
+  if(!icons.length)return;
+  iconTarget=icons;pickerTrigger=trigger;
   document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:iconPicker}));
-  iconPicker.hidden=false;iconTrigger.setAttribute('aria-expanded','true');
+  iconPicker.hidden=false;trigger.setAttribute('aria-expanded','true');
   iconSearch.value='';iconLimit=70;iconGrid.replaceChildren();iconMore.hidden=true;
   iconStatus.textContent='Loading Lucide icons…';iconSearch.focus();drawIcons();
  };
@@ -150,7 +159,7 @@ export function startEditor(){
  iconPicker.querySelector('header button').onclick=()=>closeIconPicker(true);
  iconPicker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeIconPicker(true)}});
  document.addEventListener('ie-open-panel',e=>{if(e.detail!==iconPicker)closeIconPicker()});
- document.addEventListener('pointerdown',e=>{if(!iconPicker.hidden&&!e.target.closest('#ie-icon-picker,#ie-icon-picker-trigger'))closeIconPicker()},true);
+ document.addEventListener('pointerdown',e=>{if(!iconPicker.hidden&&!e.target.closest('#ie-icon-picker,#ie-icon-picker-trigger,#ie-batch-icon'))closeIconPicker()},true);
  const pendingFields=new Map();let imageRevision=0;
  const urlStatus=message=>{const status=imagePopup.querySelector('#ie-url-status');status.textContent=message;status.hidden=!message};
  const validURL=(value,image=false)=>{if(!value||/\s/.test(value))return false;try{const url=new URL(value,document.baseURI);return image?['http:','https:','blob:'].includes(url.protocol)||/^data:image\//i.test(value):['http:','https:','mailto:','tel:'].includes(url.protocol)}catch{return false}};
@@ -162,23 +171,25 @@ export function startEditor(){
   for(const attr of shape.attributes)if(['d','cx','cy','r','rx','ry','x','y','x1','x2','y1','y2','width','height','points'].includes(attr.name))node.setAttribute(attr.name,attr.value);
   return node;
  });
- const replaceIcon=(svg,name,source)=>{
+ const selectedIcons=()=>[...new Set([...selected].filter(el=>el.isConnected).map(iconFor).filter(Boolean))];
+ const replaceIcons=(icons,name,source)=>{
   const shapes=copyIconShapes(source);
   if(!shapes.length)throw Error('Icon has no shapes.');
-  const paint=[...svg.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse'),svg].map(node=>getComputedStyle(node));
-  const stroke=paint.find(style=>style.stroke!=='none')?.stroke;
-  const fill=paint.find(style=>style.fill!=='none')?.fill;
-  const useCurrentColor=(stroke||fill)===paint.at(-1).color;
   colorSession=null;
-  recordChange(()=>{
-   svg.replaceChildren(...shapes);
+  recordChange(()=>{for(const svg of icons){
+   const paint=[...svg.querySelectorAll('path,circle,rect,line,polyline,polygon,ellipse'),svg].map(node=>getComputedStyle(node));
+   const stroke=paint.find(style=>style.stroke!=='none')?.stroke;
+   const fill=paint.find(style=>style.fill!=='none')?.fill;
+   const useCurrentColor=(stroke||fill)===paint.at(-1).color;
+   svg.replaceChildren(...shapes.map(shape=>shape.cloneNode(true)));
    svg.setAttribute('data-lucide',name);
    svg.setAttribute('viewBox','0 0 24 24');
    svg.style.setProperty('fill','none','important');
    svg.style.setProperty('stroke',useCurrentColor?'currentColor':stroke||fill||'currentColor','important');
    if(!svg.hasAttribute('stroke-width')&&!svg.style.strokeWidth)svg.setAttribute('stroke-width','2');
    svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
-  });
+  }});
+
   syncControls();
  };
  const applyField=({input,el,value,revision})=>{
@@ -188,7 +199,7 @@ export function startEditor(){
    if(!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(value))return;const svg=el.matches('svg')?el:el.querySelector('svg');if(!svg||svg.getAttribute('data-lucide')===value)return;
    fetch('https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/'+value+'.svg').then(response=>{if(!response.ok)throw Error();return response.text()}).then(source=>{
     if(revision!==imageRevision||!svg.isConnected)return;const parsed=new DOMParser().parseFromString(source,'image/svg+xml').documentElement;if(parsed.localName!=='svg'||parsed.querySelector('parsererror'))throw Error();
-    replaceIcon(svg,value,parsed);urlStatus('');
+    replaceIcons([svg],value,parsed);urlStatus('');
    }).catch(()=>{if(revision===imageRevision)urlStatus('Icon not found. Previous icon kept.')});return;
   }
   if(input.id==='ie-link-url'){const link=el.closest('a');if(link&&validURL(value)&&link.getAttribute('href')!==value)recordChange(()=>link.setAttribute('href',value));return}
@@ -246,7 +257,7 @@ export function startEditor(){
  const elementName=el=>el?outlineName(el):'Page';
  let elementOptions=[];
  const refreshElementList=()=>{const list=$('ie-label');const elements=editableElements();elementOptions=elements;list.replaceChildren(new Option('Select Item',''));elements.forEach((el,i)=>list.add(new Option(elementName(el),String(i))));list.value=active?String(elements.indexOf(active)):'';if(list.value==='-1')list.value=''};
-  const syncControls=()=>{syncHistoryButtons();$('ie-duplicate').disabled=mode!=='element'||selected.size!==1;syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
+  const syncControls=()=>{batchIconTrigger.hidden=mode!=='element'||selectedIcons().length<2;syncHistoryButtons();$('ie-duplicate').disabled=mode!=='element'||selected.size!==1;syncRevertButton();$('ie-delete').hidden=false;$('ie-delete').disabled=mode!=='element'||!active;const enabled=mode==='page'||!!active;const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
 const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el.textContent.trim()||el.matches('input,textarea,select,button'));
 $('ie-font').disabled=!enabled||!targets.length||!targets.every(textCapable);$('ie-size').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,img'));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));
@@ -482,9 +493,10 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
    {label:preview?'Edit':'Close editor',key:'toggle',enabled:true,run:()=>{preview=!preview;applyPreview()}}
   ],
   similarInfo:()=>{
-   if(mode!=='element'||!active)return null;
+   if(mode!=='element'||!active||selected.size!==1)return null;
    const group=active.getAttribute('data-edit-group');let elements=[];
    if(group)elements=[...document.querySelectorAll('[data-edit-group]')].filter(el=>el.getAttribute('data-edit-group')===group);
+   else if(active.matches('svg'))elements=[...document.querySelectorAll('svg[data-edit]')];
    elements=elements.filter(el=>!el.closest('[data-built-at-editor-runtime]'));return elements.length>1?{group:group||'items',elements}:null;
   },
   selectSimilar:elements=>{finish();mode='element';for(const el of elements){if(!el.isConnected)continue;selected.add(el);el.classList.add('ie-active-field')}active=[...selected].at(-1)||null;$('ie-page').classList.remove('ie-selected');updateSelectionContrast();syncControls()},

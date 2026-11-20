@@ -218,14 +218,14 @@ export function mountOverflow(bar,tools){
   const menu=document.getElementById('ie-menu');
   for(const el of actions)menu.before(el);
   const crowded=()=>bar.scrollWidth>bar.clientWidth;
-  for(const name of ['Padding','Radius','Border','Background','Text Color','Italic','Bold','Font','Size']){
-   if(!crowded())break;const el=formats.find(el=>el.dataset.format===name);if(!el.hidden)tools.formatOverflow.append(el);
+  for(const name of ['Padding','Radius','Border','Fill','Color','Italic','Bold','Font','Size']){
+   if(!crowded())break;const el=formats.find(el=>el.dataset.format===name);if(el&&!el.hidden)tools.formatOverflow.append(el);
   }
   for(const el of actions){if(!crowded())break;tools.actionOverflow.append(el)}for(const el of formats)if(el.parentElement===tools.formatOverflow)tools.formatOverflow.append(el);if(crowded())bar.classList.add('ie-micro');
  };
  const schedule=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;layout()})};
  new ResizeObserver(schedule).observe(bar);
- new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'&&(r.target.matches('.ie-format')||r.target.id==='ie-select-similar')))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ new MutationObserver(records=>{if(records.some(r=>r.type==='attributes'&&r.attributeName==='hidden'&&(r.target.matches('.ie-format')||r.target.matches('#ie-select-similar,#ie-batch-icon'))))schedule()}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
  window.addEventListener('resize',schedule);document.fonts?.ready.then(schedule);schedule();return {layout:schedule};
 }
 export function contrastingInk(color){
