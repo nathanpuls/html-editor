@@ -20,7 +20,7 @@ button[type=submit]{margin-top:10px;background:#171717;color:white;border-color:
 </style>
 </head>
 <body>
-<iframe id="workspace" title="Built.at editor workspace" sandbox="allow-scripts"></iframe>
+<iframe id="workspace" title="Built.at editor workspace" sandbox="allow-scripts" allow="clipboard-write *"></iframe>
 <dialog aria-labelledby="paste-title">
 <header><strong id="paste-title">Paste HTML</strong><button type="button" aria-label="Close paste dialog">×</button></header>
 <form><textarea aria-label="HTML source" placeholder="Paste your HTML here" required spellcheck="false"></textarea><button type="submit">Open in editor</button></form>
@@ -45,7 +45,7 @@ function render(){
   if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(script.getAttribute('src')))script.remove();
  }
  const loader=page.createElement('script');
- loader.src='https://edit.built.at/?v=20261120-workspace';
+ loader.src='https://edit.built.at/?v=20261120-workspace-copy';
  loader.defer=true;
  loader.setAttribute('data-built-at-workspace',String(++revision));
  if(!documentState)loader.setAttribute('data-built-at-workspace-empty','');

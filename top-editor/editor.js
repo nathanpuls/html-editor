@@ -7,7 +7,7 @@
  const base=new URL('.',script.src);
  const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('editor.css?v=20261120-workspace',base);style.dataset.builtAtEditorRuntime='';
  const ready=new Promise((resolve,reject)=>{style.onload=resolve;style.onerror=reject});document.head.append(style);
- Promise.all([ready,import(new URL('interface.js?v=20261120-workspace',base).href)]).then(([,module])=>{
+ Promise.all([ready,import(new URL('interface.js?v=20261120-workspace-copy',base).href)]).then(([,module])=>{
   const start=()=>module.startEditor({
    startInPreview:script.hasAttribute('data-built-at-preview')&&!new URL(location.href).searchParams.has('edit'),
    workspace:script.getAttribute('data-built-at-workspace'),
