@@ -1,92 +1,64 @@
-<!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>New page — Built.at</title><meta name="description" content="Describe a page, create it with your AI, and make it yours with Built.at.">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Playground · Built.at</title>
+<meta name="description" content="Paste HTML and edit it visually in the Built.at playground.">
+<link rel="icon" href="/_brand/logo.svg" type="image/svg+xml">
 <style>
-*{box-sizing:border-box}body{margin:0;background:#fff;color:#202020;font:15px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}button,textarea{font:inherit}a{color:inherit}button{cursor:pointer}header{max-width:1100px;margin:auto;padding:25px 32px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:18px;font-weight:750;text-decoration:none;letter-spacing:-.7px}.demo{font-size:13px;color:#666;text-decoration:none;display:flex;align-items:center;gap:7px}.demo:hover{color:#111}svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}main{width:min(660px,calc(100% - 40px));margin:85px auto 90px}.eyebrow{font-size:12px;color:#777;margin:0 0 16px}h1{font-size:clamp(36px,6vw,54px);font-weight:650;line-height:1.12;letter-spacing:-2px;margin:0 0 18px}.lead{max-width:510px;color:#777;font-size:16px;margin:0 0 38px}label{display:block;font-size:13px;font-weight:550;margin:0 0 9px}textarea{width:100%;min-height:180px;resize:vertical;border:1px solid #ddd;border-radius:13px;padding:17px 18px;line-height:1.65;color:#222;background:#fff;outline:none}textarea:focus{border-color:#888}textarea::placeholder{color:#999}.actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:13px}.primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid #171717;border-radius:999px;background:#171717;color:#fff;padding:11px 19px;min-width:154px}.primary:hover{background:#333}.primary:disabled{opacity:.45;cursor:default}.hint{font-size:12px;color:#888}.steps{margin-top:48px;padding-top:25px;border-top:1px solid #eee;display:grid;grid-template-columns:repeat(3,1fr);gap:25px}.steps span{font-size:11px;color:#aaa}.steps strong{display:block;font-weight:550;font-size:13px;margin-top:5px}.steps p{font-size:12px;color:#888;line-height:1.65;margin:5px 0 0}details{margin-top:30px;font-size:12px;color:#777}summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px}summary::-webkit-details-marker{display:none}details[open] summary svg{transform:rotate(180deg)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:18px;font:12px/1.7 ui-monospace,SFMono-Regular,monospace;max-height:340px;overflow:auto}footer{display:flex;justify-content:space-between;gap:15px;font-size:12px;color:#999;margin-top:44px}footer a{text-decoration:none}footer a:hover{text-decoration:underline}#status{font-size:12px;color:#777;min-height:20px;margin:9px 0 0}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}@media(max-width:600px){header{padding:20px}main{margin-top:50px;margin-bottom:40px}h1{letter-spacing:-1.3px}.lead{font-size:15px;margin-bottom:28px}.steps{gap:17px;margin-top:34px}.actions{align-items:flex-start}.hint{max-width:135px;text-align:right}.steps p{font-size:12px}footer{margin-top:32px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-#landing-edit{position:fixed;right:18px;bottom:18px;z-index:2147483500;display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:10px;border:1px solid #ddd;border-radius:50%;background:#fff;color:#222;box-shadow:0 2px 10px #0001}#landing-edit:hover{background:#f5f5f5}#landing-edit svg{width:19px;height:19px}body.ie-enabled #landing-edit{display:none}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:#fff;color:#171717;font:16px system-ui,sans-serif;min-height:100dvh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-bottom:1px solid #eee}
+.brand{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;font-weight:750}
+main{width:min(720px,calc(100% - 32px));margin:clamp(24px,8vh,80px) auto}
+h1{margin:0 0 16px;font-size:clamp(28px,6vw,42px)}
+label{display:block;margin-bottom:8px}
+textarea{display:block;width:100%;min-height:230px;resize:vertical;border:1px solid #ddd;border-radius:12px;padding:14px;font:14px/1.5 monospace}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{font:inherit;border:1px solid #ddd;border-radius:999px;background:white;color:#171717;padding:8px 15px;cursor:pointer}
+button[type=submit]{background:#171717;color:#fff;border-color:#171717}
+iframe{display:block;width:100%;border:0;flex:1;min-height:0}
 </style>
-<!--
-Lucide icons: https://lucide.dev
-ISC License
-
-Copyright (c) 2026 Lucide Icons and Contributors
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
----
-
-The following Lucide icons are derived from the Feather project:
-
-airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
-
-The MIT License (MIT) (for the icons listed above)
-
-Copyright (c) 2013-present Cole Bemis
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
--->
 </head>
 <body>
-<header><a class="brand" data-edit="Built.at brand" href="https://built.at/editor">Built.at</a><a class="demo" data-edit="Try the editor link" href="https://edit.built.at/demo.html">Try the editor <svg data-lucide="external-link" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M15 3h6v6"></path> <path d="M10 14 21 3"></path> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path> </svg></a></header>
-<main>
-
-<h1 data-edit="Main heading">What do you want to build?</h1>
-
-<form id="create-page" autocomplete="off"><label class="sr-only" for="website-description">Describe your page</label><textarea id="website-description" autocomplete="off" placeholder="A portfolio for my photography. Simple, warm, and a little playful…" required=""></textarea><div class="actions"><button class="primary" id="copy-prompt" data-export-disabled type="submit" disabled><svg data-lucide="copy" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path> </svg><span id="copy-label" data-edit="Copy prompt button label">Copy prompt</span></button></div><p id="status" data-export-text="" role="status" aria-live="polite"></p></form>
-<div class="steps"><div data-edit="Step 1" data-edit-group="instructions"><span data-edit="Step 1 number">01</span><strong data-edit="Step 1 heading" data-edit-group="instruction-headings">Describe your idea</strong><p data-edit="Step 1 description" data-edit-group="instruction-descriptions">A sentence or a whole brief. Both work.</p></div><div data-edit="Step 2" data-edit-group="instructions"><span data-edit="Step 2 number">02</span><strong data-edit="Step 2 heading" data-edit-group="instruction-headings">Let your AI build it</strong><p data-edit="Step 2 description" data-edit-group="instruction-descriptions">Paste the prompt into your AI and save the HTML it gives you.</p></div><div data-edit="Step 3" data-edit-group="instructions"><span data-edit="Step 3 number">03</span><strong data-edit="Step 3 heading" data-edit-group="instruction-headings">Make it yours</strong><p data-edit="Step 3 description" data-edit-group="instruction-descriptions">Open your HTML page. Built.at is already there, ready to edit. Copy your page and display anywhere.</p></div></div>
-<details id="prompt-details"><summary data-edit="View prompt label">View prompt <svg data-lucide="chevron-down" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="m6 9 6 6 6-6"></path> </svg></summary><pre id="prompt-preview" data-export-text=""></pre></details>
-<footer><a data-edit="Prompt source link" href="https://github.com/nathanpuls/html-editor/blob/main/new-page/prompt.txt" target="_blank" rel="noopener">Prompt source <svg data-lucide="external-link" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M15 3h6v6"></path> <path d="M10 14 21 3"></path> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path> </svg></a></footer>
+<header>
+<a class="brand" href="/"><img src="/_brand/logo.svg" width="25" height="25" alt="">Built.at</a>
+<button id="paste-again" type="button" hidden>Paste HTML</button>
+</header>
+<main id="entry">
+<h1>HTML Playground</h1>
+<form id="paste-form">
+<label for="html-source">Paste your HTML</label>
+<textarea id="html-source" required spellcheck="false" placeholder="&lt;!doctype html&gt;"></textarea>
+<div class="actions"><button type="submit">Open in editor</button><button type="button" id="sample">Try a sample</button></div>
+</form>
 </main>
+<iframe id="preview" title="HTML Playground editor" sandbox="allow-scripts" hidden></iframe>
 <script>
-(()=>{
- const input=document.getElementById('website-description'),button=document.getElementById('copy-prompt'),label=document.getElementById('copy-label'),status=document.getElementById('status'),preview=document.getElementById('prompt-preview');
- const source='https://raw.githubusercontent.com/nathanpuls/html-editor/main/new-page/prompt.txt';
- let template='',timer;
- const buildPrompt=()=>template.replaceAll('{{WEBSITE_BRIEF}}',input.value.trim()||'Describe your page here.');
- const refresh=()=>{preview.textContent=buildPrompt()};
- try{localStorage.removeItem('built-at:new-page:brief')}catch{}
- const clearBrief=()=>{input.value='';refresh()};clearBrief();
- window.addEventListener('pageshow',clearBrief);
- input.addEventListener('input',refresh);
- fetch(source+'?refresh='+Date.now(),{cache:'no-store'}).then(response=>{if(!response.ok)throw Error('Prompt unavailable');return response.text()}).then(text=>{if(!text.includes('{{WEBSITE_BRIEF}}'))throw Error('Prompt template is missing its brief field');template=text;button.disabled=false;status.textContent='';refresh()}).catch(()=>{status.textContent='Could not load the prompt. Refresh to try again.'});
- document.getElementById('create-page').onsubmit=async event=>{event.preventDefault();if(!template||!input.value.trim())return;clearTimeout(timer);try{const text=buildPrompt();if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(text);else{const area=document.createElement('textarea');area.value=text;area.className='sr-only';document.body.append(area);area.select();const copied=document.execCommand('copy');area.remove();if(!copied)throw Error('Clipboard unavailable')}clearBrief();label.setAttribute('data-export-text',label.textContent);label.textContent='Copied!';status.textContent='Paste it into your AI to create your page.';timer=setTimeout(()=>{label.textContent=label.getAttribute('data-export-text')||'Copy prompt';label.removeAttribute('data-export-text')},1800)}catch{document.getElementById('prompt-details').open=true;status.textContent='Select and copy the prompt below.';const range=document.createRange();range.selectNodeContents(preview);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range)}};
-})();
+const entry=document.getElementById('entry'),source=document.getElementById('html-source');
+const preview=document.getElementById('preview'),pasteAgain=document.getElementById('paste-again');
+function openEditor(html){
+  const page=new DOMParser().parseFromString(html,'text/html');
+  for(const script of page.querySelectorAll('script[src]')){
+    const src=script.getAttribute('src');
+    if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(src))script.remove();
+  }
+  const loader=page.createElement('script');
+  loader.src='https://edit.built.at/';
+  loader.defer=true;
+  loader.setAttribute('data-built-at-workspace','');
+  page.head.append(loader);
+  preview.srcdoc='<!doctype html>'+page.documentElement.outerHTML;
+  entry.hidden=true;preview.hidden=false;pasteAgain.hidden=false;
+}
+document.getElementById('paste-form').onsubmit=event=>{
+  event.preventDefault();
+  if(source.value.trim())openEditor(source.value);
+};
+document.getElementById('sample').onclick=()=>openEditor('<title>Playground sample</title><main data-edit="Sample section" style="max-width:640px;margin:64px auto;padding:24px;font-family:system-ui"><h1 data-edit="Sample headline">Make it yours</h1><p data-edit="Sample description">Select this text and try the toolbar.</p></main>');
+pasteAgain.onclick=()=>{preview.hidden=true;entry.hidden=false;pasteAgain.hidden=true;source.focus()};
 </script>
-
-
-<button id="landing-edit" type="button" data-built-at-editor-launcher data-export-enabled data-built-at-editor-runtime title="Edit this page" aria-label="Edit this page"><svg data-lucide="pencil" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" > <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /> </svg></button>
-<script data-built-at-editor-launcher data-built-at-editor-runtime>
-document.getElementById('landing-edit').addEventListener('click',function(){
- if(this.disabled)return;this.disabled=true;
- const button=this,script=document.createElement('script');script.src='https://edit.built.at';script.dataset.builtAtEditorRuntime='';script.onerror=()=>{button.disabled=false;button.title='Could not load the editor. Click to retry.';script.remove()};document.head.append(script);
-});
-</script>
-</body></html>
+</body>
+</html>

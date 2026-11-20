@@ -50,7 +50,7 @@ import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
 /* Selection and interaction logic extracted from Pages!B4. */
-export function startEditor(){
+export function startEditor({startInPreview=false,workspace=false}={}){
  const {snapshot,restore}=createHistory(()=>[...document.querySelectorAll('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume')]);
  // Capture the loaded document before editor setup or any saved draft is applied.
  const original=snapshot();
@@ -68,7 +68,7 @@ export function startEditor(){
  if(redoButton)redoButton.disabled=redo.length===0;
  }
  const historyStack=()=>new Proxy([],{set(target,key,value){const result=Reflect.set(target,key,value);syncHistoryButtons();return result}});
- const undo=historyStack(),redo=historyStack();let active=null,preview=false,mode='page';const selected=new Set();const removed=new Set();
+ const undo=historyStack(),redo=historyStack();let active=null,preview=startInPreview,mode='page';const selected=new Set();const removed=new Set();
  const bar=document.getElementById('ie-toolbar')||document.createElement('div');bar.id='ie-toolbar';bar.dataset.ready='true';bar.dataset.builtAtEditorRuntime='';
  bar.innerHTML=toolbarHTML;
  bar.querySelector('#ie-delete').before(bar.querySelector('#ie-undo'),bar.querySelector('#ie-redo'));
@@ -446,36 +446,9 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
  applyPreview();
  setMode('page');
- const pasteDialog=document.createElement('dialog');
- pasteDialog.id='ie-paste-dialog';pasteDialog.dataset.builtAtEditorRuntime='';
- pasteDialog.setAttribute('aria-labelledby','ie-paste-heading');
- pasteDialog.innerHTML='<header><strong id="ie-paste-heading">Paste HTML</strong><button type="button" aria-label="Close paste dialog">×</button></header><form><textarea aria-label="HTML source" placeholder="Paste your HTML here" required spellcheck="false"></textarea><button type="submit">Open in editor</button></form><iframe title="Pasted HTML editor" sandbox="allow-scripts" hidden></iframe>';
- document.body.append(pasteDialog);
- const pasteForm=pasteDialog.querySelector('form'),pasteSource=pasteDialog.querySelector('textarea'),pasteFrame=pasteDialog.querySelector('iframe');
- $('ie-paste').onclick=()=>{
-  document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:pasteDialog}));
-  pasteDialog.showModal();pasteSource.focus();
- };
- pasteDialog.querySelector('header button').onclick=()=>pasteDialog.close();
- pasteDialog.addEventListener('close',()=>{
-  pasteFrame.removeAttribute('srcdoc');pasteFrame.hidden=true;pasteForm.hidden=false;
-  pasteDialog.classList.remove('ie-paste-preview');
- });
- pasteForm.onsubmit=event=>{
-  event.preventDefault();
-  const html=pasteSource.value.trim();
-  if(!html){pasteSource.focus();return}
-  // Run pasted documents on an opaque origin, separate from the host and its draft.
-  const parsed=new DOMParser().parseFromString(html,'text/html');
-  for(const script of parsed.querySelectorAll('script[src]')){
-   const src=script.getAttribute('src');
-   if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(src))script.remove();
-  }
-  const loader=parsed.createElement('script');
-  loader.src='https://edit.built.at/';loader.defer=true;parsed.head.append(loader);
-  pasteFrame.srcdoc='<!doctype html>'+parsed.documentElement.outerHTML;
-  pasteForm.hidden=true;pasteFrame.hidden=false;pasteDialog.classList.add('ie-paste-preview');
- };
+ const pasteButton=$('ie-paste');
+ pasteButton.hidden=workspace;
+ pasteButton.onclick=()=>window.open('https://built.at/editor','_blank','noopener,noreferrer');
  let copyFeedbackTimer;
  $('ie-copy').onclick=async()=>{
   if(textEditing&&active){active.blur();active.contentEditable='false';textEditing=false}

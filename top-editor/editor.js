@@ -5,9 +5,13 @@
  window.__builtAtToolbarLoading=true;
  script.dataset.builtAtEditorRuntime='';
  const base=new URL('.',script.src);
- const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('editor.css?v=20261120-paste-toolbar',base);style.dataset.builtAtEditorRuntime='';
+ const style=document.createElement('link');style.rel='stylesheet';style.href=new URL('editor.css?v=20261120-full-page-paste',base);style.dataset.builtAtEditorRuntime='';
  const ready=new Promise((resolve,reject)=>{style.onload=resolve;style.onerror=reject});document.head.append(style);
  Promise.all([ready,import(new URL('interface.js?v=20261120-paste-toolbar',base).href)]).then(([,module])=>{
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',module.startEditor,{once:true});else module.startEditor();
+  const start=()=>module.startEditor({
+   startInPreview:script.hasAttribute('data-built-at-preview')&&!new URL(location.href).searchParams.has('edit'),
+   workspace:script.hasAttribute('data-built-at-workspace')
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
  }).catch(error=>{window.__builtAtToolbarLoading=false;console.error('Built.at editor failed to load',error)});
 })();
