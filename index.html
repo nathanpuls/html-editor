@@ -23,12 +23,12 @@ button[type=submit]{margin-top:10px;background:#171717;color:white;border-color:
 <iframe id="workspace" title="Built.at editor workspace" sandbox="allow-scripts" allow="clipboard-write *"></iframe>
 <dialog aria-labelledby="paste-title">
 <header><strong id="paste-title">Paste HTML</strong><button type="button" aria-label="Close paste dialog">×</button></header>
-<form><textarea aria-label="HTML source" placeholder="Paste your HTML here" required spellcheck="false"></textarea><button type="submit">Open in editor</button></form>
+<form><textarea aria-label="HTML source" placeholder="Paste your HTML here" required spellcheck="false"></textarea><button type="submit">Open in editor</button><p id="paste-error" role="status" hidden></p></form>
 </dialog>
 <p id="save-status" role="status"></p>
 <script>
 const frame=document.getElementById('workspace'),dialog=document.querySelector('dialog'),source=dialog.querySelector('textarea');
-const status=document.getElementById('save-status'),key='built-at:editor:workspace:v1';
+const status=document.getElementById('save-status'),pasteError=document.getElementById('paste-error'),key='built-at:editor:workspace:v1';
 let documentState=null,revision=0;
 try{
  const saved=JSON.parse(localStorage.getItem(key)||'null');
@@ -45,7 +45,7 @@ function render(){
   if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(script.getAttribute('src')))script.remove();
  }
  const loader=page.createElement('script');
- loader.src='https://edit.built.at/?v=20261120-color-swatches';
+ loader.src='https://edit.built.at/?v=20261120-direct-paste';
  loader.defer=true;
  loader.setAttribute('data-built-at-workspace',String(++revision));
  if(!documentState)loader.setAttribute('data-built-at-workspace-empty','');
@@ -57,10 +57,36 @@ function render(){
  page.head.append(loader);
  frame.srcdoc='<!doctype html>'+page.documentElement.outerHTML;
 }
+function importHTML(value){
+ const html=value.trim().replace(/^(?:`{3,}|~{3,})(?:html)?[ \t]*\r?\n([\s\S]*?)\r?\n(?:`{3,}|~{3,})[ \t]*$/i,'$1').trim();
+ const markup=html.replace(/^(?:<!--[\s\S]*?-->\s*)+/,'');
+ if(!/^<(?:!doctype\s+html\b|[a-z][\w:-]*(?=[\s/>]))/i.test(markup)||!markup.includes('>')){
+  const error='Clipboard does not contain HTML.';
+  if(dialog.open){pasteError.textContent=error;pasteError.hidden=false}
+  else status.textContent=error;
+  return;
+ }
+ documentState={html,draft:null};save();render();source.value='';dialog.close();
+}
+let readingClipboard=false;
+async function pasteFromClipboard(){
+ if(readingClipboard||dialog.open)return;
+ readingClipboard=true;
+ let value;
+ try{value=await navigator.clipboard.readText()}
+ catch{
+  pasteError.hidden=true;
+  dialog.showModal();source.focus();
+  return;
+ }finally{readingClipboard=false}
+ importHTML(value);
+}
 window.addEventListener('message',event=>{
  if(event.source!==frame.contentWindow||event.origin!=='null'||event.data?.revision!==String(revision))return;
  if(event.data?.type==='built-at:workspace-paste'){
-  if(!dialog.open){dialog.showModal();source.focus()}
+  pasteFromClipboard();
+ }else if(event.data?.type==='built-at:workspace-native-paste'&&!documentState){
+  if(typeof event.data.value==='string')importHTML(event.data.value);
  }else if(event.data?.type==='built-at:workspace-recent-colors'){
   const value=event.data.value;
   if(typeof value==='string'&&value.length<=150)try{localStorage.setItem('built-at:editor:recent-colors',value)}catch{}
@@ -73,9 +99,17 @@ window.addEventListener('message',event=>{
 dialog.querySelector('header button').onclick=()=>dialog.close();
 dialog.querySelector('form').onsubmit=event=>{
  event.preventDefault();
- const html=source.value.trim();if(!html)return;
- documentState={html,draft:null};save();render();source.value='';dialog.close();
+ importHTML(source.value);
 };
+source.addEventListener('paste',event=>{
+ const value=event.clipboardData?.getData('text/plain');
+ if(value){event.preventDefault();importHTML(value)}
+});
+document.addEventListener('paste',event=>{
+ if(documentState||dialog.open)return;
+ const value=event.clipboardData?.getData('text/plain');
+ if(value){event.preventDefault();importHTML(value)}
+});
 render();
 </script>
 </body>

@@ -519,6 +519,12 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  for(const button of bar.querySelectorAll('button[aria-label]'))if(!button.title)button.title=button.getAttribute('aria-label');
  if(!workspaceEmpty){drafts.restore();drafts.watch()}
  if(workspaceEmpty){
+  document.addEventListener('paste',event=>{
+   const value=event.clipboardData?.getData('text/plain');
+   if(!value)return;
+   event.preventDefault();
+   parent.postMessage({type:'built-at:workspace-native-paste',revision:workspace,value},'https://built.at');
+  });
   for(const control of bar.querySelectorAll('button,select,input,a'))if(control!==pasteButton&&!control.matches('.ie-brand')){
    if('disabled' in control)control.disabled=true;else control.inert=true;
   }
