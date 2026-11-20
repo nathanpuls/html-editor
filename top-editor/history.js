@@ -63,13 +63,13 @@ export function createDraftStore(sourceHTML,serialize,apply){
  const save=()=>{
   if(paused)return;
   const html=serialize();if(html===last)return;
-  try{if(html===sourceHTML)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify({version:1,source,html}));last=html}catch{}
+  try{if(html===sourceHTML)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify({version:1,source,html}));last=html}catch(error){console.warn('Could not save editor draft',error)}
  };
  const restore=()=>{
   try{const draft=JSON.parse(localStorage.getItem(key)||'null');if(!draft)return false;
    if(draft.version!==1||typeof draft.html!=='string'){clear();return false}
    paused=true;apply(draft.html);last=draft.html;return true;
-  }catch{clear();return false}finally{paused=false}
+  }catch(error){console.warn('Could not restore editor draft',error);return false}finally{paused=false}
  };
  const runtime=node=>node.nodeType===1?node.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]'):node.parentElement?.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]');
  const observer=new MutationObserver(records=>{if(paused||records.every(r=>runtime(r.target)))return;schedule()});

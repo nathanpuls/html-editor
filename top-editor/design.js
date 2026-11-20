@@ -166,10 +166,11 @@ export function mountFontPicker(select,button,{reset}={}){
 }
 
 /* Type without rewriting incomplete input; drag from a separate handle in one gesture. */
-export function mountNumber(input,min,max,sliderMax=max,{reset,closeOnRelease=false}={}){
+export function mountNumber(input,min,max,sliderMax=max,{reset,closeOnRelease=false,iconOnly=false}={}){
  const control=input.closest('.ie-format'),handle=control.querySelector('.ie-number-handle');
  const panel=document.createElement('div');panel.className='ie-number-slider';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;
  const range=document.createElement('input');range.type='range';range.min=min;range.max=sliderMax;range.step=1;range.setAttribute('aria-label',input.getAttribute('aria-label')+' slider');panel.append(range,makeResetButton(()=>{input.blur();reset?.(input.id==='ie-size'?'size':input.id==='ie-padding'?'padding':'borderRadius');applied=current();draw();close()}));document.body.append(panel);
+ if(iconOnly)panel.prepend(input);
  input.setAttribute('aria-valuemin',min);input.setAttribute('aria-valuemax',max);handle.setAttribute('aria-controls',panel.id=input.id+'-slider');
  let gesture=null,editing=false,startValue=Number(input.value)||min,applied=startValue;
  const clamp=value=>Math.max(min,Math.min(max,Math.round(value)));
@@ -183,7 +184,7 @@ export function mountNumber(input,min,max,sliderMax=max,{reset,closeOnRelease=fa
   if(panel.hidden){document.dispatchEvent(new CustomEvent('ie-number-preview',{detail:panel}));panel.hidden=false}
   const r=handle.getBoundingClientRect();panel.style.left=Math.max(8,Math.min(innerWidth-panel.offsetWidth-8,r.left+r.width/2-panel.offsetWidth/2))+'px';panel.style.top=Math.max(8,Math.min(innerHeight-panel.offsetHeight-8,r.bottom+3))+'px';
  };
- input.addEventListener('focus',()=>{editing=true;startValue=applied=current();close();input.select()});
+ input.addEventListener('focus',()=>{editing=true;startValue=applied=current();if(!iconOnly)close();input.select()});
  input.addEventListener('click',()=>input.select());
  input.addEventListener('blur',()=>{if(!editing)return;editing=false;const n=Number(input.value);emit(input.value.trim()===''||!Number.isFinite(n)?startValue:n);end()});
  input.addEventListener('keydown',e=>{
@@ -197,9 +198,9 @@ export function mountNumber(input,min,max,sliderMax=max,{reset,closeOnRelease=fa
   applied=current();gesture={id:e.pointerId,x:e.clientX,value:current(),span:Number(range.max)-min,width:range.getBoundingClientRect().width};handle.setPointerCapture(e.pointerId);
  });
  handle.addEventListener('pointermove',e=>{if(gesture?.id===e.pointerId)emit(gesture.value+(e.clientX-gesture.x)/gesture.width*gesture.span)});
- const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end();if(closeOnRelease)close()};
+ const stop=()=>{if(!gesture)return;const id=gesture.id;gesture=null;if(handle.hasPointerCapture(id))handle.releasePointerCapture(id);end();if(closeOnRelease&&!iconOnly)close()};
  handle.addEventListener('pointerup',stop);handle.addEventListener('pointercancel',stop);handle.addEventListener('lostpointercapture',stop);
- handle.addEventListener('click',e=>{if(e.detail===0){show();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));range.focus()}});
+ handle.addEventListener('click',e=>{if(e.detail===0||iconOnly&&panel.hidden&&!closeOnRelease){show();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));range.focus()}});
  range.addEventListener('focus',()=>{applied=current()});range.addEventListener('pointerdown',()=>{applied=current();document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:panel}));/* Slider remains open until dismissed. */});
  range.addEventListener('input',()=>emit(Number(range.value)));range.addEventListener('change',end);
  panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();handle.focus()}});

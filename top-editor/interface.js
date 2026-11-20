@@ -44,9 +44,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-batch-icons';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-batch-icons';
-import {createHistory,createDraftStore,applyDocument} from './history.js';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-picker-grid';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-picker-grid';
+import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261120-picker-grid';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
 /* Selection and interaction logic extracted from Pages!B4. */
@@ -93,11 +93,11 @@ export function startEditor(){
  const iconPicker=document.createElement('div');
  iconPicker.id='ie-icon-picker';iconPicker.className='ie-popover';iconPicker.dataset.builtAtEditorRuntime='';iconPicker.hidden=true;
  iconPicker.setAttribute('role','dialog');iconPicker.setAttribute('aria-label','Choose Lucide icon');
- iconPicker.innerHTML='<header><strong>Choose icon</strong><button type="button" aria-label="Close icon picker">×</button></header><input type="search" aria-label="Search Lucide icons" placeholder="Search Lucide icons"><p role="status"></p><div class="ie-icon-grid"></div><button class="ie-icon-more" type="button" hidden>Show more</button>';
+ iconPicker.innerHTML='<header><strong>Choose icon</strong><button type="button" aria-label="Close icon picker" title="Close icon picker"><svg data-lucide="x" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header><div class="ie-search-input-wrap"><input type="search" aria-label="Search Lucide icons" placeholder="Search Lucide icons" autocomplete="off"><button class="ie-search-clear" type="button" aria-label="Clear search" title="Clear search" hidden><svg data-lucide="x" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div><p role="status"></p><div class="ie-icon-grid"></div>';
  document.body.append(iconPicker);
  const iconSearch=iconPicker.querySelector('input'),iconGrid=iconPicker.querySelector('.ie-icon-grid');
- const iconStatus=iconPicker.querySelector('[role=status]'),iconMore=iconPicker.querySelector('.ie-icon-more');
- let iconCatalog,iconTarget=null,iconLimit=70,pickerTrigger=null;
+ const iconStatus=iconPicker.querySelector('[role=status]'),iconClear=iconPicker.querySelector('.ie-search-clear');
+ let iconCatalog,iconTarget=null,pickerTrigger=null;
  const closeIconPicker=(focus=false)=>{
   const trigger=pickerTrigger;
   iconPicker.hidden=true;iconTarget=null;pickerTrigger=null;
@@ -131,9 +131,8 @@ export function startEditor(){
    const terms=query.split(/\s+/).filter(Boolean);
    const matches=icons.filter(icon=>terms.every(term=>icon.search.includes(term)));
    if(query)matches.sort((a,b)=>Number(b.name.replaceAll('-',' ')===query)-Number(a.name.replaceAll('-',' ')===query));
-   iconStatus.textContent=matches.length?matches.length.toLocaleString()+' icons':'No matching icons.';
-   iconMore.hidden=matches.length<=iconLimit;
-   iconGrid.replaceChildren(...matches.slice(0,iconLimit).map(({name,source})=>{
+   iconStatus.textContent=matches.length?matches.length>49?'Showing 49 of '+matches.length.toLocaleString()+' icons. Search to narrow results.':matches.length.toLocaleString()+' icons':'No matching icons.';
+   iconGrid.replaceChildren(...matches.slice(0,49).map(({name,source})=>{
     const button=document.createElement('button');button.type='button';
     button.setAttribute('aria-pressed',String(target.every(svg=>svg.getAttribute('data-lucide')===name)));
     const glyph=document.createElementNS(svgNS,'svg');
@@ -151,11 +150,11 @@ export function startEditor(){
   iconTarget=icons;pickerTrigger=trigger;
   document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:iconPicker}));
   iconPicker.hidden=false;trigger.setAttribute('aria-expanded','true');
-  iconSearch.value='';iconLimit=70;iconGrid.replaceChildren();iconMore.hidden=true;
+  iconSearch.value='';iconGrid.replaceChildren();iconClear.hidden=true;
   iconStatus.textContent='Loading Lucide icons…';iconSearch.focus();drawIcons();
  };
- iconSearch.oninput=()=>{iconLimit=70;drawIcons()};
- iconMore.onclick=()=>{iconLimit+=70;drawIcons()};
+ iconSearch.oninput=()=>{iconClear.hidden=!iconSearch.value;drawIcons()};
+ iconClear.onclick=()=>{iconSearch.value='';iconSearch.oninput();iconSearch.focus()};
  iconPicker.querySelector('header button').onclick=()=>closeIconPicker(true);
  iconPicker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeIconPicker(true)}});
  document.addEventListener('ie-open-panel',e=>{if(e.detail!==iconPicker)closeIconPicker()});
@@ -262,7 +261,7 @@ const textCapable=el=>!el.matches('img,hr,svg,video,canvas,[role="img"]')&&(!!el
 $('ie-font').disabled=!enabled||!targets.length||!targets.every(textCapable);$('ie-size').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,img'));
 $('ie-color').disabled=!enabled||!targets.length||!targets.every(el=>textCapable(el)||el.matches('svg,svg *'));
 ['ie-bg','ie-radius','ie-border','ie-border-none','ie-padding'].forEach(id=>$(id).disabled=!enabled||!targets.length);
-updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){const input=control.querySelector('#ie-font,#ie-size,#ie-color,#ie-bg,#ie-border,#ie-radius,#ie-padding');control.hidden=!!input?.disabled}const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.size>1?selected.size+' selected':elementName(active);refreshElementList();$('ie-label').title=name;$('ie-label').classList.toggle('ie-selected',mode==='element'&&!!active);if(!enabled)return;const c=getComputedStyle(current());$('ie-padding').value=Math.round(parseFloat(c.paddingLeft))||0;$('ie-padding').setAttribute('aria-valuenow',$('ie-padding').value);const paint=current().matches('svg,svg *')?[current(),...current().querySelectorAll('*')].map(node=>getComputedStyle(node)).find(style=>style.stroke!=='none'||style.fill!=='none'):null;if(![...$('ie-font').options].some(o=>o.value===c.fontFamily))$('ie-font').add(new Option(c.fontFamily.split(',')[0].replaceAll('"',''),c.fontFamily));$('ie-font').value=c.fontFamily;$('ie-size').value=Math.round(parseFloat(current().matches('svg,img')?c.width:c.fontSize))||16;$('ie-size').setAttribute('aria-valuenow',$('ie-size').value);$('ie-color').value=mode==='page'?(document.body.style.getPropertyValue('--ie-page-text-color')||hex(c.color)):(paint?hex(paint.stroke!=='none'?paint.stroke:paint.fill):(current().style.color?hex(current().style.color):hex(c.color)));$('ie-bg').value=hex(c.backgroundColor);$('ie-radius').value=Math.round(parseFloat(c.borderTopLeftRadius))||0;$('ie-radius').setAttribute('aria-valuenow',$('ie-radius').value);$('ie-size-value').textContent=$('ie-size').value+'px';$('ie-radius-value').textContent=$('ie-radius').value+'px';$('ie-border').value=hex(c.borderTopColor);$('ie-border-none').dataset.none=(c.borderTopStyle==='none'||parseFloat(c.borderTopWidth)===0)?'true':'false';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';updateColorSwatches();const fontLabel=$('ie-font').selectedOptions[0]?.textContent||c.fontFamily;$('ie-font-trigger').dataset.ieTooltip='Font: '+(fontLabel==='Default'?c.fontFamily:fontLabel);};
+updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){const input=control.querySelector('#ie-font,#ie-size,#ie-color,#ie-bg,#ie-border,#ie-radius,#ie-padding');const handle=control.querySelector('.ie-number-handle');if(handle)handle.disabled=$(handle.id.replace('-handle','')).disabled;control.hidden=!!(input?.disabled||handle?.disabled)}const el=enabled?current():null;$('ie-label').hidden=false;const name=selected.size>1?selected.size+' selected':elementName(active);refreshElementList();$('ie-label').title=name;$('ie-label').classList.toggle('ie-selected',mode==='element'&&!!active);if(!enabled)return;const c=getComputedStyle(current());$('ie-padding').value=Math.round(parseFloat(c.paddingLeft))||0;$('ie-padding').setAttribute('aria-valuenow',$('ie-padding').value);const paint=current().matches('svg,svg *')?[current(),...current().querySelectorAll('*')].map(node=>getComputedStyle(node)).find(style=>style.stroke!=='none'||style.fill!=='none'):null;if(![...$('ie-font').options].some(o=>o.value===c.fontFamily))$('ie-font').add(new Option(c.fontFamily.split(',')[0].replaceAll('"',''),c.fontFamily));$('ie-font').value=c.fontFamily;$('ie-size').value=Math.round(parseFloat(current().matches('svg,img')?c.width:c.fontSize))||16;$('ie-size').setAttribute('aria-valuenow',$('ie-size').value);$('ie-color').value=mode==='page'?(document.body.style.getPropertyValue('--ie-page-text-color')||hex(c.color)):(paint?hex(paint.stroke!=='none'?paint.stroke:paint.fill):(current().style.color?hex(current().style.color):hex(c.color)));$('ie-bg').value=hex(c.backgroundColor);$('ie-radius').value=Math.round(parseFloat(c.borderTopLeftRadius))||0;$('ie-radius').setAttribute('aria-valuenow',$('ie-radius').value);$('ie-size-value').textContent=$('ie-size').value+'px';$('ie-radius-value').textContent=$('ie-radius').value+'px';$('ie-border').value=hex(c.borderTopColor);$('ie-border-none').dataset.none=(c.borderTopStyle==='none'||parseFloat(c.borderTopWidth)===0)?'true':'false';$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true';updateColorSwatches();const fontLabel=$('ie-font').selectedOptions[0]?.textContent||c.fontFamily;$('ie-font-trigger').dataset.ieTooltip='Font: '+(fontLabel==='Default'?c.fontFamily:fontLabel);};
  const updateColorSwatches=()=>{for(const id of ['ie-color','ie-bg','ie-border']){const button=$(id);button.style.background=button.value;button.style.color=contrastingInk(button.value)}$('ie-border-none').checked=$('ie-border-none').dataset.none!=='true'};['ie-color','ie-bg','ie-border'].forEach(id=>$(id).addEventListener('input',updateColorSwatches));
  let colorSession=null;
  const matchingElements=el=>mode==='element'&&selected.size>1?[...selected].filter(x=>x.isConnected):[el];
@@ -354,16 +353,16 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  }
 
  const paddingWrap=document.createElement('div');paddingWrap.className='ie-format';paddingWrap.dataset.format='Padding';
- paddingWrap.innerHTML='<div class="ie-circle ie-number-circle"><input class="ie-number" id="ie-padding" type="text" inputmode="numeric" role="spinbutton" aria-label="Padding" value="0" autocomplete="off"><button class="ie-number-handle" type="button" id="ie-padding-handle" aria-label="Drag to adjust padding"><svg data-lucide="move-horizontal" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4M6 8l-4 4 4 4M2 12h20"/></svg></button></div><span class="ie-format-label">Padding</span>';
+ paddingWrap.innerHTML='<div class="ie-circle ie-number-circle"><input class="ie-number" id="ie-padding" type="text" inputmode="numeric" role="spinbutton" aria-label="Padding" value="0" autocomplete="off"><button class="ie-number-handle" type="button" id="ie-padding-handle" aria-label="Padding" title="Padding"><svg aria-hidden="true" data-lucide="square-padding" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M14 17h-4" /><path d="M14 7h-4" /><path d="M17 14v-4" /><path d="M7 14v-4" /></svg></button></div><span class="ie-format-label">Padding</span>';
  document.getElementById('ie-format-row').append(paddingWrap);
  document.getElementById('ie-padding').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<0)return;styleChange('padding',n+'px',true)});
  document.getElementById('ie-padding').onchange=()=>{colorSession=null};
- mountNumber(document.getElementById('ie-padding'),0,1000,100,{reset:resetFormatting,closeOnRelease:true});
+ mountNumber(document.getElementById('ie-padding'),0,1000,100,{reset:resetFormatting,closeOnRelease:true,iconOnly:true});
  $('ie-font').onchange=e=>{ensureGoogleFont(e.target.value);styleChange('fontFamily',e.target.value)};
  $('ie-size').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<1)return;$('ie-size-value').textContent=n+'px';styleChange(current().matches('svg,img')?'iconSize':'fontSize',n+'px',true)});$('ie-size').onchange=()=>{colorSession=null};
  $('ie-color').oninput=e=>styleChange('color',e.target.value,true);$('ie-color').onchange=()=>{colorSession=null};
  $('ie-bg').oninput=e=>styleChange('backgroundColor',e.target.value,true);$('ie-bg').onchange=()=>{colorSession=null};$('ie-border').oninput=e=>{$('ie-border-none').dataset.none='false';$('ie-border-none').checked=true;updateColorSwatches();styleChange('borderColor',e.target.value,true)};$('ie-border').onchange=()=>{colorSession=null};$('ie-border-none').onchange=e=>{colorSession=null;undo.push(snapshot());redo.length=0;for(const el of matchingElements(current())){if(!e.target.checked)el.style.setProperty('border-style','none','important');else{el.style.setProperty('border-style','solid','important');if(parseFloat(getComputedStyle(el).borderTopWidth)===0)el.style.setProperty('border-width','1px','important')}}e.target.dataset.none=e.target.checked?'false':'true';updateColorSwatches()};$('ie-radius').addEventListener('ie-number-input',e=>{const n=Number(e.target.value);if(!Number.isFinite(n)||n<0)return;$('ie-radius-value').textContent=n+'px';styleChange('borderRadius',n+'px',true)});$('ie-radius').onchange=()=>{colorSession=null};
- mountFontPicker($('ie-font'),$('ie-font-trigger'),{reset:resetFormatting});mountNumber($('ie-size'),1,500,72,{reset:resetFormatting});mountNumber($('ie-radius'),0,1000,100,{reset:resetFormatting});
+ mountFontPicker($('ie-font'),$('ie-font-trigger'),{reset:resetFormatting});mountNumber($('ie-size'),1,500,72,{reset:resetFormatting,iconOnly:true});mountNumber($('ie-radius'),0,1000,100,{reset:resetFormatting,iconOnly:true});
   $('ie-delete').onclick=()=>{if(!active)return;const items=[...selected];undo.push(snapshot());redo.length=0;finish();for(const el of items){removed.add(el);el.remove()}syncControls()};
  let textEditing=false;
  const canEditText=el=>el&&!!el.textContent.trim()&&!el.querySelector('[data-edit]')&&!el.matches('header,footer,section,article,aside,nav,img,svg,svg *,video,canvas,input,textarea,select,hr')&&!el.matches('.hero-art,[role="img"]');
@@ -440,8 +439,8 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&!preview){e.preventDefault();e.shiftKey?$('ie-redo').click():$('ie-undo').click()}
  });
  syncControls();
- $('ie-undo').onclick=()=>{cancelURLUpdates();finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop());setMode('page')};
- $('ie-redo').onclick=()=>{cancelURLUpdates();finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop());setMode('page')};
+ $('ie-undo').onclick=()=>{cancelURLUpdates();finish();if(!undo.length)return;redo.push(snapshot());restore(undo.pop());setMode('page');drafts.save()};
+ $('ie-redo').onclick=()=>{cancelURLUpdates();finish();if(!redo.length)return;undo.push(snapshot());restore(redo.pop());setMode('page');drafts.save()};
  let tools=null,colorPicker=null,pageDrag=null;
  const applyPreview=()=>{document.body.classList.toggle('ie-preview',preview);if(preview){finish();tools?.close();colorPicker?.close();pageDrag?.close()}};
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
@@ -506,7 +505,9 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   revertSelection:revertSelected,
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
+ for(const button of bar.querySelectorAll('button[aria-label]'))if(!button.title)button.title=button.getAttribute('aria-label');
  drafts.restore();drafts.watch();
+ window.addEventListener('pagehide',()=>{flushFields();drafts.save()},{capture:true});
  colorPicker=mountColorPicker(bar,{reset:resetFormatting,backgroundImageURL,setBackgroundImage});
  mountOverflow(bar,tools);
 
