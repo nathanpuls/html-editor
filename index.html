@@ -2,63 +2,74 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HTML Playground · Built.at</title>
-<meta name="description" content="Paste HTML and edit it visually in the Built.at playground.">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Editor · Built.at</title>
 <link rel="icon" href="/_brand/logo.svg" type="image/svg+xml">
 <style>
 *{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;background:#fff;color:#171717;font:16px system-ui,sans-serif;min-height:100dvh;display:flex;flex-direction:column}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-bottom:1px solid #eee}
-.brand{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none;font-weight:750}
-main{width:min(720px,calc(100% - 32px));margin:clamp(24px,8vh,80px) auto}
-h1{margin:0 0 16px;font-size:clamp(28px,6vw,42px)}
-label{display:block;margin-bottom:8px}
-textarea{display:block;width:100%;min-height:230px;resize:vertical;border:1px solid #ddd;border-radius:12px;padding:14px;font:14px/1.5 monospace}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-button{font:inherit;border:1px solid #ddd;border-radius:999px;background:white;color:#171717;padding:8px 15px;cursor:pointer}
-button[type=submit]{background:#171717;color:#fff;border-color:#171717}
-iframe{display:block;width:100%;border:0;flex:1;min-height:0}
+body{margin:0;background:white;color:#171717;font:15px system-ui,sans-serif}
+iframe{display:block;width:100%;height:100dvh;border:0}
+dialog{width:min(600px,calc(100% - 24px));border:1px solid #ddd;border-radius:16px;padding:16px}
+dialog::backdrop{background:#0005}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+textarea{display:block;width:100%;min-height:180px;padding:10px;resize:vertical;border:1px solid #ddd;border-radius:8px;font:14px monospace}
+button{font:inherit;cursor:pointer;border:1px solid #ddd;border-radius:999px;background:white;padding:6px 12px}
+button[type=submit]{margin-top:10px;background:#171717;color:white;border-color:#171717}
+#save-status{position:fixed;bottom:16px;right:16px;margin:0;padding:8px 12px;border-radius:8px;background:#171717;color:white}
+#save-status:empty{display:none}
 </style>
 </head>
 <body>
-<header>
-<a class="brand" href="/"><img src="/_brand/logo.svg" width="25" height="25" alt="">Built.at</a>
-<button id="paste-again" type="button" hidden>Paste HTML</button>
-</header>
-<main id="entry">
-<h1>HTML Playground</h1>
-<form id="paste-form">
-<label for="html-source">Paste your HTML</label>
-<textarea id="html-source" required spellcheck="false" placeholder="&lt;!doctype html&gt;"></textarea>
-<div class="actions"><button type="submit">Open in editor</button><button type="button" id="sample">Try a sample</button></div>
-</form>
-</main>
-<iframe id="preview" title="HTML Playground editor" sandbox="allow-scripts" hidden></iframe>
+<iframe id="workspace" title="Built.at editor workspace" sandbox="allow-scripts"></iframe>
+<dialog aria-labelledby="paste-title">
+<header><strong id="paste-title">Paste HTML</strong><button type="button" aria-label="Close paste dialog">×</button></header>
+<form><textarea aria-label="HTML source" placeholder="Paste your HTML here" required spellcheck="false"></textarea><button type="submit">Open in editor</button></form>
+</dialog>
+<p id="save-status" role="status"></p>
 <script>
-const entry=document.getElementById('entry'),source=document.getElementById('html-source');
-const preview=document.getElementById('preview'),pasteAgain=document.getElementById('paste-again');
-function openEditor(html){
-  const page=new DOMParser().parseFromString(html,'text/html');
-  for(const script of page.querySelectorAll('script[src]')){
-    const src=script.getAttribute('src');
-    if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(src))script.remove();
-  }
-  const loader=page.createElement('script');
-  loader.src='https://edit.built.at/';
-  loader.defer=true;
-  loader.setAttribute('data-built-at-workspace','');
-  page.head.append(loader);
-  preview.srcdoc='<!doctype html>'+page.documentElement.outerHTML;
-  entry.hidden=true;preview.hidden=false;pasteAgain.hidden=false;
+const frame=document.getElementById('workspace'),dialog=document.querySelector('dialog'),source=dialog.querySelector('textarea');
+const status=document.getElementById('save-status'),key='built-at:editor:workspace:v1';
+let documentState=null,revision=0;
+try{
+ const saved=JSON.parse(localStorage.getItem(key)||'null');
+ if(saved&&typeof saved.html==='string')documentState=saved;
+}catch{}
+const emptyMarkup='<title>Editor · Built.at</title><style data-built-at-editor-runtime>body{margin:0;background:#fff}#workspace-hint{position:fixed;max-width:calc(100vw - 24px);display:grid;justify-items:end;gap:5px;color:#666;font:14px system-ui,sans-serif}#workspace-hint svg{margin-right:calc(var(--paste-center,32px) - 9px)}#ie-toolbar #ie-paste{background:#171717;color:#fff;border-color:#171717}#ie-toolbar #ie-copy{background:#fff;color:#777;border:1px solid #ddd}</style><div id="workspace-hint" data-built-at-editor-runtime><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-7 7 7-7 7 7"/></svg><span>Paste Built HTML to get started</span></div>';
+function save(){
+ try{localStorage.setItem(key,JSON.stringify(documentState));status.textContent=''}
+ catch{status.textContent='Browser storage is unavailable. Use Copy to keep your HTML.'}
 }
-document.getElementById('paste-form').onsubmit=event=>{
-  event.preventDefault();
-  if(source.value.trim())openEditor(source.value);
+function render(){
+ const page=new DOMParser().parseFromString(documentState?.html||emptyMarkup,'text/html');
+ for(const script of page.querySelectorAll('script[src]')){
+  if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(script.getAttribute('src')))script.remove();
+ }
+ const loader=page.createElement('script');
+ loader.src='https://edit.built.at/?v=20261120-workspace';
+ loader.defer=true;
+ loader.setAttribute('data-built-at-workspace',String(++revision));
+ if(!documentState)loader.setAttribute('data-built-at-workspace-empty','');
+ if(typeof documentState?.draft==='string')loader.setAttribute('data-built-at-draft',documentState.draft);
+ page.head.append(loader);
+ frame.srcdoc='<!doctype html>'+page.documentElement.outerHTML;
+}
+window.addEventListener('message',event=>{
+ if(event.source!==frame.contentWindow||event.origin!=='null'||event.data?.revision!==String(revision))return;
+ if(event.data?.type==='built-at:workspace-paste'){
+  if(!dialog.open){dialog.showModal();source.focus()}
+ }else if(event.data?.type==='built-at:workspace-draft'&&documentState){
+  const draft=event.data.draft;
+  if(draft!==null&&typeof draft!=='string')return;
+  documentState.draft=draft;save();
+ }
+});
+dialog.querySelector('header button').onclick=()=>dialog.close();
+dialog.querySelector('form').onsubmit=event=>{
+ event.preventDefault();
+ const html=source.value.trim();if(!html)return;
+ documentState={html,draft:null};save();render();source.value='';dialog.close();
 };
-document.getElementById('sample').onclick=()=>openEditor('<title>Playground sample</title><main data-edit="Sample section" style="max-width:640px;margin:64px auto;padding:24px;font-family:system-ui"><h1 data-edit="Sample headline">Make it yours</h1><p data-edit="Sample description">Select this text and try the toolbar.</p></main>');
-pasteAgain.onclick=()=>{preview.hidden=true;entry.hidden=false;pasteAgain.hidden=true;source.focus()};
+render();
 </script>
 </body>
 </html>

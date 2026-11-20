@@ -46,11 +46,11 @@ SOFTWARE.
 */
 import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-paste-toolbar';
 import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-picker-grid';
-import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261120-picker-grid';
+import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261120-workspace';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
 
 /* Selection and interaction logic extracted from Pages!B4. */
-export function startEditor({startInPreview=false,workspace=false}={}){
+export function startEditor({startInPreview=false,workspace=false,workspaceEmpty=false,workspaceDraft=null}={}){
  const {snapshot,restore}=createHistory(()=>[...document.querySelectorAll('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume')]);
  // Capture the loaded document before editor setup or any saved draft is applied.
  const original=snapshot();
@@ -447,8 +447,10 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  applyPreview();
  setMode('page');
  const pasteButton=$('ie-paste');
- pasteButton.hidden=workspace;
- pasteButton.onclick=()=>window.open('https://built.at/editor','_blank','noopener,noreferrer');
+ pasteButton.removeAttribute('aria-haspopup');
+ pasteButton.onclick=()=>workspace
+  ?parent.postMessage({type:'built-at:workspace-paste',revision:workspace},'https://built.at')
+  :window.open('https://built.at/editor','_blank','noopener,noreferrer');
  let copyFeedbackTimer;
  $('ie-copy').onclick=async()=>{
   if(textEditing&&active){active.blur();active.contentEditable='false';textEditing=false}
@@ -468,7 +470,12 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   document.body.style.setProperty('--ie-original-padding-top',getComputedStyle(document.body).paddingTop);
   document.body.classList.add('ie-enabled');updateToolbarHeight();setMode('page');
  };
- const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()});
+ const workspaceStorage=workspace?{
+  getItem:()=>workspaceDraft,
+  setItem:(_key,draft)=>parent.postMessage({type:'built-at:workspace-draft',revision:workspace,draft},'https://built.at'),
+  removeItem:()=>parent.postMessage({type:'built-at:workspace-draft',revision:workspace,draft:null},'https://built.at')
+ }:undefined;
+ const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()},workspaceStorage);
  const revertSelected=()=>{
    cancelURLUpdates();const targets=[...selected].filter(el=>el.isConnected);if(!targets.length)return;
    undo.push(snapshot());redo.length=0;finish();
@@ -510,8 +517,21 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   revert:()=>drafts.reset(()=>{cancelURLUpdates();finish();undo.push(snapshot());redo.length=0;restore(original);preview=false;afterRestore()})
  });
  for(const button of bar.querySelectorAll('button[aria-label]'))if(!button.title)button.title=button.getAttribute('aria-label');
- drafts.restore();drafts.watch();
- window.addEventListener('pagehide',()=>{flushFields();drafts.save()},{capture:true});
+ if(!workspaceEmpty){drafts.restore();drafts.watch()}
+ if(workspaceEmpty){
+  for(const control of bar.querySelectorAll('button,select,input,a'))if(control!==pasteButton&&!control.matches('.ie-brand')){
+   if('disabled' in control)control.disabled=true;else control.inert=true;
+  }
+  const hint=document.getElementById('workspace-hint');
+  const positionHint=()=>{
+   const anchor=pasteButton.getBoundingClientRect();
+   hint.style.top=bar.getBoundingClientRect().bottom+12+'px';
+   hint.style.right=Math.max(12,innerWidth-anchor.right)+'px';
+   hint.style.setProperty('--paste-center',anchor.width/2+'px');
+  };
+  new ResizeObserver(positionHint).observe(bar);positionHint();
+ }
+ window.addEventListener('pagehide',()=>{if(!workspaceEmpty){flushFields();drafts.save()}},{capture:true});
  colorPicker=mountColorPicker(bar,{reset:resetFormatting,backgroundImageURL,setBackgroundImage});
  mountOverflow(bar,tools);
 

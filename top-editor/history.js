@@ -53,20 +53,20 @@ export function applyDocument(html){
 }
 
 /* Automatic per-page drafts. Runtime source changes must not discard edits. */
-export function createDraftStore(sourceHTML,serialize,apply){
+export function createDraftStore(sourceHTML,serialize,apply,storage){
  let hash=2166136261;for(let i=0;i<sourceHTML.length;i++){hash^=sourceHTML.charCodeAt(i);hash=Math.imul(hash,16777619)}
  const url=new URL(location.href);for(const name of ['edit','preview','inspect','editor-load'])url.searchParams.delete(name);
  const key='built-at:toolbar:draft:'+url.origin+url.pathname+url.search;
  const source=sourceHTML.length+':'+(hash>>>0).toString(16);
  let last=sourceHTML,timer=null,paused=false;
- const clear=()=>{clearTimeout(timer);timer=null;last=sourceHTML;try{localStorage.removeItem(key)}catch{}};
+ const clear=()=>{clearTimeout(timer);timer=null;last=sourceHTML;try{(storage??localStorage).removeItem(key)}catch{}};
  const save=()=>{
   if(paused)return;
   const html=serialize();if(html===last)return;
-  try{if(html===sourceHTML)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify({version:1,source,html}));last=html}catch(error){console.warn('Could not save editor draft',error)}
+  try{if(html===sourceHTML)(storage??localStorage).removeItem(key);else (storage??localStorage).setItem(key,JSON.stringify({version:1,source,html}));last=html}catch(error){console.warn('Could not save editor draft',error)}
  };
  const restore=()=>{
-  try{const draft=JSON.parse(localStorage.getItem(key)||'null');if(!draft)return false;
+  try{const draft=JSON.parse((storage??localStorage).getItem(key)||'null');if(!draft)return false;
    if(draft.version!==1||typeof draft.html!=='string'){clear();return false}
    paused=true;apply(draft.html);last=draft.html;return true;
   }catch(error){console.warn('Could not restore editor draft',error);return false}finally{paused=false}
