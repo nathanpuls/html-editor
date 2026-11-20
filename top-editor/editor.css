@@ -175,3 +175,11 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 #ie-paste-dialog button{border:1px solid #ddd;border-radius:999px;background:#fff;color:#171717;padding:6px 12px;font:inherit;cursor:pointer}
 #ie-paste-dialog.ie-paste-preview{width:min(1200px,calc(100vw - 24px))}
 #ie-paste-dialog iframe{width:100%;height:min(75dvh,800px);border:1px solid #ddd;border-radius:8px}
+
+#ie-color-popover .ie-color-palettes{display:grid;gap:8px;margin-bottom:6px}
+#ie-color-popover .ie-color-palettes strong{display:block;font-size:12px;font-weight:600}
+#ie-color-popover .ie-color-swatches{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;margin-top:4px;max-height:65px;overflow-y:auto}
+#ie-color-popover .ie-color-swatches>span{grid-column:1/-1;color:#666;font-size:11px}
+#ie-color-popover .ie-color-swatch{position:relative;aspect-ratio:1;padding:0;border:1px solid #0002;border-radius:4px;background:repeating-conic-gradient(#eee 0% 25%,#fff 0% 50%) 0/8px 8px}
+#ie-color-popover .ie-color-swatch::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--ie-swatch)}
+#ie-color-popover .ie-color-swatch:is(:hover,:focus-visible){outline:1px solid #222;outline-offset:1px}

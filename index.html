@@ -45,11 +45,15 @@ function render(){
   if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(script.getAttribute('src')))script.remove();
  }
  const loader=page.createElement('script');
- loader.src='https://edit.built.at/?v=20261120-workspace-copy';
+ loader.src='https://edit.built.at/?v=20261120-color-swatches';
  loader.defer=true;
  loader.setAttribute('data-built-at-workspace',String(++revision));
  if(!documentState)loader.setAttribute('data-built-at-workspace-empty','');
  if(typeof documentState?.draft==='string')loader.setAttribute('data-built-at-draft',documentState.draft);
+ try{
+  const recent=localStorage.getItem('built-at:editor:recent-colors');
+  if(recent)loader.setAttribute('data-built-at-recent-colors',recent);
+ }catch{}
  page.head.append(loader);
  frame.srcdoc='<!doctype html>'+page.documentElement.outerHTML;
 }
@@ -57,6 +61,9 @@ window.addEventListener('message',event=>{
  if(event.source!==frame.contentWindow||event.origin!=='null'||event.data?.revision!==String(revision))return;
  if(event.data?.type==='built-at:workspace-paste'){
   if(!dialog.open){dialog.showModal();source.focus()}
+ }else if(event.data?.type==='built-at:workspace-recent-colors'){
+  const value=event.data.value;
+  if(typeof value==='string'&&value.length<=150)try{localStorage.setItem('built-at:editor:recent-colors',value)}catch{}
  }else if(event.data?.type==='built-at:workspace-draft'&&documentState){
   const draft=event.data.draft;
   if(draft!==null&&typeof draft!=='string')return;

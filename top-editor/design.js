@@ -36,9 +36,62 @@ export function restoreStyleProperties(target,originalStyle,properties){
 }
 
 /* One shared live picker for text, SVG paint, backgrounds and borders. */
-export function mountColorPicker(bar,{reset,backgroundImageURL,setBackgroundImage}={}){
+const recentColorKey='built-at:editor:recent-colors';
+const normalizeRecent=values=>Array.isArray(values)?[...new Set(values.filter(value=>typeof value==='string'&&/^#[\da-f]{6}([\da-f]{2})?$/i.test(value)).map(value=>value.toLowerCase()))].slice(0,12):[];
+
+function collectPageColors(){
+ const colors=new Set(),variables=new Set(),seen=new Set();
+ const add=value=>{
+  value=value.trim();
+  if(seen.has(value)||!value)return;
+  seen.add(value);
+  if(/^(?:inherit|initial|unset|revert(?:-layer)?|currentcolor)$/i.test(value)||!CSS.supports('color',value))return;
+  const color=rgba(value);
+  if(color[3]>0)colors.add(colorHex(color));
+ };
+ const readVariables=style=>{if(style)for(const property of Array.from(style))if(property.startsWith('--'))variables.add(property)};
+ const readRules=rules=>{for(const rule of rules){readVariables(rule.style);if(rule.cssRules)readRules(rule.cssRules)}};
+ for(const sheet of document.styleSheets){try{readRules(sheet.cssRules)}catch{/* Cross-origin declarations may be unreadable. */}}
+ const authorElements=[document.documentElement,...document.body.querySelectorAll('*')].filter(el=>!el.closest('[data-built-at-editor-runtime],[data-codex-agent-overlay-root]')&&!el.matches('script,style,link,template'));
+ for(const el of authorElements)readVariables(el.style);
+ for(const el of authorElements){
+  const style=getComputedStyle(el);
+  if(style.display==='none')continue;
+  add(style.color);add(style.backgroundColor);
+  for(const side of ['top','right','bottom','left'])if(parseFloat(style.getPropertyValue('border-'+side+'-width')))add(style.getPropertyValue('border-'+side+'-color'));
+  if(el instanceof SVGElement){add(style.fill);add(style.stroke)}
+  for(const name of variables)add(style.getPropertyValue(name));
+ }
+ return colors;
+}
+
+export function mountColorPicker(bar,{reset,backgroundImageURL,setBackgroundImage,recentStorage}={}){
  const panel=document.createElement('div');panel.id='ie-color-popover';panel.className='ie-popover';panel.dataset.builtAtEditorRuntime='';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Color picker');
  panel.innerHTML='<div class="ie-color-area" role="slider" tabindex="0" aria-label="Color area" aria-valuemin="0" aria-valuemax="100"><span class="ie-color-cursor"></span></div><label class="ie-picker-row"><span>Hue</span><input class="ie-hue" type="range" min="0" max="359" step="1" aria-label="Hue"></label><label class="ie-picker-row"><span>Opacity</span><input class="ie-alpha" type="range" min="0" max="100" step="1" aria-label="Opacity"><output class="ie-alpha-value">100%</output></label><label class="ie-hex-row"><span>HEX</span><input class="ie-hex" type="text" spellcheck="false" autocomplete="off" aria-label="HEX" maxlength="9"></label>';
+ const palette=document.createElement('div');
+ palette.className='ie-color-palettes';
+ palette.innerHTML='<section aria-label="Page colors"><strong>Page colors</strong><div class="ie-color-swatches"></div></section><section aria-label="Recent colors"><strong>Recent colors</strong><div class="ie-color-swatches"></div></section><strong>Custom color</strong>';
+ panel.prepend(palette);
+ const [pageSwatches,recentSwatches]=palette.querySelectorAll('.ie-color-swatches');
+ let pageColors=new Set(),recentColors=[],colorChanged=false;
+ const renderSwatches=(container,colors,empty)=>{
+  container.replaceChildren();
+  for(const color of colors){
+   const button=document.createElement('button');
+   button.type='button';button.className='ie-color-swatch';
+   button.setAttribute('aria-label',color.toUpperCase());button.title=color.toUpperCase();
+   button.style.setProperty('--ie-swatch',color);
+   button.onclick=()=>{
+    const components=rgba(color);
+    hsv=rgbToHSV(components);alpha=components[3];alphaTouched=true;
+    update();end();
+    drawRecent();
+   };
+   container.append(button);
+  }
+  if(!container.childElementCount){const message=document.createElement('span');message.textContent=empty;container.append(message)}
+ };
+ const drawRecent=()=>renderSwatches(recentSwatches,recentColors.filter(color=>!pageColors.has(color)),'No recent colors to show');
  const borderSwitch=document.createElement('label');borderSwitch.className='ie-border-switch';borderSwitch.innerHTML='<input type="checkbox" aria-label="Border enabled">Border enabled';borderSwitch.hidden=true;panel.append(borderSwitch);const borderToggle=borderSwitch.querySelector('input');borderToggle.onchange=()=>{const original=document.getElementById('ie-border-none');original.checked=borderToggle.checked;original.dispatchEvent(new Event('change',{bubbles:true}))};
  document.body.append(panel);
  const area=panel.querySelector('.ie-color-area'),cursor=panel.querySelector('.ie-color-cursor'),hue=panel.querySelector('.ie-hue'),opacity=panel.querySelector('.ie-alpha'),output=panel.querySelector('output'),field=panel.querySelector('.ie-hex');
@@ -57,10 +110,19 @@ export function mountColorPicker(bar,{reset,backgroundImageURL,setBackgroundImag
  };
  backgroundForm.onsubmit=e=>{e.preventDefault();applyBackground()};
  backgroundForm.querySelector('[type="button"]').onclick=()=>{backgroundField.value='';applyBackground()};
- const end=()=>trigger?.dispatchEvent(new Event('change',{bubbles:true}));
+ const end=()=>{
+  if(!trigger)return;
+  if(colorChanged){
+   const color=hex(trigger.value);
+   recentColors=normalizeRecent([color,...recentColors]);
+   try{(recentStorage??localStorage).setItem(recentColorKey,JSON.stringify(recentColors))}catch{/* Storage may be blocked. */}
+   colorChanged=false;
+  }
+  trigger.dispatchEvent(new Event('change',{bubbles:true}));
+ };
  const close=()=>{end();panel.hidden=true;trigger?.setAttribute('aria-expanded','false');trigger=null};
  const draw=()=>{const rgb=hsvToRGB(hsv,alpha),solid=colorHex(hsvToRGB(hsv,1));area.style.backgroundColor='hsl('+hsv[0]+' 100% 50%)';cursor.style.left=(hsv[1]*100)+'%';cursor.style.top=((1-hsv[2])*100)+'%';hue.value=Math.round(hsv[0]);opacity.value=Math.round(alpha*100);output.textContent=Math.round(alpha*100)+'%';opacity.style.setProperty('--ie-alpha-color',solid);field.value=colorHex(rgb).toUpperCase();field.removeAttribute('aria-invalid');area.setAttribute('aria-valuenow',Math.round(hsv[1]*100));area.setAttribute('aria-valuetext','Saturation '+Math.round(hsv[1]*100)+'%, brightness '+Math.round(hsv[2]*100)+'%')};
- const update=()=>{if(alpha===0&&!alphaTouched)alpha=1;draw();if(trigger){trigger.value=colorHex(hsvToRGB(hsv,alpha));trigger.dispatchEvent(new Event('input',{bubbles:true}))}};
+ const update=()=>{if(alpha===0&&!alphaTouched)alpha=1;draw();if(trigger){colorChanged=true;trigger.value=colorHex(hsvToRGB(hsv,alpha));trigger.dispatchEvent(new Event('input',{bubbles:true}))}};
  const open=(button,pageColor=false)=>{
   if(trigger===button&&!panel.hidden){close();return}
   const anchor=button.getBoundingClientRect();close();panel.dataset.ieKeepSettings=String(pageColor);
@@ -72,6 +134,10 @@ export function mountColorPicker(bar,{reset,backgroundImageURL,setBackgroundImag
    backgroundField.removeAttribute('aria-invalid');backgroundStatus.textContent='';
   }
   panel.setAttribute('aria-label',backgroundForm.hidden?'Color picker':'Background');
+  try{recentColors=normalizeRecent(JSON.parse((recentStorage??localStorage).getItem(recentColorKey)||'[]'))}catch{/* Keep the current session's colors. */}
+  pageColors=collectPageColors();
+  renderSwatches(pageSwatches,pageColors,'No page colors found');
+  drawRecent();
   const color=rgba(button.value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=false;draw();panel.hidden=false;button.setAttribute('aria-expanded','true');
   let left=anchor.left,top=anchor.bottom+8;
   if(pageColor){left=anchor.left-panel.offsetWidth-10;if(left<8)left=anchor.right+10;top=anchor.top}
@@ -90,7 +156,7 @@ export function mountColorPicker(bar,{reset,backgroundImageURL,setBackgroundImag
  hue.onchange=opacity.onchange=end;
  field.oninput=()=>{let value=field.value.trim();if(!value.startsWith('#'))value='#'+value;if(!/^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)){field.setAttribute('aria-invalid','true');return}const color=rgba(value);hsv=rgbToHSV(color);alpha=color[3];alphaTouched=true;const selection=field.selectionStart;update();field.setSelectionRange(selection,selection)};
  field.onchange=()=>{draw();end()};field.addEventListener('focus',()=>field.select());
- panel.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(e.key==='Enter'&&e.target===backgroundField){applyBackground();return}if(e.key==='Enter'&&backgroundForm.contains(e.target)&&e.target.tagName==='BUTTON'){e.target.click();return}const button=trigger;close();button?.focus()}},true);
+ panel.addEventListener('keydown',e=>{if(e.key==='Escape'||e.key==='Enter'){e.preventDefault();e.stopImmediatePropagation();if(e.key==='Enter'&&e.target.matches('.ie-color-swatch')){e.target.click();return}if(e.key==='Enter'&&e.target===backgroundField){applyBackground();return}if(e.key==='Enter'&&backgroundForm.contains(e.target)&&e.target.tagName==='BUTTON'){e.target.click();return}const button=trigger;close();button?.focus()}},true);
  document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!trigger?.contains(e.target))close()},true);
  document.addEventListener('ie-open-panel',e=>{if(e.detail!==panel)close()});
  window.addEventListener('resize',close);

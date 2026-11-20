@@ -45,12 +45,12 @@ SOFTWARE.
 
 */
 import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-paste-toolbar';
-import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-picker-grid';
+import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-color-swatches';
 import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261120-workspace';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js?v=20261120-workspace-copy';
 
 /* Selection and interaction logic extracted from Pages!B4. */
-export function startEditor({startInPreview=false,workspace=false,workspaceEmpty=false,workspaceDraft=null}={}){
+export function startEditor({startInPreview=false,workspace=false,workspaceEmpty=false,workspaceDraft=null,workspaceRecent=null}={}){
  const {snapshot,restore}=createHistory(()=>[...document.querySelectorAll('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume')]);
  // Capture the loaded document before editor setup or any saved draft is applied.
  const original=snapshot();
@@ -532,7 +532,14 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   new ResizeObserver(positionHint).observe(bar);positionHint();
  }
  window.addEventListener('pagehide',()=>{if(!workspaceEmpty){flushFields();drafts.save()}},{capture:true});
- colorPicker=mountColorPicker(bar,{reset:resetFormatting,backgroundImageURL,setBackgroundImage});
+ const recentStorage=workspace?{
+  getItem:()=>workspaceRecent,
+  setItem:(_key,value)=>{
+   workspaceRecent=value;
+   parent.postMessage({type:'built-at:workspace-recent-colors',revision:workspace,value},'https://built.at');
+  }
+ }:undefined;
+ colorPicker=mountColorPicker(bar,{reset:resetFormatting,backgroundImageURL,setBackgroundImage,recentStorage});
  mountOverflow(bar,tools);
 
  // Selection frames stay rectangular and never alter the author's border or shadow.
