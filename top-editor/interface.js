@@ -44,7 +44,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261119-selection';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-icon-options';
 import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261119-selection';
 import {createHistory,createDraftStore,applyDocument} from './history.js';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
