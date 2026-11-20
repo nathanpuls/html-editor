@@ -348,7 +348,7 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   for(const {wrap,button,isOn} of emphasisControls){
    const targets=mode==='page'?[document.body]:[...selected].filter(el=>el.isConnected);
    wrap.hidden=document.getElementById('ie-font').disabled;button.disabled=wrap.hidden;
-   const pressed=targets.length>0&&targets.every(isOn);button.setAttribute('aria-pressed',String(pressed));button.style.background=pressed?'#ddd':'#f4f4f4';
+   const pressed=targets.length>0&&targets.every(isOn);button.setAttribute('aria-pressed',String(pressed));
   }
  }
 
