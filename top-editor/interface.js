@@ -44,7 +44,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-picker-grid';
+import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-paste-toolbar';
 import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-picker-grid';
 import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261120-picker-grid';
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
@@ -446,6 +446,36 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
  applyPreview();
  setMode('page');
+ const pasteDialog=document.createElement('dialog');
+ pasteDialog.id='ie-paste-dialog';pasteDialog.dataset.builtAtEditorRuntime='';
+ pasteDialog.setAttribute('aria-labelledby','ie-paste-heading');
+ pasteDialog.innerHTML='<header><strong id="ie-paste-heading">Paste HTML</strong><button type="button" aria-label="Close paste dialog">×</button></header><form><textarea aria-label="HTML source" placeholder="Paste your HTML here" required spellcheck="false"></textarea><button type="submit">Open in editor</button></form><iframe title="Pasted HTML editor" sandbox="allow-scripts" hidden></iframe>';
+ document.body.append(pasteDialog);
+ const pasteForm=pasteDialog.querySelector('form'),pasteSource=pasteDialog.querySelector('textarea'),pasteFrame=pasteDialog.querySelector('iframe');
+ $('ie-paste').onclick=()=>{
+  document.dispatchEvent(new CustomEvent('ie-open-panel',{detail:pasteDialog}));
+  pasteDialog.showModal();pasteSource.focus();
+ };
+ pasteDialog.querySelector('header button').onclick=()=>pasteDialog.close();
+ pasteDialog.addEventListener('close',()=>{
+  pasteFrame.removeAttribute('srcdoc');pasteFrame.hidden=true;pasteForm.hidden=false;
+  pasteDialog.classList.remove('ie-paste-preview');
+ });
+ pasteForm.onsubmit=event=>{
+  event.preventDefault();
+  const html=pasteSource.value.trim();
+  if(!html){pasteSource.focus();return}
+  // Run pasted documents on an opaque origin, separate from the host and its draft.
+  const parsed=new DOMParser().parseFromString(html,'text/html');
+  for(const script of parsed.querySelectorAll('script[src]')){
+   const src=script.getAttribute('src');
+   if(/^https:\/\/(?:edit|side-edit)\.built\.at(?:[/?#]|$)/i.test(src))script.remove();
+  }
+  const loader=parsed.createElement('script');
+  loader.src='https://edit.built.at/';loader.defer=true;parsed.head.append(loader);
+  pasteFrame.srcdoc='<!doctype html>'+parsed.documentElement.outerHTML;
+  pasteForm.hidden=true;pasteFrame.hidden=false;pasteDialog.classList.add('ie-paste-preview');
+ };
  let copyFeedbackTimer;
  $('ie-copy').onclick=async()=>{
   if(textEditing&&active){active.blur();active.contentEditable='false';textEditing=false}

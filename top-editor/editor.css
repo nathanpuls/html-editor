@@ -8,7 +8,7 @@
 #ie-toolbar .ie-brand{display:flex;align-items:center;flex:none;width:26px;padding:0;border:0;background:transparent}
 #ie-toolbar .ie-brand img{display:block;width:25px;height:25px;max-width:none}
 #ie-toolbar #ie-page,#ie-toolbar #ie-label{display:none!important}
-#ie-toolbar #ie-search{display:flex;align-items:center;gap:5px;width:clamp(74px,15vw,230px);min-width:48px;flex:0 1 230px;height:36px;padding:0 9px;border:1px solid #ddd;border-radius:13px;background:#fff;text-align:left}
+#ie-toolbar #ie-search{display:flex;align-items:center;gap:5px;width:clamp(74px,15vw,230px);min-width:48px;flex:0 1 230px;height:36px;padding:0 9px;border:1px solid #ddd;border-radius:999px;background:#fff;text-align:left}
 .ie-current-selection{overflow:hidden;text-overflow:ellipsis;flex:1}
 .ie-picker-chevron{display:flex;flex:none}.ie-picker-chevron svg{width:15px;height:15px}
 #ie-toolbar #ie-format-row,#ie-format-overflow{display:flex;align-items:center;gap:8px;flex:none}
@@ -36,7 +36,7 @@
 #ie-toolbar .ie-icon,#ie-action-overflow .ie-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;min-width:28px;height:34px;flex:none;padding:5px;background:transparent;border:0;border-radius:6px;color:#222}
 #ie-toolbar .ie-icon svg,#ie-action-overflow .ie-icon svg{width:18px;height:18px;stroke-width:1.8}
 #ie-toolbar button:disabled,#ie-action-overflow button:disabled{color:#bcbcbc;cursor:default}
-#ie-toolbar #ie-copy{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:82px;height:36px;margin-left:8px;padding:0 11px;border:0;border-radius:13px;background:#171717;color:white;font:500 13px system-ui,sans-serif}
+#ie-toolbar #ie-copy{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:82px;height:36px;margin-left:0;padding:0 14px;border:0;border-radius:999px;background:#171717;color:white;font:500 13px system-ui,sans-serif}
 #ie-copy svg{width:17px;height:17px}
 #ie-copy .ie-copy-check{display:none}
 #ie-copy.ie-copied>svg[data-lucide=copy]{display:none}
@@ -161,3 +161,17 @@ body.ie-preview #ie-menu-popover:not([hidden]){display:block!important}
 #ie-icon-picker .ie-icon-grid button:is(:hover,[aria-pressed=true]){background:#eef3ff;border-color:#aabcf0}
 #ie-icon-picker .ie-icon-grid button span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #ie-icon-picker .ie-icon-grid svg{width:20px;height:20px;min-height:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+#ie-toolbar #ie-paste{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;min-width:82px;height:36px;padding:0 14px;border:1px solid #ddd;border-radius:999px;background:#fff;color:#171717;font:500 13px system-ui,sans-serif}
+#ie-paste svg{width:17px;height:17px}
+#ie-toolbar #ie-paste:hover{background:#f6f6f6}
+#ie-toolbar.ie-micro :is(#ie-paste,#ie-copy){min-width:36px;padding:0 9px}
+#ie-toolbar.ie-micro :is(#ie-paste,#ie-copy)>span{display:none}
+#ie-paste-dialog{box-sizing:border-box;width:min(640px,calc(100vw - 24px));max-width:none;padding:16px;border:1px solid #ddd;border-radius:16px;background:#fff;color:#171717;font:14px system-ui,sans-serif}
+#ie-paste-dialog::backdrop{background:#0005}
+#ie-paste-dialog header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+#ie-paste-dialog form:not([hidden]){display:grid;justify-items:start;gap:10px}
+#ie-paste-dialog textarea{box-sizing:border-box;width:100%;min-height:180px;padding:10px;border:1px solid #ddd;border-radius:8px;font:13px monospace}
+#ie-paste-dialog button{border:1px solid #ddd;border-radius:999px;background:#fff;color:#171717;padding:6px 12px;font:inherit;cursor:pointer}
+#ie-paste-dialog.ie-paste-preview{width:min(1200px,calc(100vw - 24px))}
+#ie-paste-dialog iframe{width:100%;height:min(75dvh,800px);border:1px solid #ddd;border-radius:8px}
