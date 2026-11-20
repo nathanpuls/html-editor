@@ -30,7 +30,7 @@ export function exportHTML(originals){
  return declaration+'\n'+page.outerHTML;
 }
 export async function copyHTML(html){
- if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(html);return}
+ if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(html);return}catch{/* Sandboxed workspaces may need the selection-based fallback. */}}
  const input=document.createElement('textarea');input.value=html;input.style.cssText='position:fixed;left:-10000px';input.dataset.builtAtEditorRuntime='';document.body.append(input);input.select();
  try{if(!document.execCommand('copy'))throw new Error('Clipboard unavailable')}finally{input.remove()}
 }

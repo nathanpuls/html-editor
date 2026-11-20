@@ -47,7 +47,7 @@ SOFTWARE.
 import {toolbarHTML,mountTools} from './toolbar.js?v=20261120-paste-toolbar';
 import {hex,ensureGoogleFont,mountColorPicker,cloneEditable,mountPageDrag,mountNumber,mountFontPicker,mountOverflow,contrastingInk,outlineName,mountPageColors,restoreStyleProperties} from './design.js?v=20261120-picker-grid';
 import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261120-workspace';
-import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js';
+import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js?v=20261120-workspace-copy';
 
 /* Selection and interaction logic extracted from Pages!B4. */
 export function startEditor({startInPreview=false,workspace=false,workspaceEmpty=false,workspaceDraft=null}={}){
