@@ -50,7 +50,7 @@ import {createHistory,createDraftStore,applyDocument} from './history.js?v=20261
 import {captureAuthorAttributes,exportHTML,copyHTML} from './export.js?v=20261120-workspace-copy';
 
 /* Selection and interaction logic extracted from Pages!B4. */
-export function startEditor({startInPreview=false,workspace=false,workspaceEmpty=false,workspaceDraft=null,workspaceRecent=null}={}){
+export function startEditor({startInPreview=false,workspace=false,workspaceParent=null,workspaceEmpty=false,workspaceDraft=null,workspaceRecent=null}={}){
  const {snapshot,restore}=createHistory(()=>[...document.querySelectorAll('[data-built-at-editor-runtime],#ie-toolbar,#ie-image-popup,#ie-marquee,#ie-resume')]);
  // Capture the loaded document before editor setup or any saved draft is applied.
  const original=snapshot();
@@ -446,11 +446,17 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  $('ie-close').onclick=()=>{preview=true;applyPreview()};
  applyPreview();
  setMode('page');
+ const workspaceOrigin=workspaceParent==='https://workspace.built.at'?workspaceParent:'https://built.at';
+ const postWorkspace=(type,details={})=>parent.postMessage({type:'built-at:workspace-'+type,revision:workspace,...details},workspaceOrigin);
  const pasteButton=$('ie-paste');
  pasteButton.removeAttribute('aria-haspopup');
  pasteButton.onclick=()=>workspace
-  ?parent.postMessage({type:'built-at:workspace-paste',revision:workspace},'https://built.at')
+  ?postWorkspace('paste')
   :window.open('https://built.at/editor','_blank','noopener,noreferrer');
+ if(workspace&&workspaceParent)document.addEventListener('built-at:export-workspace',event=>{
+  flushFields();
+  event.detail(exportHTML(authorAttributes),sourceHTML);
+ });
  let copyFeedbackTimer;
  $('ie-copy').onclick=async()=>{
   if(textEditing&&active){active.blur();active.contentEditable='false';textEditing=false}
@@ -472,8 +478,8 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
  };
  const workspaceStorage=workspace?{
   getItem:()=>workspaceDraft,
-  setItem:(_key,draft)=>parent.postMessage({type:'built-at:workspace-draft',revision:workspace,draft},'https://built.at'),
-  removeItem:()=>parent.postMessage({type:'built-at:workspace-draft',revision:workspace,draft:null},'https://built.at')
+  setItem:(_key,draft)=>postWorkspace('draft',{draft}),
+  removeItem:()=>postWorkspace('draft',{draft:null})
  }:undefined;
  const drafts=createDraftStore(sourceHTML,()=>exportHTML(authorAttributes),html=>{applyDocument(html);afterRestore()},workspaceStorage);
  const revertSelected=()=>{
@@ -523,7 +529,7 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
    const value=event.clipboardData?.getData('text/plain');
    if(!value)return;
    event.preventDefault();
-   parent.postMessage({type:'built-at:workspace-native-paste',revision:workspace,value},'https://built.at');
+   postWorkspace('native-paste',{value});
   });
   for(const control of bar.querySelectorAll('button,select,input,a'))if(control!==pasteButton&&!control.matches('.ie-brand')){
    if('disabled' in control)control.disabled=true;else control.inert=true;
@@ -542,7 +548,7 @@ updateEmphasis();for(const control of document.querySelectorAll('.ie-format')){c
   getItem:()=>workspaceRecent,
   setItem:(_key,value)=>{
    workspaceRecent=value;
-   parent.postMessage({type:'built-at:workspace-recent-colors',revision:workspace,value},'https://built.at');
+   postWorkspace('recent-colors',{value});
   }
  }:undefined;
  colorPicker=mountColorPicker(bar,{reset:resetFormatting,backgroundImageURL,setBackgroundImage,recentStorage});

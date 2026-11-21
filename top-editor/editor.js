@@ -11,6 +11,7 @@
   const start=()=>module.startEditor({
    startInPreview:script.hasAttribute('data-built-at-preview')&&!new URL(location.href).searchParams.has('edit'),
    workspace:script.getAttribute('data-built-at-workspace'),
+   workspaceParent:script.getAttribute('data-built-at-parent-origin'),
    workspaceEmpty:script.hasAttribute('data-built-at-workspace-empty'),
    workspaceDraft:script.getAttribute('data-built-at-draft'),
    workspaceRecent:script.getAttribute('data-built-at-recent-colors')
